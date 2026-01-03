@@ -1,3 +1,34 @@
+import { colors } from "./colors";
+
+export const COLOR_OPTIONS = [
+  { id: 'cyber_blue', value: '#3B82F6', label: '邏輯藍' }, // Cyber Blue
+  { id: 'mystic_purple', value: '#8B5CF6', label: '神秘紫' }, // Neon Purple
+  { id: 'hot_pink', value: '#EC4899', label: '熱情粉' }, // Hot Pink
+  { id: 'sunset_orange', value: '#F97316', label: '餘暉橘' }, // Sunset Orange
+  { id: 'gold_dust', value: '#EAB308', label: '星塵黃' }, // Gold Dust
+  { id: 'crimson_red', value: '#EF4444', label: '警戒紅' }, // Crimson Red
+  { id: 'aqua_cyan', value: '#06B6D4', label: '流動青' }, // Aqua Cyan
+  { id: 'ghost_white', value: '#F8FAFC', label: '純粹白' }, // Ghost White
+  { id: 'leaf_green', value: '#22C55E', label: '森之綠' }, // Leaf Green
+  { id: 'dark', value: colors.background, label: '深色' },
+];
+
+export const GENERATION_OPTIONS = [
+  { label: 'Gen α', value: 'gen_alpha' },
+  { label: 'Gen Z', value: 'gen_z' },
+  { label: 'Gen Y', value: 'gen_y' },
+  { label: 'Gen X', value: 'gen_x' },
+  { label: 'Time Traveler', value: 'time_traveler' },
+];
+
+export const getGeneration = (year: number) => {
+  if (year >= 2010) return 'gen_alpha';
+  if (year >= 1997) return 'gen_z';
+  if (year >= 1981) return 'gen_y';
+  if (year >= 1965) return 'gen_x';
+  return 'time_traveler';
+};
+
 export const MBTI_OPTIONS = [
   { label: '尚未解析', value: 'UNKNOWN', description: '保持神秘，讓對方來探索' },
   // 2. The Introverts (I人 - 核心用戶)
@@ -35,8 +66,8 @@ export const ORIENTATION_OPTIONS = [
 export const LOOKING_FOR_OPTIONS = [
   { 
     value: 'romantic', 
-    label: '尋找引力',
-    description: '探索未知的浪漫軌道'
+    label: '尋找浪漫',
+    description: '探索未知的引力軌道'
   },
   { 
     value: 'random', 
@@ -68,6 +99,14 @@ export const INTEREST_TAGS = [
   { id: 'sleep', label: '#睡覺', value: 'Sleep' }, // I 人最愛
   { id: 'sports', label: '#運動', value: 'Sports' },
   { id: 'fitness', label: '#健身', value: 'Fitness' },
+  { id: 'volleyball', label: '#排球', value: 'Volleyball' },
+  { id: 'basketball', label: '#籃球', value: 'Basketball' },
+  { id: 'tennis', label: '#網球', value: 'Tennis' },
+  { id: 'badminton', label: '#羽毛球', value: 'Badminton' },
+  { id: 'table tennis', label: '#桌球', value: 'Table Tennis' },
+  { id: 'golf', label: '#高爾夫', value: 'Golf' },
+  { id: 'swimming', label: '#游泳', value: 'Swimming' },
+  { id: 'hiking', label: '#登山', value: 'Hiking' },
 
   // 3. 毛孩與自然 (Nature & Pets)
   { id: 'cat', label: '#貓派', value: 'Cat' },

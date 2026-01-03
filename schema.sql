@@ -8,3 +8,21 @@ CREATE TABLE users (
   created_at TIMESTAMPTZ DEFAULT now(),
 );
 
+CREATE TABLE chats (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  users UUID[] NOT NULL, -- 2 users
+  last_message_id UUID NOT NULL, -- last message id
+  chat_info JSONB NOT NULL DEFAULT '{}', -- chat info
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+);
+
+CREATE TABLE messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chat_id UUID NOT NULL,
+  content TEXT NOT NULL,
+  sender_id UUID NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  FOREIGN KEY (chat_id) REFERENCES chats(id),
+  FOREIGN KEY (sender_id) REFERENCES users(id),
+);

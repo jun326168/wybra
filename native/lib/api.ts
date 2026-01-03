@@ -61,11 +61,11 @@ export const signOut = async () => {
 
   // Call the API to invalidate the token (if needed in the future)
   try {
-    const headers = await getAuthHeaders();
-    await fetch(`${API_URL}/auth/signout`, {
-      method: 'POST',
-      headers,
-    });
+    // const headers = await getAuthHeaders();
+    // await fetch(`${API_URL}/auth/signout`, {
+    //   method: 'POST',
+    //   headers,
+    // });
   } catch (error) {
     console.error('Error signing out:', error);
   }

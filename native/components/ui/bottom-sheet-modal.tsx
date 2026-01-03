@@ -116,8 +116,8 @@ const styles = StyleSheet.create({
   },
   sheet: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 32,
+    paddingVertical: 24,
     paddingTop: 24,
     paddingBottom: 50,
     borderTopLeftRadius: 24,

@@ -1,0 +1,843 @@
+import { View, Text, StyleSheet, Pressable, ScrollView, Image, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
+import React, { useState } from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { colors } from '@/lib/colors'
+import Button from '@/components/ui/button'
+import Input from '@/components/ui/input'
+import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
+import { useAppContext } from '@/contexts/AppContext'
+import { MBTI_OPTIONS, GENDER_OPTIONS, ORIENTATION_OPTIONS } from '@/lib/setup'
+import LoadingSpinner from '@/svgs/spinner'
+import { updateUserProfile, uploadUserPhoto } from '@/lib/api'
+import { useRouter } from 'expo-router'
+import * as ImagePicker from 'expo-image-picker'
+import LogoIcon from '@/svgs/logo'
+import { EyeIcon, EyeSlashIcon } from '@/svgs'
+
+const ProfileSettingsScreen = () => {
+  const { user, setUser } = useAppContext();
+  const router = useRouter();
+
+  const logoStrokeColor = (user?.personal_info?.color as string | undefined) || colors.background;
+
+  // Form states
+  const [username, setUsername] = useState(user?.username || '');
+  const [mbti, setMbti] = useState<string | null>(
+    (user?.personal_info?.mbti as string | undefined) || null
+  );
+  const [birthday, setBirthday] = useState<string>(
+    (user?.personal_info?.birthday as string | undefined) || ''
+  );
+  const [gender, setGender] = useState<string | null>(
+    (user?.personal_info?.gender as string | undefined) || null
+  );
+  const [sexualOrientation, setSexualOrientation] = useState<string | null>(
+    (user?.personal_info?.sexual_orientation as string | undefined) || null
+  );
+  const [bio, setBio] = useState<string>(
+    (user?.personal_info?.bio as string | undefined) || ''
+  );
+  const [photoUri, setPhotoUri] = useState<string | null>(
+    (user?.personal_info?.avatar_url as string | undefined) || null
+  );
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showImage, setShowImage] = useState(false);
+
+  // Modal states
+  const [showMbtiModal, setShowMbtiModal] = useState(false);
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [showGenderModal, setShowGenderModal] = useState(false);
+  const [showOrientationModal, setShowOrientationModal] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
+  // Date picker logic
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 50 }, (_, i) => currentYear - 18 - i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+
+  const getDaysInMonth = (year: number, month: number): number => {
+    return new Date(year, month, 0).getDate();
+  };
+
+  const getValidDays = (year: number | null, month: number | null): number[] => {
+    if (!year || !month) return Array.from({ length: 31 }, (_, i) => i + 1);
+    const maxDays = getDaysInMonth(year, month);
+    return Array.from({ length: maxDays }, (_, i) => i + 1);
+  };
+
+  const [selectedYear, setSelectedYear] = useState<number | null>(
+    birthday ? parseInt(birthday.split('-')[0]) : null
+  );
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(
+    birthday ? parseInt(birthday.split('-')[1]) : null
+  );
+  const [selectedDay, setSelectedDay] = useState<number | null>(
+    birthday ? parseInt(birthday.split('-')[2]) : null
+  );
+
+  const validDays = getValidDays(selectedYear, selectedMonth);
+
+  const handleYearChange = (year: number) => {
+    setSelectedYear(year);
+    if (selectedMonth && selectedDay) {
+      const maxDays = getDaysInMonth(year, selectedMonth);
+      if (selectedDay > maxDays) {
+        setSelectedDay(maxDays);
+      }
+    }
+  };
+
+  const handleMonthChange = (month: number) => {
+    setSelectedMonth(month);
+    if (selectedYear && selectedDay) {
+      const maxDays = getDaysInMonth(selectedYear, month);
+      if (selectedDay > maxDays) {
+        setSelectedDay(maxDays);
+      }
+    }
+  };
+
+  const handleDateConfirm = () => {
+    if (selectedYear && selectedMonth && selectedDay) {
+      const maxDays = getDaysInMonth(selectedYear, selectedMonth);
+      const adjustedDay = Math.min(selectedDay, maxDays);
+
+      const dateString = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(adjustedDay).padStart(2, '0')}`;
+      setBirthday(dateString);
+
+      if (adjustedDay !== selectedDay) {
+        setSelectedDay(adjustedDay);
+      }
+    }
+    setShowDateModal(false);
+  };
+
+  const handleMbtiSelect = (selectedMbti: string | null) => {
+    setMbti(selectedMbti);
+    setShowMbtiModal(false);
+  };
+
+  const handlePickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert('需要權限', '需要訪問相冊的權限才能上傳照片');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0] && user?.id) {
+        setUploadingPhoto(true);
+        try {
+          const photoUrl = await uploadUserPhoto(user.id, result.assets[0].uri);
+          setPhotoUri(photoUrl);
+
+          // Update user immediately with new photo
+          const updatedUser = await updateUserProfile(user.id, {
+            personal_info: {
+              ...user.personal_info,
+              avatar_url: photoUrl,
+            }
+          });
+          setUser(updatedUser);
+        } catch (error: any) {
+          console.error('Upload error:', error);
+          Alert.alert('上傳失敗', error.message || '無法上傳照片，請重試');
+        } finally {
+          setUploadingPhoto(false);
+        }
+      }
+    } catch (error) {
+      console.error('Image picker error:', error);
+      Alert.alert('錯誤', '無法選擇照片，請重試');
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+      const updatedUser = await updateUserProfile(user.id, {
+        username,
+        personal_info: {
+          ...user.personal_info,
+          mbti: mbti || undefined,
+          birthday: birthday || undefined,
+          gender: gender || undefined,
+          sexual_orientation: sexualOrientation || undefined,
+          bio: bio || undefined,
+          avatar_url: photoUri || undefined,
+        }
+      });
+      setUser(updatedUser);
+      router.back();
+    } catch (error: any) {
+      console.error('Save error:', error);
+      Alert.alert('儲存失敗', error.message || '無法儲存個人資料');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Button onPress={() => router.back()} style={styles.cancelButton}>
+            <Text style={styles.cancelButtonText}>取消</Text>
+          </Button>
+          <Text style={styles.title}>個人資料</Text>
+          <Button onPress={handleSave} disabled={loading || !username || !birthday || !mbti || !gender || !sexualOrientation} style={styles.saveButton}>
+            {loading ? (
+              <LoadingSpinner size={16} color={colors.primary} strokeWidth={3} />
+            ) : (
+              <Text style={styles.saveButtonText}>儲存</Text>
+            )}
+          </Button>
+        </View>
+
+        {/* Content */}
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardAvoidingView}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Photo */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>相片</Text>
+              <View style={styles.avatarContainer}>
+                {photoUri ? (
+                  <Button
+                    onPress={() => setShowImage(!showImage)}
+                    style={styles.avatarPlaceholder}
+                  >
+                    <View style={styles.avatarImageWrapper}>
+                      <Image
+                        source={{ uri: photoUri }}
+                        style={[
+                          styles.avatarImage,
+                          !showImage && styles.avatarImageBlurred
+                        ]}
+                        blurRadius={showImage ? 0 : 60}
+                      />
+                      {!showImage && (
+                        <View style={styles.blurOverlay}>
+                          {uploadingPhoto ? (
+                            <LoadingSpinner size={30} color={colors.text} strokeWidth={3} />
+                          ) : (
+                            <View style={styles.lockedStateContent}>
+                              <LogoIcon size={92} floatingY={0} stroke={logoStrokeColor} />
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                    {/* Eye icon indicator */}
+                    <View style={styles.eyeIconContainer}>
+                      {showImage ? (
+                        <EyeIcon size={18} color={colors.text} />
+                      ) : (
+                        <EyeSlashIcon size={18} color={colors.textSecondary} />
+                      )}
+                    </View>
+                  </Button>
+                ) : (
+                  <Pressable
+                    onPress={handlePickImage}
+                    style={[styles.avatarPlaceholder, { borderWidth: 2 }]}
+                    disabled={uploadingPhoto}
+                  >
+                    <View style={styles.emptyAvatar}>
+                      {uploadingPhoto ? (
+                        <LoadingSpinner size={28} color={colors.text} strokeWidth={3} />
+                      ) : (
+                        <>
+                          <LogoIcon size={60} floatingY={0} />
+                          <Text style={styles.uploadText}>點擊上傳</Text>
+                        </>
+                      )}
+                    </View>
+                  </Pressable>
+                )}
+
+                {photoUri && !uploadingPhoto && (
+                  <Pressable onPress={handlePickImage} style={styles.reuploadLink}>
+                    <Text style={styles.reuploadText}>更換照片</Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
+
+            {/* Username */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>代號</Text>
+              <Input
+                value={username}
+                placeholder="別透露你的真名喔"
+                onChangeText={setUsername}
+                editable={!loading}
+              />
+            </View>
+
+            {/* Birthday */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>生日</Text>
+              <Pressable onPress={() => !loading && setShowDateModal(true)}>
+                <View style={styles.selectButton}>
+                  <Text style={[styles.selectButtonText, !birthday && styles.selectButtonPlaceholder]}>
+                    {birthday || '輸入生日'}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+
+            {/* MBTI */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>屬性 (MBTI)</Text>
+              <Pressable onPress={() => !loading && setShowMbtiModal(true)}>
+                <View style={styles.selectButton}>
+                  <Text style={[styles.selectButtonText, !mbti && styles.selectButtonPlaceholder]}>
+                    {mbti ? MBTI_OPTIONS.find(opt => opt.value === mbti)?.label || mbti : '選擇你的 MBTI'}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+
+            {/* Gender */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>性別</Text>
+              <Pressable onPress={() => !loading && setShowGenderModal(true)}>
+                <View style={styles.selectButton}>
+                  <Text style={[styles.selectButtonText, !gender && styles.selectButtonPlaceholder]}>
+                    {gender ? GENDER_OPTIONS.find(opt => opt.value === gender)?.label : '選擇你的性別'}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+
+            {/* Sexual Orientation */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>性向</Text>
+              <Pressable onPress={() => !loading && setShowOrientationModal(true)}>
+                <View style={styles.selectButton}>
+                  <Text style={[styles.selectButtonText, !sexualOrientation && styles.selectButtonPlaceholder]}>
+                    {sexualOrientation ? ORIENTATION_OPTIONS.find(opt => opt.value === sexualOrientation)?.label : '選擇你的性向'}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+
+            {/* Bio */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>簡介</Text>
+              <TextInput
+                value={bio}
+                placeholder="介紹一下自己..."
+                onChangeText={setBio}
+                editable={!loading}
+                multiline
+                numberOfLines={4}
+                style={styles.bioInput}
+                placeholderTextColor={colors.textSecondary}
+                maxLength={300}
+              />
+              <Text style={styles.bioCount}>{bio.length}/300</Text>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+
+      {/* MBTI Modal */}
+      <BottomSheetModal
+        visible={showMbtiModal}
+        onClose={() => setShowMbtiModal(false)}
+        containerStyle={styles.modalContainer}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>選擇你的 MBTI</Text>
+          <ScrollView style={styles.optionsList} showsVerticalScrollIndicator={false}>
+            {MBTI_OPTIONS.map((option) => (
+              <Button
+                key={option.value}
+                onPress={() => handleMbtiSelect(option.value)}
+                style={[
+                  styles.option,
+                  mbti === option.value && styles.optionSelected
+                ]}
+              >
+                <View style={styles.optionContent}>
+                  <Text style={[
+                    styles.optionText,
+                    mbti === option.value && styles.optionTextSelected
+                  ]}>
+                    {option.label}
+                  </Text>
+                  {option.description && (
+                    <Text style={[
+                      styles.optionDescription,
+                      mbti === option.value && styles.optionDescriptionSelected
+                    ]}>
+                      {option.description}
+                    </Text>
+                  )}
+                </View>
+              </Button>
+            ))}
+          </ScrollView>
+        </View>
+      </BottomSheetModal>
+
+      {/* Date Modal */}
+      <BottomSheetModal
+        visible={showDateModal}
+        onClose={() => setShowDateModal(false)}
+        containerStyle={styles.modalContainer}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>選擇你的生日</Text>
+          <View style={styles.datePickerContainer}>
+            <View style={styles.dateColumn}>
+              <Text style={styles.dateLabel}>年</Text>
+              <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
+                {years.map((year) => (
+                  <Button
+                    key={year}
+                    onPress={() => handleYearChange(year)}
+                    style={[
+                      styles.dateOption,
+                      selectedYear === year && styles.dateOptionSelected
+                    ]}
+                  >
+                    <Text style={[
+                      styles.dateOptionText,
+                      selectedYear === year && styles.dateOptionTextSelected
+                    ]}>
+                      {year}
+                    </Text>
+                  </Button>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={styles.dateColumn}>
+              <Text style={styles.dateLabel}>月</Text>
+              <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
+                {months.map((month) => (
+                  <Button
+                    key={month}
+                    onPress={() => handleMonthChange(month)}
+                    style={[
+                      styles.dateOption,
+                      selectedMonth === month && styles.dateOptionSelected
+                    ]}
+                  >
+                    <Text style={[
+                      styles.dateOptionText,
+                      selectedMonth === month && styles.dateOptionTextSelected
+                    ]}>
+                      {month}
+                    </Text>
+                  </Button>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={styles.dateColumn}>
+              <Text style={styles.dateLabel}>日</Text>
+              <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
+                {validDays.map((day) => (
+                  <Button
+                    key={day}
+                    onPress={() => setSelectedDay(day)}
+                    style={[
+                      styles.dateOption,
+                      selectedDay === day && styles.dateOptionSelected
+                    ]}
+                  >
+                    <Text style={[
+                      styles.dateOptionText,
+                      selectedDay === day && styles.dateOptionTextSelected
+                    ]}>
+                      {day}
+                    </Text>
+                  </Button>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+          <Button
+            onPress={handleDateConfirm}
+            style={[styles.button, styles.modalButton]}
+          >
+            <Text style={styles.buttonText}>確定</Text>
+          </Button>
+        </View>
+      </BottomSheetModal>
+
+      {/* Gender Modal */}
+      <BottomSheetModal
+        visible={showGenderModal}
+        onClose={() => setShowGenderModal(false)}
+        containerStyle={styles.modalContainer}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>選擇你的性別</Text>
+          <ScrollView style={styles.optionsList} showsVerticalScrollIndicator={false}>
+            {GENDER_OPTIONS.map((option) => (
+              <Button
+                key={option.value}
+                onPress={() => {
+                  setGender(option.value);
+                  setShowGenderModal(false);
+                }}
+                style={[
+                  styles.option,
+                  gender === option.value && styles.optionSelected
+                ]}
+              >
+                <Text style={[
+                  styles.optionText,
+                  gender === option.value && styles.optionTextSelected
+                ]}>
+                  {option.label}
+                </Text>
+              </Button>
+            ))}
+          </ScrollView>
+        </View>
+      </BottomSheetModal>
+
+      {/* Orientation Modal */}
+      <BottomSheetModal
+        visible={showOrientationModal}
+        onClose={() => setShowOrientationModal(false)}
+        containerStyle={styles.modalContainer}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>選擇你的性向</Text>
+          <ScrollView style={styles.optionsList} showsVerticalScrollIndicator={false}>
+            {ORIENTATION_OPTIONS.map((option) => (
+              <Button
+                key={option.value}
+                onPress={() => {
+                  setSexualOrientation(option.value);
+                  setShowOrientationModal(false);
+                }}
+                style={[
+                  styles.option,
+                  sexualOrientation === option.value && styles.optionSelected
+                ]}
+              >
+                <Text style={[
+                  styles.optionText,
+                  sexualOrientation === option.value && styles.optionTextSelected
+                ]}>
+                  {option.label}
+                </Text>
+              </Button>
+            ))}
+          </ScrollView>
+        </View>
+      </BottomSheetModal>
+    </>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  cancelButton: {
+    paddingVertical: 8,
+    paddingRight: 12,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  saveButton: {
+    paddingVertical: 8,
+    paddingLeft: 12,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    paddingBottom: 100,
+    gap: 24,
+  },
+  section: {
+    gap: 10,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.textSecondary,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  inputLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  selectButton: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    minHeight: 52,
+    justifyContent: 'center',
+  },
+  selectButtonText: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  selectButtonPlaceholder: {
+    color: colors.textSecondary,
+  },
+  bioInput: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    fontSize: 16,
+    color: colors.text,
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  bioCount: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  avatarPlaceholder: {
+    width: 200,
+    height: 200,
+    borderRadius: 80,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'visible',
+    position: 'relative',
+  },
+  avatarImageWrapper: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 80,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    borderRadius: 80,
+  },
+  avatarImageBlurred: {
+    opacity: 0.6,
+  },
+  eyeIconContainer: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.background + 'E6',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  blurOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.background + '40',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  lockedStateContent: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyAvatar: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  uploadText: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  reuploadLink: {
+    marginTop: 16,
+    padding: 8,
+  },
+  reuploadText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  modalContainer: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  modalContent: {
+    width: '100%',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  optionsList: {
+    maxHeight: 400,
+  },
+  option: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.border,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  optionSelected: {
+    borderColor: colors.primary,
+  },
+  optionContent: {
+    alignItems: 'center',
+  },
+  optionText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  optionTextSelected: {
+    color: colors.primary,
+  },
+  optionDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  optionDescriptionSelected: {
+    color: colors.primary,
+    opacity: 0.8,
+  },
+  datePickerContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  dateColumn: {
+    flex: 1,
+  },
+  dateLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  dateScroll: {
+    maxHeight: 200,
+  },
+  dateOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.border,
+    marginBottom: 8,
+    alignItems: 'center',
+  },
+  dateOptionSelected: {
+    borderColor: colors.primary,
+  },
+  dateOptionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  dateOptionTextSelected: {
+    color: colors.primary,
+  },
+  button: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  modalButton: {
+    marginTop: 12,
+  },
+});
+
+export default ProfileSettingsScreen
+

@@ -2,10 +2,18 @@ export const colors = {
   background: '#121418',
   primary: '#8A7EFF',
   text: '#F0F2F5',
-  textSecondary: '#9DAab6',
+  textSecondary: '#A2AFBA',
   border: '#242930',
   card: '#1c1f24',
   warning: '#FFA500',
+  error: '#d15e7f',
+  generation: {
+    gen_alpha: '#e3349b',
+    gen_z: '#06B6E4',
+    gen_y: '#10BA81',
+    gen_x: '#F59E0B',
+    time_traveler: '#64748B',
+  }
 };
 
 export function brightenHexColor(hex: string, amount: number): string {

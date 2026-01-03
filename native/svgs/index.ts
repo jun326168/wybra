@@ -22,3 +22,6 @@ export interface SvgProps {
 // export { default as Logo } from './logo';
 // export { default as IconName } from './icon-name';
 
+export { default as EyeIcon } from './eye';
+export { default as EyeSlashIcon } from './eye-slash';
+

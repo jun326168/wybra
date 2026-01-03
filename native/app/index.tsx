@@ -51,7 +51,7 @@ export default function SplashAuthScreen() {
       !user.personal_info?.looking_for ||
       !user.personal_info?.interests ||
       !user.personal_info?.avatar_url
-    ) ? '/setup' : '/(tabs)';
+    ) ? '/setup' : '/(tabs)/home';
   };
 
   const handleGoogleResponse = useCallback(async (accessToken?: string) => {

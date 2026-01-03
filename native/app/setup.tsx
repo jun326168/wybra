@@ -12,10 +12,13 @@ import LoadingSpinner from '@/svgs/spinner'
 import { updateUserProfile, uploadUserPhoto } from '@/lib/api'
 import { useRouter } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
+import { EyeIcon, EyeSlashIcon } from '@/svgs'
 
 const SetupScreen = () => {
   const { user, setUser, loading: userLoading } = useAppContext();
   const router = useRouter();
+
+  const logoStrokeColor = (user?.personal_info?.color as string | undefined) || colors.background;
 
   // Step state
   const [currentStep, setCurrentStep] = useState(1);
@@ -50,6 +53,7 @@ const SetupScreen = () => {
     (user?.personal_info?.avatar_url as string | undefined) || null
   );
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showImage, setShowImage] = useState(false);
 
   // Modal states
   const [showMbtiModal, setShowMbtiModal] = useState(false);
@@ -66,7 +70,7 @@ const SetupScreen = () => {
   // Redirect if user already completed setup
   useEffect(() => {
     if (!userLoading && user?.personal_info?.bio) {
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/home');
     }
   }, [user, userLoading, router]);
 
@@ -225,7 +229,7 @@ const SetupScreen = () => {
         }
       });
       setUser(updatedUser);
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/home');
     } catch (error: any) {
       console.error('Setup error:', error);
       alert(error.message || 'Failed to save profile');
@@ -312,7 +316,7 @@ const SetupScreen = () => {
                     <Text style={styles.inputLabel}>代號</Text>
                     <Input
                       value={username}
-                      placeholder="輸入你的代號"
+                      placeholder="別透露你的真名喔"
                       onChangeText={setUsername}
                       editable={!loading}
                     />
@@ -430,26 +434,47 @@ const SetupScreen = () => {
                   </Text>
 
                   <View style={styles.avatarContainer}>
-                    <Pressable
-                      onPress={handlePickImage}
-                      style={[styles.avatarPlaceholder, { borderWidth: photoUri ? 0 : 2 }]}
-                      disabled={uploadingPhoto}
-                    >
-                      {photoUri ? (
-                        <>
-                          <Image source={{ uri: photoUri }} style={styles.avatarImage} blurRadius={16} />
-
-                          <View style={styles.blurOverlay}>
-                            {uploadingPhoto ? (
-                              <LoadingSpinner size={30} color={colors.text} strokeWidth={3} />
-                            ) : (
-                              <View style={styles.lockedStateContent}>
-                                <LogoIcon size={60} floatingY={0} />
-                              </View>
-                            )}
-                          </View>
-                        </>
-                      ) : (
+                    {photoUri ? (
+                      <Button
+                        onPress={() => setShowImage(!showImage)}
+                        style={styles.avatarPlaceholder}
+                      >
+                        <View style={styles.avatarImageWrapper}>
+                          <Image 
+                            source={{ uri: photoUri }} 
+                            style={[
+                              styles.avatarImage,
+                              !showImage && styles.avatarImageBlurred
+                            ]} 
+                            blurRadius={showImage ? 0 : 60} 
+                          />
+                          {!showImage && (
+                            <View style={styles.blurOverlay}>
+                              {uploadingPhoto ? (
+                                <LoadingSpinner size={30} color={colors.text} strokeWidth={3} />
+                              ) : (
+                                <View style={styles.lockedStateContent}>
+                                  <LogoIcon size={92} floatingY={0} stroke={logoStrokeColor} />
+                                </View>
+                              )}
+                            </View>
+                          )}
+                        </View>
+                        {/* Eye icon indicator */}
+                        <View style={styles.eyeIconContainer}>
+                          {showImage ? (
+                            <EyeIcon size={18} color={colors.text} />
+                          ) : (
+                            <EyeSlashIcon size={18} color={colors.textSecondary} />
+                          )}
+                        </View>
+                      </Button>
+                    ) : (
+                      <Pressable
+                        onPress={handlePickImage}
+                        style={[styles.avatarPlaceholder, { borderWidth: 2 }]}
+                        disabled={uploadingPhoto}
+                      >
                         <View style={styles.emptyAvatar}>
                           {uploadingPhoto ? (
                             <LoadingSpinner size={28} color={colors.text} strokeWidth={3} />
@@ -460,8 +485,8 @@ const SetupScreen = () => {
                             </>
                           )}
                         </View>
-                      )}
-                    </Pressable>
+                      </Pressable>
+                    )}
 
                     {photoUri && !uploadingPhoto && (
                       <Pressable onPress={handlePickImage} style={styles.reuploadLink}>
@@ -908,21 +933,44 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderWidth: 2,
     borderColor: colors.border,
-    borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'visible',
+    position: 'relative',
+  },
+  avatarImageWrapper: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 80,
     overflow: 'hidden',
     position: 'relative',
   },
   avatarImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'contain',
+    resizeMode: 'cover',
+    borderRadius: 80,
+  },
+  avatarImageBlurred: {
     opacity: 0.6,
+  },
+  eyeIconContainer: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.background + 'E6',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
   },
   blurOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.background + 'dd',
+    backgroundColor: colors.background + '40',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,

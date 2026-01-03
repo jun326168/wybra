@@ -23,7 +23,7 @@ const useAnimationTriggers = () => {
   const profileTrigger = useSharedValue(0);
 
   const triggers: Record<string, SharedValue<number>> = {
-    index: radarTrigger,
+    home: radarTrigger,
     chats: chatsTrigger,
     profile: profileTrigger,
   };
@@ -174,9 +174,9 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         listeners={{
-          tabPress: () => triggerAnimation('index'),
+          tabPress: () => triggerAnimation('home'),
         }}
         options={{
           title: 'Home',
@@ -185,7 +185,7 @@ export default function TabLayout() {
               backgroundColor: focused ? colors.primary + '15' : 'transparent',
               borderColor: focused ? colors.primary + '28' : 'transparent',
             }]}>
-              <AnimatedRadarIcon color={color} size={focused ? 24 : 26} focused={focused} trigger={triggers.index} />
+              <AnimatedRadarIcon color={color} size={focused ? 24 : 26} focused={focused} trigger={triggers.home} />
             </View>
           ),
         }}
