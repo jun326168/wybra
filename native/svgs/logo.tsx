@@ -74,8 +74,9 @@ const LogoIcon = ({ size = 120, color = '#EAE8FF', stroke = '#121418', floatingY
           <Path d="M157.35 110.575C157.35 110.575 165.678 115.105 171.827 114.985C177.606 114.872 185.269 110.575 185.269 110.575" stroke={stroke} strokeWidth="7" strokeLinecap="round" />
         </AnimatedG>
 
+
         <Ellipse cx="49.5839" cy="130.98" rx="27.3604" ry="38.6029" fill={stroke} />
-        <Path d="M45.1169 100.098C45.1169 100.098 37.858 76.3843 51.8174 46.0534C65.7768 15.7225 95.9291 8.00192 95.9291 8.00192" stroke={stroke} strokeWidth="16" strokeLinecap="round" />
+        <Path d="M45.1169 101.836C45.1169 101.836 42.4029 74.2918 53.4722 50.2403C64.5416 26.1888 80.4291 18.2403 94.9722 13.2403C109.515 8.24031 126.472 7.77876 141.472 11.2403C156.472 14.7019 169.472 26.7403 169.472 26.7403" stroke={stroke} strokeWidth="18" strokeLinecap="round"/>
         <Ellipse cx="43.4418" cy="130.98" rx="16.7513" ry="25.3676" fill={color} />
       </Svg>
     </Animated.View>

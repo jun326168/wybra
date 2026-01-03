@@ -113,3 +113,42 @@ export const updateUserProfile = async (
   return data.user as User;
 };
 
+export const uploadUserPhoto = async (
+  userId: string,
+  photoUri: string
+): Promise<string> => {
+  const token = await storage.getToken();
+  
+  // Create form data
+  const formData = new FormData();
+  
+  // Get file extension from URI
+  const uriParts = photoUri.split('.');
+  const fileType = uriParts[uriParts.length - 1];
+  
+  // Create file object for upload
+  const file = {
+    uri: photoUri,
+    type: `image/${fileType}`,
+    name: `photo.${fileType}`,
+  } as any;
+  
+  formData.append('photo', file);
+
+  const response = await fetch(`${API_URL}/users/${userId}/photo`, {
+    method: 'POST',
+    headers: {
+      'Authorization': token ? `Bearer ${token}` : '',
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to upload photo');
+  }
+
+  const data = await response.json();
+  return data.avatarUrl as string;
+};
+

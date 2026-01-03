@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Platform, Pressable, ScrollView, Animated, Dimensions } from 'react-native'
+import { View, Text, StyleSheet, Platform, Pressable, ScrollView, Animated, Dimensions, Image, Alert } from 'react-native'
 import React, { useState, useEffect, useRef } from 'react'
 import LogoIcon from '@/svgs/logo'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -9,16 +9,17 @@ import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
 import { useAppContext } from '@/contexts/AppContext'
 import { MBTI_OPTIONS, INTEREST_TAGS, GENDER_OPTIONS, ORIENTATION_OPTIONS, LOOKING_FOR_OPTIONS } from '@/lib/setup'
 import LoadingSpinner from '@/svgs/spinner'
-import { updateUserProfile } from '@/lib/api'
+import { updateUserProfile, uploadUserPhoto } from '@/lib/api'
 import { useRouter } from 'expo-router'
+import * as ImagePicker from 'expo-image-picker'
 
 const SetupScreen = () => {
   const { user, setUser, loading: userLoading } = useAppContext();
   const router = useRouter();
-  
+
   // Step state
   const [currentStep, setCurrentStep] = useState(1);
-  
+
   // Step 1 - Basic Info
   const [username, setUsername] = useState(user?.username || '');
   const [mbti, setMbti] = useState<string | null>(
@@ -27,7 +28,7 @@ const SetupScreen = () => {
   const [birthday, setBirthday] = useState<string>(
     (user?.personal_info?.birthday as string | undefined) || ''
   );
-  
+
   // Step 2 - Personal Info
   const [gender, setGender] = useState<string | null>(
     (user?.personal_info?.gender as string | undefined) || null
@@ -38,19 +39,25 @@ const SetupScreen = () => {
   const [lookingFor, setLookingFor] = useState<string | null>(
     (user?.personal_info?.looking_for as string | undefined) || null
   );
-  
+
   // Step 3 - Interests
   const [selectedInterests, setSelectedInterests] = useState<string[]>(
     (user?.personal_info?.interests as string[] | undefined) || []
   );
-  
+
+  // Step 4 - Photo
+  const [photoUri, setPhotoUri] = useState<string | null>(
+    (user?.personal_info?.avatar_url as string | undefined) || null
+  );
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
   // Modal states
   const [showMbtiModal, setShowMbtiModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [showOrientationModal, setShowOrientationModal] = useState(false);
   const [showLookingForModal, setShowLookingForModal] = useState(false);
-  
+
   const [loading, setLoading] = useState(false);
 
   // Animation
@@ -124,10 +131,10 @@ const SetupScreen = () => {
     if (selectedYear && selectedMonth && selectedDay) {
       const maxDays = getDaysInMonth(selectedYear, selectedMonth);
       const adjustedDay = Math.min(selectedDay, maxDays);
-      
+
       const dateString = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(adjustedDay).padStart(2, '0')}`;
       setBirthday(dateString);
-      
+
       if (adjustedDay !== selectedDay) {
         setSelectedDay(adjustedDay);
       }
@@ -141,11 +148,45 @@ const SetupScreen = () => {
   };
 
   const toggleInterest = (interestId: string) => {
-    setSelectedInterests(prev => 
+    setSelectedInterests(prev =>
       prev.includes(interestId)
         ? prev.filter(id => id !== interestId)
         : [...prev, interestId]
     );
+  };
+
+  const handlePickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert('需要權限', '需要訪問相冊的權限才能上傳照片');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0] && user?.id) {
+        setUploadingPhoto(true);
+        try {
+          const photoUrl = await uploadUserPhoto(user.id, result.assets[0].uri);
+          setPhotoUri(photoUrl);
+        } catch (error: any) {
+          console.error('Upload error:', error);
+          Alert.alert('上傳失敗', error.message || '無法上傳照片，請重試');
+        } finally {
+          setUploadingPhoto(false);
+        }
+      }
+    } catch (error) {
+      console.error('Image picker error:', error);
+      Alert.alert('錯誤', '無法選擇照片，請重試');
+    }
   };
 
   const animateToStep = (step: number) => {
@@ -159,7 +200,7 @@ const SetupScreen = () => {
   };
 
   const handleNext = () => {
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       animateToStep(currentStep + 1);
     } else {
       handleSubmit();
@@ -180,6 +221,7 @@ const SetupScreen = () => {
           sexual_orientation: sexualOrientation || undefined,
           looking_for: lookingFor || undefined,
           interests: selectedInterests.length > 0 ? selectedInterests : undefined,
+          avatar_url: photoUri || undefined,
         }
       });
       setUser(updatedUser);
@@ -195,14 +237,16 @@ const SetupScreen = () => {
   const isStep1Valid = username && birthday && mbti;
   const isStep2Valid = gender && sexualOrientation && lookingFor;
   const isStep3Valid = selectedInterests.length > 0;
-  const isStep4Valid = true; // Always valid on the final screen
+  const isStep4Valid = photoUri !== null;
+  const isStep5Valid = true; // Always valid on the final screen
 
-  const canProceed = currentStep === 1 ? isStep1Valid : 
-                     currentStep === 2 ? isStep2Valid : 
-                     currentStep === 3 ? isStep3Valid :
-                     isStep4Valid;
+  const canProceed = currentStep === 1 ? isStep1Valid :
+    currentStep === 2 ? isStep2Valid :
+      currentStep === 3 ? isStep3Valid :
+        currentStep === 4 ? isStep4Valid :
+          isStep5Valid;
 
-  const buttonText = currentStep === 4 ? '開始！' : '下一步';
+  const buttonText = currentStep === 5 ? '開始！' : '下一步';
 
   return (
     <>
@@ -215,9 +259,9 @@ const SetupScreen = () => {
 
         {/* Step indicator */}
         <View style={styles.stepIndicator}>
-          {[1, 2, 3, 4].map((step) => (
-            <Pressable 
-              key={step} 
+          {[1, 2, 3, 4, 5].map((step) => (
+            <Pressable
+              key={step}
               style={styles.stepDotContainer}
               onPress={() => {
                 // Only allow navigation to completed steps or current step
@@ -243,12 +287,13 @@ const SetupScreen = () => {
             {
               transform: [{
                 translateX: slideAnim.interpolate({
-                  inputRange: [0, 1, 2, 3],
+                  inputRange: [0, 1, 2, 3, 4],
                   outputRange: [
-                    0, 
-                    -Dimensions.get('window').width, 
+                    0,
+                    -Dimensions.get('window').width,
                     -Dimensions.get('window').width * 2,
-                    -Dimensions.get('window').width * 3
+                    -Dimensions.get('window').width * 3,
+                    -Dimensions.get('window').width * 4
                   ]
                 })
               }]
@@ -256,7 +301,7 @@ const SetupScreen = () => {
           ]}>
             {/* Step 1 */}
             <View style={styles.stepContent}>
-              <ScrollView 
+              <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
@@ -265,7 +310,7 @@ const SetupScreen = () => {
                 <View style={styles.inputsContainer}>
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>代號</Text>
-                    <Input 
+                    <Input
                       value={username}
                       placeholder="輸入你的代號"
                       onChangeText={setUsername}
@@ -298,7 +343,7 @@ const SetupScreen = () => {
 
             {/* Step 2 */}
             <View style={styles.stepContent}>
-              <ScrollView 
+              <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
@@ -341,7 +386,7 @@ const SetupScreen = () => {
 
             {/* Step 3 */}
             <View style={styles.stepContent}>
-              <ScrollView 
+              <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
@@ -371,7 +416,68 @@ const SetupScreen = () => {
               </ScrollView>
             </View>
 
-            {/* Step 4 - Completion */}
+            {/* Step 4 - Photo Upload (Revised Vibe Version) */}
+            <View style={styles.stepContent}>
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.inputsContainer}>
+                  <Text style={styles.vibeTitle}>選擇一張有你的相片</Text>
+                  <Text style={styles.vibeDescription}>
+                    相片會以「模糊狀態」顯示。在配對聊天滿 7 天後，你可以決定是否解鎖給對方看。
+                  </Text>
+
+                  <View style={styles.avatarContainer}>
+                    <Pressable
+                      onPress={handlePickImage}
+                      style={[styles.avatarPlaceholder, { borderWidth: photoUri ? 0 : 2 }]}
+                      disabled={uploadingPhoto}
+                    >
+                      {photoUri ? (
+                        <>
+                          <Image source={{ uri: photoUri }} style={styles.avatarImage} blurRadius={16} />
+
+                          <View style={styles.blurOverlay}>
+                            {uploadingPhoto ? (
+                              <LoadingSpinner size={30} color={colors.text} strokeWidth={3} />
+                            ) : (
+                              <View style={styles.lockedStateContent}>
+                                <LogoIcon size={60} floatingY={0} />
+                              </View>
+                            )}
+                          </View>
+                        </>
+                      ) : (
+                        <View style={styles.emptyAvatar}>
+                          {uploadingPhoto ? (
+                            <LoadingSpinner size={28} color={colors.text} strokeWidth={3} />
+                          ) : (
+                            <>
+                              <LogoIcon size={60} floatingY={0} />
+                              <Text style={styles.uploadText}>點擊上傳</Text>
+                            </>
+                          )}
+                        </View>
+                      )}
+                    </Pressable>
+
+                    {photoUri && !uploadingPhoto && (
+                      <Pressable onPress={handlePickImage} style={styles.reuploadLink}>
+                        <Text style={styles.reuploadText}>更換照片</Text>
+                      </Pressable>
+                    )}
+                  </View>
+
+                  <Text style={styles.photoWarning}>
+                    請勿上傳不雅照，解鎖時若被檢舉將導致永久封鎖！
+                  </Text>
+                </View>
+              </ScrollView>
+            </View>
+
+            {/* Step 5 - Completion */}
             <View style={styles.stepContent}>
               <View style={styles.completionContainer}>
                 <LogoIcon size={80} floatingY={8} />
@@ -737,7 +843,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 8,
+  },
+  vibeDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 20,
   },
   interestsGrid: {
     flexDirection: 'row',
@@ -748,7 +858,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 20,
-    flex: 1,
+    // flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.card,
@@ -756,7 +866,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   interestTagSelected: {
-    backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
   interestTagText: {
@@ -765,7 +874,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   interestTagTextSelected: {
-    color: colors.background,
+    color: colors.primary,
   },
   completionContainer: {
     flex: 1,
@@ -781,6 +890,72 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 36,
   },
+  photoWarning: {
+    fontSize: 12,
+    color: colors.warning,
+    textAlign: 'center',
+    marginTop: 20,
+    lineHeight: 20,
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    marginVertical: 30,
+  },
+  avatarPlaceholder: {
+    width: 200,
+    height: 200,
+    borderRadius: 80,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+    opacity: 0.6,
+  },
+  blurOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.background + 'dd',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  lockedStateContent: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyAvatar: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  uploadText: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  lockedText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 4,
+    marginTop: 8,
+  },
+  reuploadLink: {
+    marginTop: 16,
+    padding: 8,
+  },
+  reuploadText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
   buttonContainer: {
     width: '100%',
     paddingHorizontal: 20,
@@ -790,7 +965,7 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 32,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',

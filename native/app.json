@@ -20,7 +20,7 @@
             ]
           }
         ],
-        "NSPhotoLibraryUsageDescription": "Wybra 需要存取你的相簿，以便你上傳你的頭像或其它相片。"
+        "NSPhotoLibraryUsageDescription": "Wybra 需要存取你的相簿，以便你上傳頭像或其它相片。"
       }
     },
     "android": {
@@ -62,7 +62,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Wybra 需要存取你的相簿，以便你上傳你的頭像或其它相片。"
+          "photosPermission": "Wybra 需要存取你的相簿，以便你上傳頭像或其它相片。"
         }
       ]
     ],

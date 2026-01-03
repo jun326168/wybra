@@ -5,6 +5,7 @@ export const colors = {
   textSecondary: '#9DAab6',
   border: '#242930',
   card: '#1c1f24',
+  warning: '#FFA500',
 };
 
 export function brightenHexColor(hex: string, amount: number): string {
