@@ -7,7 +7,7 @@ import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
 import { useAppContext } from '@/contexts/AppContext'
-import { MBTI_OPTIONS, INTEREST_TAGS, GENDER_OPTIONS, ORIENTATION_OPTIONS, LOOKING_FOR_OPTIONS, COLOR_OPTIONS } from '@/lib/setup'
+import { MBTI_OPTIONS, INTEREST_TAGS, GENDER_OPTIONS, ORIENTATION_OPTIONS, LOOKING_FOR_OPTIONS, COLOR_OPTIONS, PHOTO_BLUR_AMOUNT } from '@/lib/setup'
 import LoadingSpinner from '@/svgs/spinner'
 import { updateUserProfile, uploadUserPhoto } from '@/lib/api'
 import { useRouter } from 'expo-router'
@@ -607,7 +607,7 @@ const SetupScreen = () => {
                               styles.avatarImage,
                               !showImage && styles.avatarImageBlurred
                             ]} 
-                            blurRadius={showImage ? 0 : 60} 
+                            blurRadius={showImage ? 0 : PHOTO_BLUR_AMOUNT} 
                           />
                           {!showImage && (
                             <View style={styles.blurOverlay}>

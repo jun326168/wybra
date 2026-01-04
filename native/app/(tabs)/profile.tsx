@@ -8,7 +8,7 @@ import { EyeIcon, EyeSlashIcon } from '@/svgs'
 import Button from '@/components/ui/button'
 import { useRouter } from 'expo-router'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
-import { GENERATION_OPTIONS, getGeneration, INTEREST_TAGS, MBTI_OPTIONS } from '@/lib/setup'
+import { GENERATION_OPTIONS, getGeneration, INTEREST_TAGS, MBTI_OPTIONS, PHOTO_BLUR_AMOUNT } from '@/lib/setup'
 
 const ProfileScreen = () => {
   const { user, signOut } = useAppContext();
@@ -77,7 +77,7 @@ const ProfileScreen = () => {
                     styles.avatarImage,
                     !showImage && styles.avatarImageBlurred
                   ]}
-                  blurRadius={showImage ? 0 : 60}
+                  blurRadius={showImage ? 0 : PHOTO_BLUR_AMOUNT}
                 />
                 {!showImage && (
                   <View style={styles.blurOverlay}>
@@ -153,7 +153,7 @@ const ProfileScreen = () => {
           <View>
             <Text style={styles.sectionTitle}>設定</Text>
             <Button style={styles.settingRow} onPress={handlePreferenceSettings}>
-              <Text style={styles.settingLabel}>偏好</Text>
+              <Text style={styles.settingLabel}>主題</Text>
               <Text style={styles.linkArrow}>→</Text>
             </Button>
             <Button style={styles.settingRow} onPress={handleAccountSettings}>

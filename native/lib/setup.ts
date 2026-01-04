@@ -1,5 +1,7 @@
 import { colors } from "./colors";
 
+export const PHOTO_BLUR_AMOUNT = 30;
+
 export const COLOR_OPTIONS = [
   { id: 'cyber_blue', value: '#3B82F6', label: '邏輯藍' }, // Cyber Blue
   { id: 'mystic_purple', value: '#8B5CF6', label: '神秘紫' }, // Neon Purple
@@ -111,33 +113,61 @@ export const INTEREST_TAGS = [
   { id: 'science', label: '#科學', value: 'Science' },
 ];
 
+// CATEGORY 1: ATMOSPHERE & TEXTURE (80+ words)
 const PREFIXES = [
-  // Vibe: Quiet, Introvert, Space
-  "Silent", "Hazy", "Neon", "Deep", "Lunar", 
-  "Solar", "Drift", "Pale", "Quiet", "Lost", 
-  "Void", "Cyber", "Muted", "Glitch", "Analog",
-  "Hollow", "Faint", "Distant", "Cold", "Slow",
-  "Zen", "Retro", "Static", "Numb", "Dark"
+  // Colors & Light
+  "Indigo", "Azure", "Cobalt", "Slate", "Obsidian", "Ivory", "Amber", "Crimson", "Violet", "Cyan",
+  "Noir", "Silver", "Chrome", "Rusty", "Golden", "Neon", "Pale", "Dark", "Dim", "Bright",
+  // Weather & Nature
+  "Misty", "Hazy", "Foggy", "Rainy", "Stormy", "Windy", "Snowy", "Frosty", "Solar", "Lunar",
+  "Stellar", "Cosmic", "Void", "Ethereal", "Tidal", "Arctic", "Tropical", "Alpine", "Desert", "Oceanic",
+  // Tech & Urban
+  "Analog", "Digital", "Cyber", "Glitch", "Static", "Pixel", "Retro", "Modern", "Metro", "Urban",
+  "Concrete", "Asphalt", "Laser", "Radio", "Magnetic", "Electric", "Virtual", "Binary", "Quantum", "Nano",
+  // Emotion & State
+  "Quiet", "Silent", "Loud", "Muted", "Numb", "Dizzy", "Lucid", "Vivid", "Hollow", "Empty",
+  "Lonely", "Solo", "Idle", "Busy", "Lazy", "Deep", "Shallow", "Heavy", "Light", "Slow",
+  // Texture & Abstract
+  "Velvet", "Silk", "Paper", "Glass", "Soft", "Hard", "Rough", "Smooth", "Sharp", "Blurry",
+  "Lost", "Found", "Hidden", "Secret", "Unknown", "Public", "Private", "Open", "Closed", "Blank",
+  "Zen", "Chaos", "Wild", "Tame", "Free", "Safe", "Raw", "Pure", "Toxic", "Clean"
 ];
 
+// CATEGORY 2: ENTITIES & OBJECTS (80+ words)
 const SUFFIXES = [
-  // Vibe: Tech, Nature, Entity
-  "Ghost", "Walker", "Echo", "Signal", "Wave", 
-  "Panda", "Cat", "Pilot", "Static", "Pixel", 
-  "Shadow", "Cloud", "Star", "Rover", "Orbit",
-  "Glitch", "Vibe", "Noise", "Dust", "Moon",
-  "Nomad", "Unit", "System", "Error", "Mode"
+  // Roles & People
+  "Drifter", "Walker", "Runner", "Diver", "Flyer", "Pilot", "Driver", "Rider", "Surfer", "Gamer",
+  "Coder", "Artist", "Writer", "Poet", "Monk", "Ninja", "Samurai", "Knight", "Wizard", "Ghost",
+  // Spirits & Beings
+  "Phantom", "Specter", "Spirit", "Soul", "Shadow", "Demon", "Angel", "Robot", "Android", "Cyborg",
+  "Alien", "Human", "Person", "Stranger", "Guest", "Host", "User", "Admin", "System", "Bot",
+  // Animals (The "Cool" Ones)
+  "Moth", "Owl", "Fox", "Wolf", "Bear", "Cat", "Koi", "Crow", "Raven", "Swan",
+  "Deer", "Snake", "Dragon", "Tiger", "Lion", "Eagle", "Hawk", "Bat", "Rat", "Mouse",
+  // Objects & Tech
+  "Radio", "TV", "Screen", "Phone", "Disc", "Tape", "Vinyl", "Book", "Pen", "Key",
+  "Lock", "Box", "Bag", "Map", "Compass", "Radar", "Sonar", "Sensor", "Signal", "Noise",
+  // Nature & Elements
+  "Cloud", "Rain", "Snow", "Wind", "Fire", "Water", "Ice", "Leaf", "Tree", "Flower",
+  "Rose", "Lily", "Cactus", "Fern", "Moss", "Stone", "Rock", "Sand", "Dust", "Ash",
+  // Abstract Concepts
+  "Dream", "Memory", "Thought", "Idea", "Logic", "Data", "Code", "Sound", "Music", "Song",
+  "Loop", "Echo", "Vibe", "Mood", "Zone", "Room", "Space", "Time", "Era", "Mode"
 ];
 
 export function generateCallsign(): string {
   const prefix = PREFIXES[Math.floor(Math.random() * PREFIXES.length)];
   const suffix = SUFFIXES[Math.floor(Math.random() * SUFFIXES.length)];
   
-  // Optional: Add a 2-digit number for uniqueness (e.g., "NeonGhost77")
-  // Gen Z likes numbers that look like codes: 07, 99, 404, 88
-  const randomNumber = Math.floor(Math.random() * 100); 
-  const numberStr = randomNumber < 10 ? `0${randomNumber}` : `${randomNumber}`;
+  // OPTIONAL: Add a "Version Number" only 30% of the time to add variety
+  // This looks like sci-fi versions, not "User123"
+  const useVariant = Math.random() > 0.7;
+  let variant = "";
+  
+  if (useVariant) {
+    const variants = ["_v1", "_v2", ".X", ".01", "_99", "_404", "Box", "Lab", "HQ"];
+    variant = variants[Math.floor(Math.random() * variants.length)];
+  }
 
-  // Format: PascalCase is cleaner for reading (e.g., SilentWalker07)
-  return `${prefix}${suffix}${numberStr}`;
+  return `${prefix}${suffix}${variant}`;
 }

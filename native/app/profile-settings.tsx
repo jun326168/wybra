@@ -1,12 +1,12 @@
 import { View, Text, StyleSheet, Pressable, ScrollView, Image, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { colors } from '@/lib/colors'
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
 import { useAppContext } from '@/contexts/AppContext'
-import { MBTI_OPTIONS, GENDER_OPTIONS, ORIENTATION_OPTIONS } from '@/lib/setup'
+import { MBTI_OPTIONS, GENDER_OPTIONS, ORIENTATION_OPTIONS, PHOTO_BLUR_AMOUNT, INTEREST_TAGS } from '@/lib/setup'
 import LoadingSpinner from '@/svgs/spinner'
 import { updateUserProfile, uploadUserPhoto } from '@/lib/api'
 import { useRouter } from 'expo-router'
@@ -43,6 +43,11 @@ const ProfileSettingsScreen = () => {
   const [customQuestionHate, setCustomQuestionHate] = useState<string>(
     (user?.personal_info?.custom_question as any)?.hate || ''
   );
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(
+    (user?.personal_info?.interests as string[] | undefined) || []
+  );
+  const [customTagInput, setCustomTagInput] = useState<string>('#');
+  const [customTags, setCustomTags] = useState<string[]>([]);
   const [photoUri, setPhotoUri] = useState<string | null>(
     (user?.personal_info?.avatar_url as string | undefined) || null
   );
@@ -56,6 +61,16 @@ const ProfileSettingsScreen = () => {
   const [showOrientationModal, setShowOrientationModal] = useState(false);
 
   const [loading, setLoading] = useState(false);
+
+  // Initialize custom tags from existing interests
+  useEffect(() => {
+    const predefinedIds = INTEREST_TAGS.map(tag => tag.id);
+    const customInterests = selectedInterests.filter(interest => 
+      !predefinedIds.includes(interest) && interest.startsWith('#')
+    );
+    setCustomTags(customInterests);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Date picker logic
   const currentYear = new Date().getFullYear();
@@ -124,6 +139,47 @@ const ProfileSettingsScreen = () => {
     setShowMbtiModal(false);
   };
 
+  const toggleInterest = (interestId: string) => {
+    setSelectedInterests(prev =>
+      prev.includes(interestId)
+        ? prev.filter(id => id !== interestId)
+        : [...prev, interestId]
+    );
+  };
+
+  const handleCustomTagInput = (text: string) => {
+    // Always ensure it starts with #
+    if (!text.startsWith('#')) {
+      text = '#' + text;
+    }
+    
+    setCustomTagInput(text);
+
+    // Check if user pressed space and tag is not just #
+    if (text.endsWith(' ') && text.trim().length > 1) {
+      const tag = text.trim();
+      if (!customTags.includes(tag) && !selectedInterests.includes(tag)) {
+        setCustomTags(prev => [...prev, tag]);
+        setSelectedInterests(prev => [...prev, tag]);
+      }
+      setCustomTagInput('#');
+    }
+  };
+
+  const handleCustomTagEndEditing = () => {
+    const tag = customTagInput.trim();
+    if (tag.length > 1 && !customTags.includes(tag) && !selectedInterests.includes(tag)) {
+      setCustomTags(prev => [...prev, tag]);
+      setSelectedInterests(prev => [...prev, tag]);
+    }
+    setCustomTagInput('#');
+  };
+
+  const removeCustomTag = (tag: string) => {
+    setCustomTags(prev => prev.filter(t => t !== tag));
+    setSelectedInterests(prev => prev.filter(t => t !== tag));
+  };
+
   const handlePickImage = async () => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -185,6 +241,7 @@ const ProfileSettingsScreen = () => {
             love: customQuestionLove || undefined,
             hate: customQuestionHate || undefined,
           },
+          interests: selectedInterests.length > 0 ? selectedInterests : undefined,
           avatar_url: photoUri || undefined,
         }
       });
@@ -240,7 +297,7 @@ const ProfileSettingsScreen = () => {
                           styles.avatarImage,
                           !showImage && styles.avatarImageBlurred
                         ]}
-                        blurRadius={showImage ? 0 : 60}
+                        blurRadius={showImage ? 0 : PHOTO_BLUR_AMOUNT}
                       />
                       {!showImage && (
                         <View style={styles.blurOverlay}>
@@ -401,6 +458,65 @@ const ProfileSettingsScreen = () => {
                 maxLength={100}
               />
               <Text style={styles.bioCount}>{customQuestionHate.length}/100</Text>
+            </View>
+
+            {/* Interests */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>我的 Vibe</Text>
+              
+              {/* Custom Tag Input */}
+              <View style={styles.customTagInputContainer}>
+                <TextInput
+                  value={customTagInput}
+                  onChangeText={handleCustomTagInput}
+                  placeholder="#自訂"
+                  placeholderTextColor={colors.textSecondary}
+                  style={styles.customTagTextInput}
+                  editable={!loading}
+                  onEndEditing={handleCustomTagEndEditing}
+                />
+              </View>
+
+              <View style={styles.interestsGrid}>
+                {/* Custom Tags First */}
+                {customTags.map((tag) => (
+                  <Pressable
+                    key={tag}
+                    onPress={() => removeCustomTag(tag)}
+                    style={[
+                      styles.interestTag,
+                      styles.interestTagSelected,
+                      styles.customInterestTag
+                    ]}
+                  >
+                    <Text style={[
+                      styles.interestTagText,
+                      styles.interestTagTextSelected
+                    ]}>
+                      {tag}
+                    </Text>
+                  </Pressable>
+                ))}
+
+                {/* Predefined Tags */}
+                {INTEREST_TAGS.map((interest) => (
+                  <Pressable
+                    key={interest.id}
+                    onPress={() => toggleInterest(interest.id)}
+                    style={[
+                      styles.interestTag,
+                      selectedInterests.includes(interest.id) && styles.interestTagSelected
+                    ]}
+                  >
+                    <Text style={[
+                      styles.interestTagText,
+                      selectedInterests.includes(interest.id) && styles.interestTagTextSelected
+                    ]}>
+                      {interest.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -715,6 +831,50 @@ const styles = StyleSheet.create({
     color: colors.text,
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  customTagInputContainer: {
+    width: '100%',
+    marginBottom: 12,
+  },
+  customTagTextInput: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    fontSize: 16,
+    color: colors.text,
+  },
+  interestsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  interestTag: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  interestTagSelected: {
+    borderColor: colors.primary,
+  },
+  interestTagText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  interestTagTextSelected: {
+    color: colors.primary,
+  },
+  customInterestTag: {
+    opacity: 1,
   },
   avatarContainer: {
     alignItems: 'center',

@@ -1,11 +1,11 @@
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native'
+import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { colors } from '@/lib/colors'
 import Button from '@/components/ui/button'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
 import { useAppContext } from '@/contexts/AppContext'
-import { COLOR_OPTIONS, INTEREST_TAGS, LOOKING_FOR_OPTIONS } from '@/lib/setup'
+import { COLOR_OPTIONS, LOOKING_FOR_OPTIONS } from '@/lib/setup'
 import LoadingSpinner from '@/svgs/spinner'
 import { updateUserProfile } from '@/lib/api'
 import { useRouter } from 'expo-router'
@@ -19,11 +19,6 @@ const PreferenceSettingsScreen = () => {
   const [lookingFor, setLookingFor] = useState<string | null>(
     (user?.personal_info?.looking_for as string | undefined) || null
   );
-  const [selectedInterests, setSelectedInterests] = useState<string[]>(
-    (user?.personal_info?.interests as string[] | undefined) || []
-  );
-  const [customTagInput, setCustomTagInput] = useState<string>('#');
-  const [customTags, setCustomTags] = useState<string[]>([]);
   const [selectedColor, setSelectedColor] = useState<string>(
     (user?.personal_info?.color as string | undefined) || colors.background
   );
@@ -32,56 +27,6 @@ const PreferenceSettingsScreen = () => {
   const [showLookingForModal, setShowLookingForModal] = useState(false);
 
   const [loading, setLoading] = useState(false);
-
-  // Initialize custom tags from existing interests
-  useEffect(() => {
-    const predefinedIds = INTEREST_TAGS.map(tag => tag.id);
-    const customInterests = selectedInterests.filter(interest => 
-      !predefinedIds.includes(interest) && interest.startsWith('#')
-    );
-    setCustomTags(customInterests);
-  }, []);
-
-  const toggleInterest = (interestId: string) => {
-    setSelectedInterests(prev =>
-      prev.includes(interestId)
-        ? prev.filter(id => id !== interestId)
-        : [...prev, interestId]
-    );
-  };
-
-  const handleCustomTagInput = (text: string) => {
-    // Always ensure it starts with #
-    if (!text.startsWith('#')) {
-      text = '#' + text;
-    }
-    
-    setCustomTagInput(text);
-
-    // Check if user pressed space and tag is not just #
-    if (text.endsWith(' ') && text.trim().length > 1) {
-      const tag = text.trim();
-      if (!customTags.includes(tag) && !selectedInterests.includes(tag)) {
-        setCustomTags(prev => [...prev, tag]);
-        setSelectedInterests(prev => [...prev, tag]);
-      }
-      setCustomTagInput('#');
-    }
-  };
-
-  const handleCustomTagEndEditing = () => {
-    const tag = customTagInput.trim();
-    if (tag.length > 1 && !customTags.includes(tag) && !selectedInterests.includes(tag)) {
-      setCustomTags(prev => [...prev, tag]);
-      setSelectedInterests(prev => [...prev, tag]);
-    }
-    setCustomTagInput('#');
-  };
-
-  const removeCustomTag = (tag: string) => {
-    setCustomTags(prev => prev.filter(t => t !== tag));
-    setSelectedInterests(prev => prev.filter(t => t !== tag));
-  };
 
   const handleSave = async () => {
     if (!user?.id) return;
@@ -92,7 +37,6 @@ const PreferenceSettingsScreen = () => {
         personal_info: {
           ...user.personal_info,
           looking_for: lookingFor || undefined,
-          interests: selectedInterests.length > 0 ? selectedInterests : undefined,
           color: selectedColor,
         }
       });
@@ -114,8 +58,8 @@ const PreferenceSettingsScreen = () => {
           <Button onPress={() => router.back()} style={styles.cancelButton}>
             <Text style={styles.cancelButtonText}>取消</Text>
           </Button>
-          <Text style={styles.title}>偏好設定</Text>
-          <Button onPress={handleSave} disabled={loading || !lookingFor || selectedInterests.length === 0} style={styles.saveButton}>
+          <Text style={styles.title}>主題設定</Text>
+          <Button onPress={handleSave} disabled={loading || !lookingFor} style={styles.saveButton}>
             {loading ? (
               <LoadingSpinner size={16} color={colors.primary} strokeWidth={3} />
             ) : (
@@ -147,66 +91,7 @@ const PreferenceSettingsScreen = () => {
               </Pressable>
             </View>
 
-            {/* Interests */}
-            <View style={styles.section}>
-              <Text style={styles.inputLabel}>我的 Vibe</Text>
-              
-              {/* Custom Tag Input */}
-              <View style={styles.customTagInputContainer}>
-                <TextInput
-                  value={customTagInput}
-                  onChangeText={handleCustomTagInput}
-                  placeholder="#自訂"
-                  placeholderTextColor={colors.textSecondary}
-                  style={styles.customTagTextInput}
-                  editable={!loading}
-                  onEndEditing={handleCustomTagEndEditing}
-                />
-              </View>
-
-              <View style={styles.interestsGrid}>
-                {/* Custom Tags First */}
-                {customTags.map((tag) => (
-                  <Pressable
-                    key={tag}
-                    onPress={() => removeCustomTag(tag)}
-                    style={[
-                      styles.interestTag,
-                      styles.interestTagSelected,
-                      styles.customInterestTag
-                    ]}
-                  >
-                    <Text style={[
-                      styles.interestTagText,
-                      styles.interestTagTextSelected
-                    ]}>
-                      {tag}
-                    </Text>
-                  </Pressable>
-                ))}
-
-                {/* Predefined Tags */}
-                {INTEREST_TAGS.map((interest) => (
-                  <Pressable
-                    key={interest.id}
-                    onPress={() => toggleInterest(interest.id)}
-                    style={[
-                      styles.interestTag,
-                      selectedInterests.includes(interest.id) && styles.interestTagSelected
-                    ]}
-                  >
-                    <Text style={[
-                      styles.interestTagText,
-                      selectedInterests.includes(interest.id) && styles.interestTagTextSelected
-                    ]}>
-                      {interest.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-          {/* Color Picker */}
+            {/* Color Picker */}
           <View style={styles.section}>
             <Text style={styles.inputLabel}>主題色</Text>
             <Text style={styles.colorDescription}>選擇你的個人色彩</Text>
@@ -362,50 +247,6 @@ const styles = StyleSheet.create({
   },
   selectButtonPlaceholder: {
     color: colors.textSecondary,
-  },
-  interestsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  interestTag: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderWidth: 2,
-    borderColor: colors.border,
-  },
-  interestTagSelected: {
-    borderColor: colors.primary,
-  },
-  interestTagText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  interestTagTextSelected: {
-    color: colors.primary,
-  },
-  customTagInputContainer: {
-    width: '100%',
-    marginBottom: 12,
-  },
-  customTagTextInput: {
-    width: '100%',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    borderWidth: 2,
-    borderColor: colors.border,
-    fontSize: 16,
-    color: colors.text,
-  },
-  customInterestTag: {
-    opacity: 1,
   },
   colorDescription: {
     fontSize: 14,

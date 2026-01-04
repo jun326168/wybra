@@ -152,3 +152,17 @@ export const uploadUserPhoto = async (
   return data.avatarUrl as string;
 };
 
+export const fetchProfiles = async (lookingFor: 'romantic' | 'random' | 'team'): Promise<User[]> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/profiles?lookingFor=${lookingFor}`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch profiles');
+  }
+
+  const data = await response.json();
+  return data as User[];
+};
