@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native'
-import React, { useState } from 'react'
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { colors } from '@/lib/colors'
 import Button from '@/components/ui/button'
@@ -22,6 +22,8 @@ const PreferenceSettingsScreen = () => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>(
     (user?.personal_info?.interests as string[] | undefined) || []
   );
+  const [customTagInput, setCustomTagInput] = useState<string>('#');
+  const [customTags, setCustomTags] = useState<string[]>([]);
   const [selectedColor, setSelectedColor] = useState<string>(
     (user?.personal_info?.color as string | undefined) || colors.background
   );
@@ -31,12 +33,54 @@ const PreferenceSettingsScreen = () => {
 
   const [loading, setLoading] = useState(false);
 
+  // Initialize custom tags from existing interests
+  useEffect(() => {
+    const predefinedIds = INTEREST_TAGS.map(tag => tag.id);
+    const customInterests = selectedInterests.filter(interest => 
+      !predefinedIds.includes(interest) && interest.startsWith('#')
+    );
+    setCustomTags(customInterests);
+  }, []);
+
   const toggleInterest = (interestId: string) => {
     setSelectedInterests(prev =>
       prev.includes(interestId)
         ? prev.filter(id => id !== interestId)
         : [...prev, interestId]
     );
+  };
+
+  const handleCustomTagInput = (text: string) => {
+    // Always ensure it starts with #
+    if (!text.startsWith('#')) {
+      text = '#' + text;
+    }
+    
+    setCustomTagInput(text);
+
+    // Check if user pressed space and tag is not just #
+    if (text.endsWith(' ') && text.trim().length > 1) {
+      const tag = text.trim();
+      if (!customTags.includes(tag) && !selectedInterests.includes(tag)) {
+        setCustomTags(prev => [...prev, tag]);
+        setSelectedInterests(prev => [...prev, tag]);
+      }
+      setCustomTagInput('#');
+    }
+  };
+
+  const handleCustomTagEndEditing = () => {
+    const tag = customTagInput.trim();
+    if (tag.length > 1 && !customTags.includes(tag) && !selectedInterests.includes(tag)) {
+      setCustomTags(prev => [...prev, tag]);
+      setSelectedInterests(prev => [...prev, tag]);
+    }
+    setCustomTagInput('#');
+  };
+
+  const removeCustomTag = (tag: string) => {
+    setCustomTags(prev => prev.filter(t => t !== tag));
+    setSelectedInterests(prev => prev.filter(t => t !== tag));
   };
 
   const handleSave = async () => {
@@ -81,46 +125,86 @@ const PreferenceSettingsScreen = () => {
         </View>
 
         {/* Content */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+          style={styles.keyboardAvoidingView}
         >
-          {/* Looking For */}
-          <View style={styles.section}>
-            <Text style={styles.inputLabel}>目標</Text>
-            <Pressable onPress={() => !loading && setShowLookingForModal(true)}>
-              <View style={styles.selectButton}>
-                <Text style={[styles.selectButtonText, !lookingFor && styles.selectButtonPlaceholder]}>
-                  {lookingFor ? LOOKING_FOR_OPTIONS.find(opt => opt.value === lookingFor)?.label : '你在尋找什麼？'}
-                </Text>
-              </View>
-            </Pressable>
-          </View>
-
-          {/* Interests */}
-          <View style={styles.section}>
-            <Text style={styles.inputLabel}>我的 Vibe</Text>
-            <View style={styles.interestsGrid}>
-              {INTEREST_TAGS.map((interest) => (
-                <Pressable
-                  key={interest.id}
-                  onPress={() => toggleInterest(interest.id)}
-                  style={[
-                    styles.interestTag,
-                    selectedInterests.includes(interest.id) && styles.interestTagSelected
-                  ]}
-                >
-                  <Text style={[
-                    styles.interestTagText,
-                    selectedInterests.includes(interest.id) && styles.interestTagTextSelected
-                  ]}>
-                    {interest.label}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Looking For */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>訊號</Text>
+              <Pressable onPress={() => !loading && setShowLookingForModal(true)}>
+                <View style={styles.selectButton}>
+                  <Text style={[styles.selectButtonText, !lookingFor && styles.selectButtonPlaceholder]}>
+                    {lookingFor ? LOOKING_FOR_OPTIONS.find(opt => opt.value === lookingFor)?.label : '你在尋找什麼？'}
                   </Text>
-                </Pressable>
-              ))}
+                </View>
+              </Pressable>
             </View>
-          </View>
+
+            {/* Interests */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>我的 Vibe</Text>
+              
+              {/* Custom Tag Input */}
+              <View style={styles.customTagInputContainer}>
+                <TextInput
+                  value={customTagInput}
+                  onChangeText={handleCustomTagInput}
+                  placeholder="#自訂"
+                  placeholderTextColor={colors.textSecondary}
+                  style={styles.customTagTextInput}
+                  editable={!loading}
+                  onEndEditing={handleCustomTagEndEditing}
+                />
+              </View>
+
+              <View style={styles.interestsGrid}>
+                {/* Custom Tags First */}
+                {customTags.map((tag) => (
+                  <Pressable
+                    key={tag}
+                    onPress={() => removeCustomTag(tag)}
+                    style={[
+                      styles.interestTag,
+                      styles.interestTagSelected,
+                      styles.customInterestTag
+                    ]}
+                  >
+                    <Text style={[
+                      styles.interestTagText,
+                      styles.interestTagTextSelected
+                    ]}>
+                      {tag}
+                    </Text>
+                  </Pressable>
+                ))}
+
+                {/* Predefined Tags */}
+                {INTEREST_TAGS.map((interest) => (
+                  <Pressable
+                    key={interest.id}
+                    onPress={() => toggleInterest(interest.id)}
+                    style={[
+                      styles.interestTag,
+                      selectedInterests.includes(interest.id) && styles.interestTagSelected
+                    ]}
+                  >
+                    <Text style={[
+                      styles.interestTagText,
+                      selectedInterests.includes(interest.id) && styles.interestTagTextSelected
+                    ]}>
+                      {interest.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
 
           {/* Color Picker */}
           <View style={styles.section}>
@@ -155,7 +239,8 @@ const PreferenceSettingsScreen = () => {
               ))}
             </View>
           </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
 
       {/* Looking For Modal */}
@@ -240,6 +325,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
   },
@@ -300,6 +388,24 @@ const styles = StyleSheet.create({
   },
   interestTagTextSelected: {
     color: colors.primary,
+  },
+  customTagInputContainer: {
+    width: '100%',
+    marginBottom: 12,
+  },
+  customTagTextInput: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    fontSize: 16,
+    color: colors.text,
+  },
+  customInterestTag: {
+    opacity: 1,
   },
   colorDescription: {
     fontSize: 14,

@@ -43,6 +43,10 @@ export default function SplashAuthScreen() {
 
   const getNextRoute = (user: User) => {
     if (!user) return '/';
+    
+    const bio = user.personal_info?.bio as string | undefined;
+    const customQuestion = user.personal_info?.custom_question as { love?: string; hate?: string } | undefined;
+    
     return (
       !user.personal_info?.birthday || 
       !user.personal_info?.mbti ||
@@ -50,7 +54,11 @@ export default function SplashAuthScreen() {
       !user.personal_info?.sexual_orientation ||
       !user.personal_info?.looking_for ||
       !user.personal_info?.interests ||
-      !user.personal_info?.avatar_url
+      !user.personal_info?.avatar_url ||
+      !bio ||
+      bio.length < 30 ||
+      !customQuestion?.love ||
+      !customQuestion?.hate
     ) ? '/setup' : '/(tabs)/home';
   };
 

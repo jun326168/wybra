@@ -92,26 +92,12 @@ export const INTEREST_TAGS = [
 
   // 2. 生活與飲食 (Lifestyle)
   { id: 'foodie', label: '#美食', value: 'Foodie' },
-  { id: 'coffee', label: '#咖啡', value: 'Coffee' },
-  { id: 'alcohol', label: '#小酌', value: 'Alcohol' }, // 適合微醺的氛圍
   { id: 'cooking', label: '#烹飪', value: 'Cooking' },
-  { id: 'fashion', label: '#穿搭', value: 'Fashion' },
   { id: 'sleep', label: '#睡覺', value: 'Sleep' }, // I 人最愛
   { id: 'sports', label: '#運動', value: 'Sports' },
   { id: 'fitness', label: '#健身', value: 'Fitness' },
-  { id: 'volleyball', label: '#排球', value: 'Volleyball' },
-  { id: 'basketball', label: '#籃球', value: 'Basketball' },
-  { id: 'tennis', label: '#網球', value: 'Tennis' },
-  { id: 'badminton', label: '#羽毛球', value: 'Badminton' },
-  { id: 'table tennis', label: '#桌球', value: 'Table Tennis' },
-  { id: 'golf', label: '#高爾夫', value: 'Golf' },
-  { id: 'swimming', label: '#游泳', value: 'Swimming' },
-  { id: 'hiking', label: '#登山', value: 'Hiking' },
 
   // 3. 毛孩與自然 (Nature & Pets)
-  { id: 'cat', label: '#貓派', value: 'Cat' },
-  { id: 'dog', label: '#狗派', value: 'Dog' },
-  { id: 'plant', label: '#植栽', value: 'Plants' },
   { id: 'outdoor', label: '#戶外', value: 'Outdoor' }, // 露營/爬山
   { id: 'walk', label: '#散步', value: 'Walk' }, // 取代 Night Walk
   { id: 'travel', label: '#旅行', value: 'Travel' },
@@ -123,10 +109,6 @@ export const INTEREST_TAGS = [
   { id: 'art', label: '#藝術', value: 'Art' },
   { id: 'photo', label: '#攝影', value: 'Photo' },
   { id: 'science', label: '#科學', value: 'Science' },
-
-  // 5. 靈魂與氛圍 (Vibe & Soul) - 這是 Wybra 的核心
-  { id: 'deeptalk', label: '#深聊', value: 'DeepTalk' },
-  { id: 'psych', label: '#心理', value: 'Psychology' }, // MBTI 愛好者
 ];
 
 const PREFIXES = [

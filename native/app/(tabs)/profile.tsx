@@ -112,7 +112,7 @@ const ProfileScreen = () => {
             </View>
             <Text style={[styles.profileInfoTextMbti, { color: colors.primary }]}>{user?.personal_info?.mbti === 'UNKNOWN' ? 'MBTI: ' : ''}{MBTI_OPTIONS.find(option => option.value === user?.personal_info?.mbti)?.label}</Text>
             <Text style={styles.profileInfoTextInterests}>{(user?.personal_info?.interests as string[])?.map(i => INTEREST_TAGS.find(tag => tag.id === i)?.label).join(' ')}</Text>
-            <Text style={styles.profileInfoTextIntroductionTitle}>簡介</Text>
+            <Text style={styles.profileInfoTextIntroductionTitle}>在沒人的時候</Text>
             {user?.personal_info?.bio ? (
               <Text style={styles.profileInfoTextIntroductionText}>{user?.personal_info?.bio as string}</Text>
             ) : (
@@ -120,6 +120,9 @@ const ProfileScreen = () => {
                 <Text style={styles.editProfileButtonText}>新增簡介</Text>
               </Button>
             )}
+            <Text style={styles.profileInfoTextIntroductionTitle}>關於我的城市</Text>
+            <Text style={styles.profileInfoTextIntroductionText}>我最喜歡: {(user?.personal_info?.custom_question as any)?.love as string}</Text>
+            <Text style={styles.profileInfoTextIntroductionText}>我最討厭: {(user?.personal_info?.custom_question as any)?.hate as string}</Text>
           </View>
         </View>
 
@@ -147,9 +150,8 @@ const ProfileScreen = () => {
 
         {/* Settings Section */}
         <View style={styles.settingsView}>
-          <View style={styles.settingsSection}>
+          <View>
             <Text style={styles.sectionTitle}>設定</Text>
-
             <Button style={styles.settingRow} onPress={handlePreferenceSettings}>
               <Text style={styles.settingLabel}>偏好</Text>
               <Text style={styles.linkArrow}>→</Text>
@@ -158,14 +160,27 @@ const ProfileScreen = () => {
               <Text style={styles.settingLabel}>帳號</Text>
               <Text style={styles.linkArrow}>→</Text>
             </Button>
+          </View>
+        </View>
 
-            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>關於</Text>
+        <View style={styles.divider} />
 
+        {/* About Section */}
+        <View style={[styles.settingsView]}>
+          <View>
+            <Text style={styles.sectionTitle}>關於</Text>
             <Button style={styles.linkRow} onPress={() => openLink('https://wybra.vercel.app/privacy')}>
               <Text style={styles.linkLabel}>隱私權政策</Text>
               <Text style={styles.linkArrow}>→</Text>
             </Button>
+          </View>
+        </View>
 
+        <View style={styles.divider} />
+
+        {/* Sign Out Section */}
+        <View style={[styles.settingsView, { paddingBottom: 100 }]}>
+          <View>
             <Button style={styles.signOutButton} onPress={handleSignOut}>
               <Text style={styles.signOutText}>登出</Text>
             </Button>
@@ -350,10 +365,6 @@ const styles = StyleSheet.create({
   settingsView: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  settingsSection: {
-    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 12,
@@ -402,7 +413,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   signOutButton: {
-    marginTop: 24,
     padding: 16,
     borderRadius: 16,
     backgroundColor: colors.error + '1A',

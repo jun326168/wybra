@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Platform, Pressable, ScrollView, Animated, Dimensions, Image, Alert } from 'react-native'
+import { View, Text, StyleSheet, Platform, Pressable, ScrollView, Animated, Dimensions, Image, Alert, TextInput, KeyboardAvoidingView } from 'react-native'
 import React, { useState, useEffect, useRef } from 'react'
 import LogoIcon from '@/svgs/logo'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -7,7 +7,7 @@ import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
 import { useAppContext } from '@/contexts/AppContext'
-import { MBTI_OPTIONS, INTEREST_TAGS, GENDER_OPTIONS, ORIENTATION_OPTIONS, LOOKING_FOR_OPTIONS } from '@/lib/setup'
+import { MBTI_OPTIONS, INTEREST_TAGS, GENDER_OPTIONS, ORIENTATION_OPTIONS, LOOKING_FOR_OPTIONS, COLOR_OPTIONS } from '@/lib/setup'
 import LoadingSpinner from '@/svgs/spinner'
 import { updateUserProfile, uploadUserPhoto } from '@/lib/api'
 import { useRouter } from 'expo-router'
@@ -23,30 +23,41 @@ const SetupScreen = () => {
   // Step state
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Step 1 - Basic Info
+  // Step 1 - Basic Info + Gender & Orientation
   const [username, setUsername] = useState(user?.username || '');
-  const [mbti, setMbti] = useState<string | null>(
-    (user?.personal_info?.mbti as string | undefined) || null
-  );
   const [birthday, setBirthday] = useState<string>(
     (user?.personal_info?.birthday as string | undefined) || ''
   );
-
-  // Step 2 - Personal Info
+  const [mbti, setMbti] = useState<string | null>(
+    (user?.personal_info?.mbti as string | undefined) || null
+  );
   const [gender, setGender] = useState<string | null>(
     (user?.personal_info?.gender as string | undefined) || null
   );
   const [sexualOrientation, setSexualOrientation] = useState<string | null>(
     (user?.personal_info?.sexual_orientation as string | undefined) || null
   );
+
+  // Step 2 - Looking For, Bio, Custom Question
   const [lookingFor, setLookingFor] = useState<string | null>(
     (user?.personal_info?.looking_for as string | undefined) || null
+  );
+  const [bio, setBio] = useState<string>(
+    (user?.personal_info?.bio as string | undefined) || ''
+  );
+  const [customQuestionLove, setCustomQuestionLove] = useState<string>(
+    (user?.personal_info?.custom_question as any)?.love || ''
+  );
+  const [customQuestionHate, setCustomQuestionHate] = useState<string>(
+    (user?.personal_info?.custom_question as any)?.hate || ''
   );
 
   // Step 3 - Interests
   const [selectedInterests, setSelectedInterests] = useState<string[]>(
     (user?.personal_info?.interests as string[] | undefined) || []
   );
+  const [customTagInput, setCustomTagInput] = useState<string>('#');
+  const [customTags, setCustomTags] = useState<string[]>([]);
 
   // Step 4 - Photo
   const [photoUri, setPhotoUri] = useState<string | null>(
@@ -54,6 +65,11 @@ const SetupScreen = () => {
   );
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [showImage, setShowImage] = useState(false);
+
+  // Step 5 - Color
+  const [selectedColor, setSelectedColor] = useState<string>(
+    (user?.personal_info?.color as string | undefined) || colors.background
+  );
 
   // Modal states
   const [showMbtiModal, setShowMbtiModal] = useState(false);
@@ -69,7 +85,9 @@ const SetupScreen = () => {
 
   // Redirect if user already completed setup
   useEffect(() => {
-    if (!userLoading && user?.personal_info?.bio) {
+    if (!userLoading && user?.personal_info?.bio && 
+        user?.personal_info?.custom_question &&
+        (user?.personal_info?.bio as string)?.length >= 30) {
       router.replace('/(tabs)/home');
     }
   }, [user, userLoading, router]);
@@ -159,6 +177,39 @@ const SetupScreen = () => {
     );
   };
 
+  const handleCustomTagInput = (text: string) => {
+    // Always ensure it starts with #
+    if (!text.startsWith('#')) {
+      text = '#' + text;
+    }
+    
+    setCustomTagInput(text);
+
+    // Check if user pressed space and tag is not just #
+    if (text.endsWith(' ') && text.trim().length > 1) {
+      const tag = text.trim();
+      if (!customTags.includes(tag) && !selectedInterests.includes(tag)) {
+        setCustomTags(prev => [...prev, tag]);
+        setSelectedInterests(prev => [...prev, tag]);
+      }
+      setCustomTagInput('#');
+    }
+  };
+
+  const handleCustomTagEndEditing = () => {
+    const tag = customTagInput.trim();
+    if (tag.length > 1 && !customTags.includes(tag) && !selectedInterests.includes(tag)) {
+      setCustomTags(prev => [...prev, tag]);
+      setSelectedInterests(prev => [...prev, tag]);
+    }
+    setCustomTagInput('#');
+  };
+
+  const removeCustomTag = (tag: string) => {
+    setCustomTags(prev => prev.filter(t => t !== tag));
+    setSelectedInterests(prev => prev.filter(t => t !== tag));
+  };
+
   const handlePickImage = async () => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -219,13 +270,19 @@ const SetupScreen = () => {
       const updatedUser = await updateUserProfile(user.id, {
         username,
         personal_info: {
-          mbti: mbti || undefined,
-          birthday: birthday || undefined,
           gender: gender || undefined,
           sexual_orientation: sexualOrientation || undefined,
           looking_for: lookingFor || undefined,
+          bio: bio || undefined,
+          custom_question: {
+            love: customQuestionLove || undefined,
+            hate: customQuestionHate || undefined,
+          },
           interests: selectedInterests.length > 0 ? selectedInterests : undefined,
           avatar_url: photoUri || undefined,
+          mbti: mbti || undefined,
+          birthday: birthday || undefined,
+          color: selectedColor,
         }
       });
       setUser(updatedUser);
@@ -238,11 +295,11 @@ const SetupScreen = () => {
     }
   };
 
-  const isStep1Valid = username && birthday && mbti;
-  const isStep2Valid = gender && sexualOrientation && lookingFor;
+  const isStep1Valid = username && birthday && mbti && gender && sexualOrientation;
+  const isStep2Valid = lookingFor && bio.length >= 30 && customQuestionLove.trim() && customQuestionHate.trim();
   const isStep3Valid = selectedInterests.length > 0;
   const isStep4Valid = photoUri !== null;
-  const isStep5Valid = true; // Always valid on the final screen
+  const isStep5Valid = true; // Color selection is optional
 
   const canProceed = currentStep === 1 ? isStep1Valid :
     currentStep === 2 ? isStep2Valid :
@@ -303,7 +360,7 @@ const SetupScreen = () => {
               }]
             }
           ]}>
-            {/* Step 1 */}
+            {/* Step 1 - Basic Info + Gender & Orientation */}
             <View style={styles.stepContent}>
               <ScrollView
                 style={styles.scrollView}
@@ -321,6 +378,7 @@ const SetupScreen = () => {
                       editable={!loading}
                     />
                   </View>
+                  
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>生日</Text>
                     <Pressable onPress={() => !loading && setShowDateModal(true)}>
@@ -331,6 +389,29 @@ const SetupScreen = () => {
                       </View>
                     </Pressable>
                   </View>
+
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>性別</Text>
+                    <Pressable onPress={() => !loading && setShowGenderModal(true)}>
+                      <View style={styles.selectButton}>
+                        <Text style={[styles.selectButtonText, !gender && styles.selectButtonPlaceholder]}>
+                          {gender ? GENDER_OPTIONS.find(opt => opt.value === gender)?.label : '選擇你的性別'}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  </View>
+                  
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>性向</Text>
+                    <Pressable onPress={() => !loading && setShowOrientationModal(true)}>
+                      <View style={styles.selectButton}>
+                        <Text style={[styles.selectButtonText, !sexualOrientation && styles.selectButtonPlaceholder]}>
+                          {sexualOrientation ? ORIENTATION_OPTIONS.find(opt => opt.value === sexualOrientation)?.label : '選擇你的性向'}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  </View>
+
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>屬性 (MBTI)</Text>
                     <Pressable onPress={() => !loading && setShowMbtiModal(true)}>
@@ -345,79 +426,159 @@ const SetupScreen = () => {
               </ScrollView>
             </View>
 
-            {/* Step 2 */}
+            {/* Step 2 - Looking For, Bio, Custom Question */}
             <View style={styles.stepContent}>
-              <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
+              <KeyboardAvoidingView 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+                style={styles.keyboardAvoidingView}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
               >
-                <View style={styles.inputsContainer}>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>性別</Text>
-                    <Pressable onPress={() => !loading && setShowGenderModal(true)}>
-                      <View style={styles.selectButton}>
-                        <Text style={[styles.selectButtonText, !gender && styles.selectButtonPlaceholder]}>
-                          {gender ? GENDER_OPTIONS.find(opt => opt.value === gender)?.label : '選擇你的性別'}
-                        </Text>
-                      </View>
-                    </Pressable>
+                <ScrollView
+                  style={styles.scrollView}
+                  contentContainerStyle={[styles.scrollContent, styles.scrollContentStep2]}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <View style={styles.inputsContainer}>
+                    <View style={styles.inputContainer}>
+                      <Text style={styles.inputLabel}>訊號</Text>
+                      <Pressable onPress={() => !loading && setShowLookingForModal(true)}>
+                        <View style={styles.selectButton}>
+                          <Text style={[styles.selectButtonText, !lookingFor && styles.selectButtonPlaceholder]}>
+                            {lookingFor ? LOOKING_FOR_OPTIONS.find(opt => opt.value === lookingFor)?.label : '你在尋找什麼？'}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <Text style={styles.inputLabel}>簡介</Text>
+                      <TextInput
+                        value={bio}
+                        placeholder="沒人看見時的你，是什麼樣子？"
+                        onChangeText={setBio}
+                        editable={!loading}
+                        multiline
+                        numberOfLines={4}
+                        style={styles.bioInput}
+                        placeholderTextColor={colors.textSecondary}
+                        maxLength={150}
+                      />
+                      <Text style={[
+                        styles.bioCount,
+                        bio.length < 30 && styles.bioCountWarning
+                      ]}>
+                        {bio.length}/150 {bio.length < 30 && `(至少 30 字)`}
+                      </Text>
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <Text style={styles.inputLabel}>在你所在的城市，你最喜歡和最討厭什麼？</Text>
+                      <TextInput
+                        value={customQuestionLove}
+                        placeholder="我最喜歡..."
+                        onChangeText={setCustomQuestionLove}
+                        editable={!loading}
+                        multiline
+                        numberOfLines={2}
+                        style={styles.customQuestionInput}
+                        placeholderTextColor={colors.textSecondary}
+                        maxLength={100}
+                      />
+                      <Text style={styles.bioCount}>{customQuestionLove.length}/100</Text>
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        value={customQuestionHate}
+                        placeholder="我最討厭..."
+                        onChangeText={setCustomQuestionHate}
+                        editable={!loading}
+                        multiline
+                        numberOfLines={2}
+                        style={styles.customQuestionInput}
+                        placeholderTextColor={colors.textSecondary}
+                        maxLength={100}
+                      />
+                      <Text style={styles.bioCount}>{customQuestionHate.length}/100</Text>
+                    </View>
                   </View>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>性向</Text>
-                    <Pressable onPress={() => !loading && setShowOrientationModal(true)}>
-                      <View style={styles.selectButton}>
-                        <Text style={[styles.selectButtonText, !sexualOrientation && styles.selectButtonPlaceholder]}>
-                          {sexualOrientation ? ORIENTATION_OPTIONS.find(opt => opt.value === sexualOrientation)?.label : '選擇你的性向'}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  </View>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>目標</Text>
-                    <Pressable onPress={() => !loading && setShowLookingForModal(true)}>
-                      <View style={styles.selectButton}>
-                        <Text style={[styles.selectButtonText, !lookingFor && styles.selectButtonPlaceholder]}>
-                          {lookingFor ? LOOKING_FOR_OPTIONS.find(opt => opt.value === lookingFor)?.label : '你在尋找什麼？'}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  </View>
-                </View>
-              </ScrollView>
+                </ScrollView>
+              </KeyboardAvoidingView>
             </View>
 
-            {/* Step 3 */}
+            {/* Step 3 - Interests with Custom Tags */}
             <View style={styles.stepContent}>
-              <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
+              <KeyboardAvoidingView 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+                style={styles.keyboardAvoidingView}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
               >
-                <View style={styles.inputsContainer}>
-                  <Text style={styles.vibeTitle}>我的 Vibe</Text>
-                  <View style={styles.interestsGrid}>
-                    {INTEREST_TAGS.map((interest) => (
-                      <Pressable
-                        key={interest.id}
-                        onPress={() => toggleInterest(interest.id)}
-                        style={[
-                          styles.interestTag,
-                          selectedInterests.includes(interest.id) && styles.interestTagSelected
-                        ]}
-                      >
-                        <Text style={[
-                          styles.interestTagText,
-                          selectedInterests.includes(interest.id) && styles.interestTagTextSelected
-                        ]}>
-                          {interest.label}
-                        </Text>
-                      </Pressable>
-                    ))}
+                <ScrollView
+                  style={styles.scrollView}
+                  contentContainerStyle={[styles.scrollContent, styles.scrollContentStep3]}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <View style={styles.inputsContainer}>
+                    <Text style={styles.vibeTitle}>我的 Vibe</Text>
+                    
+                    {/* Custom Tag Input */}
+                    <View style={styles.customTagInputContainer}>
+                      <TextInput
+                        value={customTagInput}
+                        onChangeText={handleCustomTagInput}
+                        placeholder="#自訂"
+                        placeholderTextColor={colors.textSecondary}
+                        style={styles.customTagTextInput}
+                        editable={!loading}
+                        onEndEditing={handleCustomTagEndEditing}
+                      />
+                    </View>
+
+                    <View style={styles.interestsGrid}>
+                      {/* Custom Tags First */}
+                      {customTags.map((tag) => (
+                        <Pressable
+                          key={tag}
+                          onPress={() => removeCustomTag(tag)}
+                          style={[
+                            styles.interestTag,
+                            styles.interestTagSelected,
+                            styles.customInterestTag
+                          ]}
+                        >
+                          <Text style={[
+                            styles.interestTagText,
+                            styles.interestTagTextSelected
+                          ]}>
+                            {tag}
+                          </Text>
+                        </Pressable>
+                      ))}
+
+                      {/* Predefined Tags */}
+                      {INTEREST_TAGS.map((interest) => (
+                        <Pressable
+                          key={interest.id}
+                          onPress={() => toggleInterest(interest.id)}
+                          style={[
+                            styles.interestTag,
+                            selectedInterests.includes(interest.id) && styles.interestTagSelected
+                          ]}
+                        >
+                          <Text style={[
+                            styles.interestTagText,
+                            selectedInterests.includes(interest.id) && styles.interestTagTextSelected
+                          ]}>
+                            {interest.label}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
                   </View>
-                </View>
-              </ScrollView>
+                </ScrollView>
+              </KeyboardAvoidingView>
             </View>
 
             {/* Step 4 - Photo Upload (Revised Vibe Version) */}
@@ -502,14 +663,56 @@ const SetupScreen = () => {
               </ScrollView>
             </View>
 
-            {/* Step 5 - Completion */}
+            {/* Step 5 - Color Picker & Completion */}
             <View style={styles.stepContent}>
-              <View style={styles.completionContainer}>
-                <LogoIcon size={80} floatingY={8} />
-                <Text style={styles.completionText}>
-                  設定完成，開始尋找頻率相符的夥伴吧！
-                </Text>
-              </View>
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.inputsContainer}>
+                  <Text style={styles.vibeTitle}>最後一步</Text>
+                  <Text style={styles.vibeDescription}>選擇你的主題色</Text>
+
+                  {/* Color Picker */}
+                  <View style={styles.inputContainer}>
+                    {/* Preview */}
+                    <View style={styles.colorPreviewContainer}>
+                      <View style={styles.colorPreview}>
+                        <LogoIcon size={60} floatingY={0} stroke={selectedColor} />
+                      </View>
+                    </View>
+
+                    {/* Color Grid */}
+                    <View style={styles.colorGrid}>
+                      {COLOR_OPTIONS.map((color) => (
+                        <Button
+                          key={color.id}
+                          onPress={() => setSelectedColor(color.value)}
+                          style={[
+                            styles.colorOption,
+                            { backgroundColor: color.value },
+                            selectedColor === color.value && styles.colorOptionSelected
+                          ]}
+                        >
+                          {selectedColor === color.value && (
+                            <View style={styles.colorCheckmark}>
+                              <Text style={styles.colorCheckmarkText}>✓</Text>
+                            </View>
+                          )}
+                        </Button>
+                      ))}
+                    </View>
+                  </View>
+
+                  <View style={styles.completionMessageContainer}>
+                    <Text style={styles.completionText}>
+                      設定完成，開始尋找頻率相符的夥伴吧！
+                    </Text>
+                  </View>
+                </View>
+              </ScrollView>
             </View>
           </Animated.View>
         </View>
@@ -833,6 +1036,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
+  scrollContentStep2: {
+    paddingBottom: 80,
+  },
+  scrollContentStep3: {
+    paddingBottom: 80,
+  },
   inputsContainer: {
     width: '100%',
     gap: 20,
@@ -863,6 +1072,59 @@ const styles = StyleSheet.create({
   },
   selectButtonPlaceholder: {
     color: colors.textSecondary,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  bioInput: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    fontSize: 16,
+    color: colors.text,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  bioCount: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  bioCountWarning: {
+    color: colors.warning,
+  },
+  customQuestionInput: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    fontSize: 16,
+    color: colors.text,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  customTagInputContainer: {
+    width: '100%',
+    marginBottom: 12,
+  },
+  customTagTextInput: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    fontSize: 16,
+    color: colors.text,
   },
   vibeTitle: {
     fontSize: 24,
@@ -900,6 +1162,64 @@ const styles = StyleSheet.create({
   },
   interestTagTextSelected: {
     color: colors.primary,
+  },
+  customInterestTag: {
+    opacity: 1,
+  },
+  colorDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: -4,
+    marginBottom: 12,
+  },
+  colorPreviewContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  colorPreview: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  colorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  colorOption: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  colorOptionSelected: {
+    borderColor: colors.text,
+    borderWidth: 3,
+  },
+  colorCheckmark: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  colorCheckmarkText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  completionMessageContainer: {
+    marginTop: 40,
+    alignItems: 'center',
   },
   completionContainer: {
     flex: 1,

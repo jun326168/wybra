@@ -37,6 +37,12 @@ const ProfileSettingsScreen = () => {
   const [bio, setBio] = useState<string>(
     (user?.personal_info?.bio as string | undefined) || ''
   );
+  const [customQuestionLove, setCustomQuestionLove] = useState<string>(
+    (user?.personal_info?.custom_question as any)?.love || ''
+  );
+  const [customQuestionHate, setCustomQuestionHate] = useState<string>(
+    (user?.personal_info?.custom_question as any)?.hate || ''
+  );
   const [photoUri, setPhotoUri] = useState<string | null>(
     (user?.personal_info?.avatar_url as string | undefined) || null
   );
@@ -175,6 +181,10 @@ const ProfileSettingsScreen = () => {
           gender: gender || undefined,
           sexual_orientation: sexualOrientation || undefined,
           bio: bio || undefined,
+          custom_question: {
+            love: customQuestionLove || undefined,
+            hate: customQuestionHate || undefined,
+          },
           avatar_url: photoUri || undefined,
         }
       });
@@ -344,16 +354,53 @@ const ProfileSettingsScreen = () => {
               <Text style={styles.inputLabel}>簡介</Text>
               <TextInput
                 value={bio}
-                placeholder="介紹一下自己..."
+                placeholder="沒人看見時的你，是什麼樣子？"
                 onChangeText={setBio}
                 editable={!loading}
                 multiline
                 numberOfLines={4}
                 style={styles.bioInput}
                 placeholderTextColor={colors.textSecondary}
-                maxLength={300}
+                maxLength={150}
               />
-              <Text style={styles.bioCount}>{bio.length}/300</Text>
+              <Text style={[
+                styles.bioCount,
+                bio.length < 30 && styles.bioCountWarning
+              ]}>
+                {bio.length}/150 {bio.length < 30 && `(至少 30 字)`}
+              </Text>
+            </View>
+
+            {/* Custom Question */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>在你所在的城市，你最喜歡和最討厭什麼？</Text>
+              <TextInput
+                value={customQuestionLove}
+                placeholder="我最喜歡..."
+                onChangeText={setCustomQuestionLove}
+                editable={!loading}
+                multiline
+                numberOfLines={3}
+                style={styles.customQuestionInput}
+                placeholderTextColor={colors.textSecondary}
+                maxLength={100}
+              />
+              <Text style={styles.bioCount}>{customQuestionLove.length}/100</Text>
+            </View>
+
+            <View style={styles.section}>
+              <TextInput
+                value={customQuestionHate}
+                placeholder="我最討厭..."
+                onChangeText={setCustomQuestionHate}
+                editable={!loading}
+                multiline
+                numberOfLines={3}
+                style={styles.customQuestionInput}
+                placeholderTextColor={colors.textSecondary}
+                maxLength={100}
+              />
+              <Text style={styles.bioCount}>{customQuestionHate.length}/100</Text>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -652,6 +699,22 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'right',
     marginTop: 4,
+  },
+  bioCountWarning: {
+    color: colors.warning,
+  },
+  customQuestionInput: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    fontSize: 16,
+    color: colors.text,
+    minHeight: 100,
+    textAlignVertical: 'top',
   },
   avatarContainer: {
     alignItems: 'center',
