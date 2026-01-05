@@ -31,15 +31,15 @@ const ProfileSettingsScreen = () => {
   const [gender, setGender] = useState<string | null>(
     (user?.personal_info?.gender as string | undefined) || null
   );
-  const [sexualOrientation, setSexualOrientation] = useState<string | null>(
-    (user?.personal_info?.sexual_orientation as string | undefined) || null
-  );
+  // const [sexualOrientation, setSexualOrientation] = useState<string | null>(
+  //   (user?.personal_info?.sexual_orientation as string | undefined) || null
+  // );
   const [bio, setBio] = useState<string>(
     (user?.personal_info?.bio as string | undefined) || ''
   );
-  const [lookingFor, setLookingFor] = useState<string | null>(
-    (user?.personal_info?.looking_for as string | undefined) || null
-  );
+  // const [lookingFor, setLookingFor] = useState<string | null>(
+  //   (user?.personal_info?.looking_for as string | undefined) || null
+  // );
   const [customQuestionLove, setCustomQuestionLove] = useState<string>(
     (user?.personal_info?.custom_question as any)?.love || ''
   );
@@ -61,8 +61,8 @@ const ProfileSettingsScreen = () => {
   const [showMbtiModal, setShowMbtiModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
-  const [showOrientationModal, setShowOrientationModal] = useState(false);
-  const [showLookingForModal, setShowLookingForModal] = useState(false);
+  // const [showOrientationModal, setShowOrientationModal] = useState(false);
+  // const [showLookingForModal, setShowLookingForModal] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -239,8 +239,8 @@ const ProfileSettingsScreen = () => {
           mbti: mbti || undefined,
           birthday: birthday || undefined,
           gender: gender || undefined,
-          sexual_orientation: sexualOrientation || undefined,
-          looking_for: lookingFor || undefined,
+          // sexual_orientation: sexualOrientation || undefined,
+          // looking_for: lookingFor || undefined,
           bio: bio || undefined,
           custom_question: {
             love: customQuestionLove || undefined,
@@ -269,7 +269,7 @@ const ProfileSettingsScreen = () => {
             <Text style={styles.cancelButtonText}>取消</Text>
           </Button>
           <Text style={styles.title}>個人資料</Text>
-          <Button onPress={handleSave} disabled={loading || !username || !birthday || !mbti || !gender || !sexualOrientation} style={styles.saveButton}>
+          <Button onPress={handleSave} disabled={loading || !username || !birthday || !mbti || !gender /* || !sexualOrientation */} style={styles.saveButton}>
             {loading ? (
               <LoadingSpinner size={16} color={colors.primary} strokeWidth={3} />
             ) : (
@@ -400,7 +400,7 @@ const ProfileSettingsScreen = () => {
             </View>
 
             {/* Sexual Orientation */}
-            <View style={styles.section}>
+            {/* <View style={styles.section}>
               <Text style={styles.inputLabel}>性向</Text>
               <Pressable onPress={() => !loading && setShowOrientationModal(true)}>
                 <View style={styles.selectButton}>
@@ -409,10 +409,10 @@ const ProfileSettingsScreen = () => {
                   </Text>
                 </View>
               </Pressable>
-            </View>
+            </View> */}
 
             {/* Looking For */}
-            <View style={styles.section}>
+            {/* <View style={styles.section}>
               <Text style={styles.inputLabel}>訊號</Text>
               <Pressable onPress={() => !loading && setShowLookingForModal(true)}>
                 <View style={styles.selectButton}>
@@ -421,7 +421,7 @@ const ProfileSettingsScreen = () => {
                   </Text>
                 </View>
               </Pressable>
-            </View>
+            </View> */}
 
             {/* Bio */}
             <View style={styles.section}>
@@ -698,7 +698,7 @@ const ProfileSettingsScreen = () => {
       </BottomSheetModal>
 
       {/* Orientation Modal */}
-      <BottomSheetModal
+      {/* <BottomSheetModal
         visible={showOrientationModal}
         onClose={() => setShowOrientationModal(false)}
         containerStyle={styles.modalContainer}
@@ -728,10 +728,10 @@ const ProfileSettingsScreen = () => {
             ))}
           </ScrollView>
         </View>
-      </BottomSheetModal>
+      </BottomSheetModal> */}
 
       {/* Looking For Modal */}
-      <BottomSheetModal
+      {/* <BottomSheetModal
         visible={showLookingForModal}
         onClose={() => setShowLookingForModal(false)}
         containerStyle={styles.modalContainer}
@@ -771,7 +771,7 @@ const ProfileSettingsScreen = () => {
             ))}
           </ScrollView>
         </View>
-      </BottomSheetModal>
+      </BottomSheetModal> */}
     </>
   )
 }

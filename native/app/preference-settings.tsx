@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, FlatList, Dimensions, Image } from 'react-native'
 import React, { useState, useRef } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { colors } from '@/lib/colors'
+import { colors, darkenHexColor } from '@/lib/colors'
 import Button from '@/components/ui/button'
 import { useAppContext } from '@/contexts/AppContext'
 import { COLOR_OPTIONS, GENERATION_OPTIONS, getGeneration, INTEREST_TAGS, MBTI_OPTIONS, PHOTO_BLUR_AMOUNT } from '@/lib/setup'
@@ -20,26 +20,26 @@ const TEMPLATE_OPTIONS = [
     label: 'Classic',
   },
   {
-    id: 'headline',
-    label: 'Headline',
+    id: 'quote',
+    label: 'Quote',
   },
   {
-    id: 'structure',
-    label: 'Structure',
+    id: 'zine',
+    label: 'Zine',
   },
   {
     id: 'essence',
-    label: 'Essence',
+    label: 'Polaroid',
   },
   {
     id: 'avant',
-    label: 'Avant',
+    label: 'Ticket',
   },
 ];
 
 // Template Card Components
 const ClassicCard = ({ user, themeColor }: { user: any, themeColor: string }) => {
-  
+
   const generation = getGeneration(new Date(user.personal_info.birthday).getFullYear());
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.label + ' ';
   let isDefault = themeColor === colors.background;
@@ -87,29 +87,269 @@ const ClassicCard = ({ user, themeColor }: { user: any, themeColor: string }) =>
   );
 };
 
-const HeadlineCard = ({ user, themeColor }: { user: any, themeColor: string }) => (
-  <View style={[styles.templateCard, { borderColor: themeColor }]}>
+const QuoteCard = ({ user, themeColor }: { user: any, themeColor: string }) => {
+  const generation = getGeneration(new Date(user.personal_info.birthday).getFullYear());
+  const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.label + ' ';
+  let isDefault = themeColor === colors.background;
 
-  </View>
-);
+  if (isDefault) {
+    themeColor = colors.text;
+  }
 
-const StructureCard = ({ user, themeColor }: { user: any, themeColor: string }) => (
-  <View style={[styles.templateCard, { backgroundColor: '#0A0A0A', borderColor: themeColor }]}>
+  const darkenedColor = darkenHexColor(themeColor, 0.2);
 
-  </View>
-);
+  return (
+    <View style={[styles.templateCard, styles.quoteCard, { backgroundColor: darkenedColor + '24' }]}>
+      {/* background quote symbol */}
+      <View style={[styles.quoteBackgroundSymbol, { left: 0, top: 0 }]}>
+        <Text style={styles.quoteBackgroundSymbolText}>“</Text>
+      </View>
+      <View style={[styles.quoteBackgroundSymbol, { right: 0, bottom: 0 }]}>
+        <Text style={styles.quoteBackgroundSymbolText}>”</Text>
+      </View>
+      {/* tags */}
+      <View style={styles.quoteTagsContainer}>
+        <Text style={styles.quoteTagText}>-</Text>
+        <Text style={[styles.quoteTagText, { maxWidth: '70%' }]}>{mbtiTag}{user.personal_info.interests.map((i: string) => i.startsWith('#') ? i : INTEREST_TAGS.find(tag => tag.id === i)?.label).join(' ')}</Text>
+        <Text style={styles.quoteTagText}>-</Text>
+      </View>
+      {/* quote */}
+      <View style={styles.quoteContentContainer}>
+        {/* bio */}
+        <Text style={styles.quoteContentText} numberOfLines={10}>{user.personal_info.bio}</Text>
+        {/* city */}
+        <View style={styles.quoteContentAuthorRow}>
+          <View style={styles.quoteContentAuthorAvatarContainer}>
+            <Image source={{ uri: user.personal_info.avatar_url }} style={[styles.quoteContentAuthorAvatar, { borderColor: themeColor }]} blurRadius={PHOTO_BLUR_AMOUNT} />
+            <View style={styles.quoteContentAuthorAvatarOverlay}>
+              <LogoIcon size={20} floatingY={0} stroke={isDefault ? colors.background : themeColor} />
+            </View>
+          </View>
+          <Text style={styles.quoteContentAuthorName}>{user.username}</Text>
+        </View>
+      </View>
+      {/* footer */}
+      <View style={styles.quoteTagsContainer}>
+        <Text style={styles.quoteTagText}>-</Text>
+        <Text style={[styles.quoteTagText, { fontSize: 12 }]}>{GENERATION_OPTIONS.find(option => option.value === generation)?.label}</Text>
+        <Text style={styles.quoteTagText}>-</Text>
+      </View>
+    </View>
+  );
+};
 
-const EssenceCard = ({ user, themeColor }: { user: any, themeColor: string }) => (
-  <View style={[styles.templateCard, { backgroundColor: '#F5F5F0' }]}>
+const ZineCard = ({ user, themeColor }: { user: any, themeColor: string }) => {
+  const generation = getGeneration(new Date(user.personal_info.birthday).getFullYear());
+  const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.label + ' ';
+  let isDefault = themeColor === colors.background;
 
-  </View>
-);
+  if (isDefault) {
+    themeColor = colors.text;
+  }
 
-const AvantCard = ({ user, themeColor }: { user: any, themeColor: string }) => (
-  <View style={[styles.templateCard, { borderColor: themeColor }]}>
+  // Random angles for sticker effect (-2 to +2 degrees)
+  const stickerAngles = [2, -2.2, 1.8, -3.8, 2.3, -1.9, 2.7, -1.4, 2.6];
 
-  </View>
-);
+  return (
+    <View style={[styles.templateCard, styles.zineCard, { backgroundColor: colors.card }]}>
+
+      {/* Avatar - Top Right */}
+      <View style={styles.zineAvatarContainer}>
+        <View style={[styles.zineAvatarWrapper, { borderColor: themeColor, transform: [{ rotate: `${stickerAngles[0]}deg` }] }]}>
+          <Image source={{ uri: user.personal_info.avatar_url }} style={styles.zineAvatar} blurRadius={PHOTO_BLUR_AMOUNT} />
+          <View style={styles.zineAvatarOverlay}>
+            <LogoIcon size={36} floatingY={0} stroke={isDefault ? colors.background : themeColor} />
+          </View>
+        </View>
+      </View>
+
+      {/* Bio - Upper Left */}
+      <View style={styles.zineBioContainer}>
+        <View style={[styles.zineSticker, { backgroundColor: themeColor + '28', transform: [{ rotate: `${stickerAngles[1]}deg` }] }]}>
+          <Text style={styles.zineBioText} numberOfLines={7}>{user.personal_info.bio}</Text>
+        </View>
+      </View>
+
+      {/* Interest Tags - Middle Bottom Left */}
+      <View style={styles.zineInterestsContainer}>
+        {[mbtiTag, ...user.personal_info.interests.slice(0, 4)].filter(Boolean).map((interest: string, index: number) => {
+          const label = interest.startsWith('#') ? interest : INTEREST_TAGS.find(tag => tag.id === interest)?.label || interest;
+          return (
+            <View
+              key={index}
+              style={[
+                styles.zineInterestTag,
+                {
+                  backgroundColor: themeColor + '48',
+                  transform: [{ rotate: `${stickerAngles[(index + 2) % stickerAngles.length]}deg` }]
+                }
+              ]}
+            >
+              <Text style={styles.zineInterestText}>{label}</Text>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* City Question - Middle Bottom Right */}
+      <View style={styles.zineCityContainer}>
+        <View style={[styles.zineSticker, { backgroundColor: themeColor + '32', transform: [{ rotate: `${stickerAngles[7]}deg` }] }]}>
+          <Text style={styles.zineCityLabel}>About My City</Text>
+          <Text style={styles.zineCityText} numberOfLines={3}>
+            💚 {user.personal_info.custom_question.love}
+          </Text>
+          <Text style={styles.zineCityText} numberOfLines={3}>
+            💔 {user.personal_info.custom_question.hate}
+          </Text>
+        </View>
+      </View>
+
+      {/* Username - Bottom Left (No Sticker) */}
+      <View style={styles.zineUsernameContainer}>
+        <Text style={[styles.zineUsername, { color: themeColor }]}>{user.username}</Text>
+      </View>
+
+      {/* Generation - Bottom Right (Sticker) */}
+      <View style={styles.zineGenerationContainer}>
+        <View style={[styles.zineGenerationSticker, { backgroundColor: themeColor + '24', transform: [{ rotate: `${stickerAngles[8]}deg` }] }]}>
+          <Text style={styles.zineGenerationText}>我是 {GENERATION_OPTIONS.find(option => option.value === generation)?.label}</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const PolaroidCard = ({ user, themeColor }: { user: any, themeColor: string }) => {
+  const generation = getGeneration(new Date(user.personal_info.birthday).getFullYear());
+  const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.label + ' ';
+  let isDefault = themeColor === colors.background;
+  if (isDefault) themeColor = '#64686E';
+
+  // Washi tape color (semi-transparent version of theme)
+  const tapeColor = themeColor + '90';
+
+  return (
+    <View style={[styles.templateCard, styles.polaroidCard]}>
+      {/* The Washi Tape (Decorative) */}
+      <View style={[styles.polaroidTape, { backgroundColor: tapeColor }]} />
+
+      {/* The Photo Area */}
+      <View style={styles.polaroidImageFrame}>
+        <Image source={{ uri: user.personal_info.avatar_url }} style={styles.polaroidImage} blurRadius={PHOTO_BLUR_AMOUNT + 15} />
+        <View style={styles.polaroidOverlay}>
+          <LogoIcon size={120} floatingY={0} stroke={isDefault ? colors.background : themeColor} />
+        </View>
+      </View>
+
+      {/* The Handwritten Area */}
+      <View style={styles.polaroidTextArea}>
+        <View style={styles.polaroidHeaderRow}>
+          <Text style={[styles.polaroidUsername, { color: themeColor }]}>{user.username}</Text>
+          <Text style={styles.polaroidDate}>{GENERATION_OPTIONS.find(option => option.value === generation)?.label}</Text>
+        </View>
+
+        <Text style={styles.polaroidBio} numberOfLines={4}>
+          {user.personal_info.bio}
+        </Text>
+
+        {/* Hand-drawn style separator */}
+        <View style={[styles.polaroidLine, { backgroundColor: themeColor + '40' }]} />
+
+        <Text style={styles.polaroidTagLine} numberOfLines={2}>
+          My Vibe: {mbtiTag}{user.personal_info.interests.slice(0, 3).map((i: string) => i.startsWith('#') ? i : INTEREST_TAGS.find(tag => tag.id === i)?.label).join(' • ')}
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+const TicketCard = ({ user, themeColor }: { user: any, themeColor: string }) => {
+  const generation = getGeneration(new Date(user.personal_info.birthday).getFullYear());
+  const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.label + ' ';
+  let isDefault = themeColor === colors.background;
+  if (isDefault) themeColor = colors.text;
+
+  // Fixed barcode pattern for consistent rendering
+  const barcodeBars = [ { width: 2, height: 30 }, { width: 1, height: 30 }, { width: 2, height: 30 }, { width: 3, height: 30 }, { width: 2, height: 30 }, { width: 4, height: 30 }, { width: 1, height: 30 }, { width: 3, height: 30 }, { width: 2, height: 30 }, { width: 4, height: 30 }, { width: 1, height: 30 }, { width: 3, height: 30 }, { width: 2, height: 30 }, { width: 4, height: 30 }, { width: 2, height: 30 } ];
+
+  return (
+    <View style={[styles.templateCard, styles.ticketCard, { backgroundColor: colors.card }]}>
+
+      {/* Left colored stripe */}
+      <View style={[styles.ticketStripe, { backgroundColor: themeColor }]} />
+
+      {/* Main Content */}
+      <View style={styles.ticketContent}>
+
+        {/* Header: "Admit One" style */}
+        <View style={styles.ticketHeader}>
+          <View>
+            <Text style={[styles.ticketLabel, { color: themeColor }]}>PASSENGER</Text>
+            <Text style={styles.ticketUsername}>{user.username}</Text>
+          </View>
+          <View style={[styles.ticketAvatarContainer, { borderColor: themeColor }]}>
+            <Image source={{ uri: user.personal_info.avatar_url }} style={styles.ticketAvatar} blurRadius={PHOTO_BLUR_AMOUNT} />
+            <View style={styles.ticketAvatarOverlay}>
+              <LogoIcon size={20} floatingY={0} stroke={isDefault ? colors.background : themeColor} />
+            </View>
+          </View>
+        </View>
+
+        {/* Dashed Line Divider */}
+        <View style={styles.ticketDividerContainer}>
+          {/* The "Cutouts" to make it look like paper */}
+          <View style={[styles.ticketCutout, { left: -24, backgroundColor: colors.background }]} />
+          <View style={[styles.ticketDashedLine, { borderColor: themeColor }]} />
+          <View style={[styles.ticketCutout, { right: -24, backgroundColor: colors.background }]} />
+        </View>
+
+        {/* Body Info */}
+        <View style={styles.ticketBody}>
+          <Text style={[styles.ticketLabel, { color: themeColor }]}>MEMO</Text>
+          <Text style={styles.ticketBio} numberOfLines={7}>{user.personal_info.bio}</Text>
+
+          <View style={styles.ticketDataGrid}>
+            <View style={styles.ticketDataItem}>
+              <Text style={[styles.ticketLabel, { color: themeColor }]}>WHERE I LIVE</Text>
+              <Text style={styles.ticketBio} numberOfLines={1}>✓ {user.personal_info.custom_question.love}</Text>
+              <Text style={styles.ticketBio} numberOfLines={1}>✗ {user.personal_info.custom_question.hate}</Text>
+            </View>
+          </View>
+
+          {/* Tags as "Zones" */}
+          <View style={styles.ticketTagsRow}>
+            {[mbtiTag, ...user.personal_info.interests.slice(0, 3)].filter(Boolean).map((tag: string, i: number) => (
+              <View key={i} style={[styles.ticketTagBox, { borderColor: themeColor }]}>
+                <Text style={[styles.ticketTagText, { color: themeColor }]}>
+                  {tag.startsWith('#') ? tag : INTEREST_TAGS.find(t => t.id === tag)?.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Barcode Footer */}
+        <View style={styles.ticketFooter}>
+          {/* Fake Barcode (Just views) */}
+          <View style={{ flexDirection: 'row', gap: 3, opacity: 0.3, alignItems: 'flex-end' }}>
+            {barcodeBars.map((bar, i) => (
+              <View key={i} style={{
+                width: bar.width,
+                height: bar.height,
+                backgroundColor: colors.text
+              }} />
+            ))}
+          </View>
+
+          {/* Generation - Bottom Right (Stamp) */}
+          <View style={[styles.ticketStampContainer, { borderColor: themeColor }]}>
+            <Text style={[styles.ticketStampText, { color: themeColor }]}>{GENERATION_OPTIONS.find(option => option.value === generation)?.label}</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
 
 const PreferenceSettingsScreen = () => {
   const { user, setUser } = useAppContext();
@@ -164,17 +404,19 @@ const PreferenceSettingsScreen = () => {
       case 'classic':
         TemplateComponent = <ClassicCard user={user} themeColor={selectedColor} />;
         break;
-      case 'headline':
-        TemplateComponent = <HeadlineCard user={user} themeColor={selectedColor} />;
+      case 'quote':
+        TemplateComponent = <QuoteCard user={user} themeColor={selectedColor} />;
         break;
-      case 'structure':
-        TemplateComponent = <StructureCard user={user} themeColor={selectedColor} />;
+      case 'zine':
+        TemplateComponent = <ZineCard user={user} themeColor={selectedColor} />;
         break;
       case 'essence':
-        TemplateComponent = <EssenceCard user={user} themeColor={selectedColor} />;
+        // Now maps to Polaroid
+        TemplateComponent = <PolaroidCard user={user} themeColor={selectedColor} />;
         break;
       case 'avant':
-        TemplateComponent = <AvantCard user={user} themeColor={selectedColor} />;
+        // Now maps to Ticket
+        TemplateComponent = <TicketCard user={user} themeColor={selectedColor} />;
         break;
       default:
         TemplateComponent = <ClassicCard user={user} themeColor={selectedColor} />;
@@ -492,6 +734,386 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontWeight: '200',
     marginTop: 4,
+  },
+  // quote
+  quoteCard: {
+    padding: 16,
+    gap: 12,
+    // overflow: 'hidden',
+  },
+  quoteBackgroundSymbol: {
+    position: 'absolute',
+  },
+  quoteBackgroundSymbolText: {
+    fontSize: 200,
+    fontFamily: 'NotoSerifJP-Bold',
+    color: colors.textSecondary,
+    opacity: 0.1,
+  },
+  quoteTagsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  quoteTagText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontFamily: 'NotoSerifJP',
+  },
+  quoteContentContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    gap: 12,
+  },
+  quoteContentText: {
+    fontSize: 16,
+    color: colors.text,
+    lineHeight: 22,
+    fontFamily: 'NotoSerifJP',
+    letterSpacing: 0.5,
+  },
+  quoteContentAuthorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    width: '100%',
+    gap: 8,
+  },
+  quoteContentAuthorAvatarContainer: {
+    position: 'relative',
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quoteContentAuthorAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 21,
+    borderWidth: 1,
+  },
+  quoteContentAuthorAvatarOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quoteContentAuthorName: {
+    fontSize: 16,
+    color: colors.text,
+    fontFamily: 'PlayfairDisplay-Bold',
+    letterSpacing: 0.5,
+  },
+  quoteContentAuthorGeneration: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: 'bold',
+  },
+  // zine
+  zineCard: {
+    padding: 16,
+    position: 'relative',
+  },
+  zineAvatarContainer: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+  },
+  zineAvatarWrapper: {
+    position: 'relative',
+    width: 70,
+    height: 70,
+    overflow: 'hidden',
+    backgroundColor: colors.card,
+  },
+  zineAvatar: {
+    width: '100%',
+    height: '100%',
+  },
+  zineAvatarOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zineBioContainer: {
+    position: 'absolute',
+    top: 24,
+    left: 16,
+    width: '64%',
+  },
+  zineSticker: {
+    padding: 12,
+  },
+  zineBioText: {
+    fontSize: 16,
+    color: colors.text,
+    lineHeight: 20,
+    fontFamily: 'System',
+    letterSpacing: 0.5,
+  },
+  zineInterestsContainer: {
+    position: 'absolute',
+    left: 16,
+    top: '54%',
+    width: '45%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  zineInterestTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  zineInterestText: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  zineCityContainer: {
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    width: '48%',
+  },
+  zineCityLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  zineCityText: {
+    fontSize: 15,
+    color: colors.text,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  zineUsernameContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 16,
+  },
+  zineUsername: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  zineGenerationContainer: {
+    position: 'absolute',
+    bottom: 24,
+    right: 16,
+  },
+  zineGenerationSticker: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  zineGenerationText: {
+    fontSize: 13,
+    color: colors.text,
+  },
+  // --- Polaroid Styles ---
+  polaroidCard: {
+    backgroundColor: '#F8F9FA', // Off-white photo paper look
+    padding: 16,
+    alignItems: 'center',
+    paddingTop: 24, // Space for tape
+  },
+  polaroidTape: {
+    position: 'absolute',
+    top: -10,
+    width: 80,
+    height: 25,
+    transform: [{ rotate: '-3deg' }],
+    opacity: 0.8,
+    zIndex: 10,
+  },
+  polaroidImageFrame: {
+    width: '75%',
+    aspectRatio: 1, // Square photo
+    backgroundColor: '#000',
+    marginVertical: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  polaroidImage: {
+    width: '100%',
+    height: '100%',
+  },
+  polaroidOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  polaroidTextArea: {
+    width: '100%',
+    flex: 1,
+  },
+  polaroidHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  polaroidUsername: {
+    fontSize: 24,
+    fontFamily: Platform.OS === 'ios' ? 'Noteworthy-Bold' : 'serif', // Handwriting style
+    fontWeight: 'bold',
+  },
+  polaroidDate: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontFamily: Platform.OS === 'ios' ? 'Noteworthy' : 'serif',
+  },
+  polaroidBio: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    fontFamily: Platform.OS === 'ios' ? 'Noteworthy' : 'serif',
+    marginBottom: 12,
+  },
+  polaroidLine: {
+    width: '100%',
+    height: 1,
+    marginBottom: 12,
+  },
+  polaroidTagLine: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  // --- Ticket Styles ---
+  ticketCard: {
+    flexDirection: 'row',
+    overflow: 'hidden', // Contain the content
+  },
+  ticketStripe: {
+    width: 12,
+    height: '100%',
+    opacity: 0.8,
+  },
+  ticketContent: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'space-between',
+  },
+  ticketHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  ticketLabel: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    marginBottom: 2,
+    marginTop: 8,
+  },
+  ticketUsername: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.text,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', // Tech/Ticket font
+  },
+  ticketAvatarContainer: {
+    position: 'relative',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: 'hidden',
+    zIndex: 10,
+  },
+  ticketAvatarOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ticketAvatar: {
+    width: '100%',
+    height: '100%',
+  },
+  ticketDividerContainer: {
+    height: 20,
+    justifyContent: 'center',
+    position: 'relative',
+    marginVertical: 4,
+  },
+  ticketDashedLine: {
+    width: '100%',
+    height: 1,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 1,
+  },
+  ticketCutout: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    zIndex: 10,
+  },
+  ticketBody: {
+    flex: 1,
+    paddingVertical: 8,
+  },
+  ticketBio: {
+    fontSize: 14,
+    color: colors.text,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    lineHeight: 18,
+  },
+  ticketDataGrid: {
+    flexDirection: 'row',
+    gap: 24,
+    marginBottom: 12,
+  },
+  ticketDataItem: {
+    // 
+  },
+  ticketValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  ticketTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  ticketTagBox: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  ticketTagText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  ticketFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: 4,
+  },
+  ticketStampContainer: {
+    transform: [{ rotate: '-4deg' }],
+    borderStyle: 'dashed',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+  },
+  ticketStampText: {
+    fontSize: 13,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
 });
 

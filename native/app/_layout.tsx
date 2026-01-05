@@ -10,6 +10,9 @@ import {
   Merriweather_400Regular_Italic,
   Merriweather_700Bold_Italic,
 } from '@expo-google-fonts/merriweather';
+import { PlayfairDisplay_400Regular, PlayfairDisplay_700Bold, PlayfairDisplay_400Regular_Italic, PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/playfair-display';
+import { Nunito_400Regular, Nunito_700Bold } from '@expo-google-fonts/nunito';
+import { NotoSerifJP_400Regular, NotoSerifJP_700Bold } from '@expo-google-fonts/noto-serif-jp';
 import 'react-native-reanimated';
 
 import { colors } from '@/lib/colors';
@@ -51,6 +54,14 @@ export default function RootLayout() {
     'Merriweather-Bold': Merriweather_700Bold,
     'Merriweather-Italic': Merriweather_400Regular_Italic,
     'Merriweather-Bold-Italic': Merriweather_700Bold_Italic,
+    'Nunito': Nunito_400Regular,
+    'Nunito-Bold': Nunito_700Bold,
+    'PlayfairDisplay': PlayfairDisplay_400Regular,
+    'PlayfairDisplay-Bold': PlayfairDisplay_700Bold,
+    'PlayfairDisplay-Italic': PlayfairDisplay_400Regular_Italic,
+    'PlayfairDisplay-Bold-Italic': PlayfairDisplay_700Bold_Italic,
+    'NotoSerifJP': NotoSerifJP_400Regular,
+    'NotoSerifJP-Bold': NotoSerifJP_700Bold,
   });
 
   useEffect(() => {

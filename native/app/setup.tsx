@@ -7,7 +7,7 @@ import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
 import { useAppContext } from '@/contexts/AppContext'
-import { MBTI_OPTIONS, INTEREST_TAGS, GENDER_OPTIONS, ORIENTATION_OPTIONS, LOOKING_FOR_OPTIONS, COLOR_OPTIONS, PHOTO_BLUR_AMOUNT } from '@/lib/setup'
+import { MBTI_OPTIONS, INTEREST_TAGS, GENDER_OPTIONS, /* ORIENTATION_OPTIONS, LOOKING_FOR_OPTIONS, */ COLOR_OPTIONS, PHOTO_BLUR_AMOUNT } from '@/lib/setup'
 import LoadingSpinner from '@/svgs/spinner'
 import { updateUserProfile, uploadUserPhoto } from '@/lib/api'
 import { useRouter } from 'expo-router'
@@ -34,14 +34,14 @@ const SetupScreen = () => {
   const [gender, setGender] = useState<string | null>(
     (user?.personal_info?.gender as string | undefined) || null
   );
-  const [sexualOrientation, setSexualOrientation] = useState<string | null>(
-    (user?.personal_info?.sexual_orientation as string | undefined) || null
-  );
+  // const [sexualOrientation, setSexualOrientation] = useState<string | null>(
+  //   (user?.personal_info?.sexual_orientation as string | undefined) || null
+  // );
 
   // Step 2 - Looking For, Bio, Custom Question
-  const [lookingFor, setLookingFor] = useState<string | null>(
-    (user?.personal_info?.looking_for as string | undefined) || null
-  );
+  // const [lookingFor, setLookingFor] = useState<string | null>(
+  //   (user?.personal_info?.looking_for as string | undefined) || null
+  // );
   const [bio, setBio] = useState<string>(
     (user?.personal_info?.bio as string | undefined) || ''
   );
@@ -75,8 +75,8 @@ const SetupScreen = () => {
   const [showMbtiModal, setShowMbtiModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
-  const [showOrientationModal, setShowOrientationModal] = useState(false);
-  const [showLookingForModal, setShowLookingForModal] = useState(false);
+  // const [showOrientationModal, setShowOrientationModal] = useState(false);
+  // const [showLookingForModal, setShowLookingForModal] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -271,8 +271,8 @@ const SetupScreen = () => {
         username,
         personal_info: {
           gender: gender || undefined,
-          sexual_orientation: sexualOrientation || undefined,
-          looking_for: lookingFor || undefined,
+          // sexual_orientation: sexualOrientation || undefined,
+          // looking_for: lookingFor || undefined,
           bio: bio || undefined,
           custom_question: {
             love: customQuestionLove || undefined,
@@ -295,8 +295,8 @@ const SetupScreen = () => {
     }
   };
 
-  const isStep1Valid = username && birthday && mbti && gender && sexualOrientation;
-  const isStep2Valid = lookingFor && bio.length >= 30 && customQuestionLove.trim() && customQuestionHate.trim();
+  const isStep1Valid = username && birthday && mbti && gender /* && sexualOrientation */;
+  const isStep2Valid = /* lookingFor && */ bio.length >= 30 && customQuestionLove.trim() && customQuestionHate.trim();
   const isStep3Valid = selectedInterests.length > 0;
   const isStep4Valid = photoUri !== null;
   const isStep5Valid = true; // Color selection is optional
@@ -401,7 +401,7 @@ const SetupScreen = () => {
                     </Pressable>
                   </View>
                   
-                  <View style={styles.inputContainer}>
+                  {/* <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>性向</Text>
                     <Pressable onPress={() => !loading && setShowOrientationModal(true)}>
                       <View style={styles.selectButton}>
@@ -410,7 +410,7 @@ const SetupScreen = () => {
                         </Text>
                       </View>
                     </Pressable>
-                  </View>
+                  </View> */}
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>屬性 (MBTI)</Text>
@@ -440,7 +440,7 @@ const SetupScreen = () => {
                   keyboardShouldPersistTaps="handled"
                 >
                   <View style={styles.inputsContainer}>
-                    <View style={styles.inputContainer}>
+                    {/* <View style={styles.inputContainer}>
                       <Text style={styles.inputLabel}>訊號</Text>
                       <Pressable onPress={() => !loading && setShowLookingForModal(true)}>
                         <View style={styles.selectButton}>
@@ -449,7 +449,7 @@ const SetupScreen = () => {
                           </Text>
                         </View>
                       </Pressable>
-                    </View>
+                    </View> */}
 
                     <View style={styles.inputContainer}>
                       <Text style={styles.inputLabel}>簡介</Text>
@@ -892,7 +892,7 @@ const SetupScreen = () => {
       </BottomSheetModal>
 
       {/* Orientation Modal */}
-      <BottomSheetModal
+      {/* <BottomSheetModal
         visible={showOrientationModal}
         onClose={() => setShowOrientationModal(false)}
         containerStyle={styles.modalContainer}
@@ -922,10 +922,10 @@ const SetupScreen = () => {
             ))}
           </ScrollView>
         </View>
-      </BottomSheetModal>
+      </BottomSheetModal> */}
 
       {/* Looking For Modal */}
-      <BottomSheetModal
+      {/* <BottomSheetModal
         visible={showLookingForModal}
         onClose={() => setShowLookingForModal(false)}
         containerStyle={styles.modalContainer}
@@ -965,7 +965,7 @@ const SetupScreen = () => {
             ))}
           </ScrollView>
         </View>
-      </BottomSheetModal>
+      </BottomSheetModal> */}
     </>
   )
 }

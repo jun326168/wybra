@@ -51,8 +51,8 @@ export default function SplashAuthScreen() {
       !user.personal_info?.birthday || 
       !user.personal_info?.mbti ||
       !user.personal_info?.gender ||
-      !user.personal_info?.sexual_orientation ||
-      !user.personal_info?.looking_for ||
+      // !user.personal_info?.sexual_orientation ||
+      // !user.personal_info?.looking_for ||
       !user.personal_info?.interests ||
       !user.personal_info?.avatar_url ||
       !bio ||
