@@ -455,7 +455,7 @@ const SetupScreen = () => {
                       <Text style={styles.inputLabel}>簡介</Text>
                       <TextInput
                         value={bio}
-                        placeholder="沒人看見時的你，是什麼樣子？"
+                        placeholder="你最快樂的時候，是什麼樣子？"
                         onChangeText={setBio}
                         editable={!loading}
                         multiline

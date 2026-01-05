@@ -6,7 +6,7 @@ import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
 import { useAppContext } from '@/contexts/AppContext'
-import { MBTI_OPTIONS, GENDER_OPTIONS, ORIENTATION_OPTIONS, PHOTO_BLUR_AMOUNT, INTEREST_TAGS } from '@/lib/setup'
+import { MBTI_OPTIONS, GENDER_OPTIONS, ORIENTATION_OPTIONS, PHOTO_BLUR_AMOUNT, INTEREST_TAGS, LOOKING_FOR_OPTIONS } from '@/lib/setup'
 import LoadingSpinner from '@/svgs/spinner'
 import { updateUserProfile, uploadUserPhoto } from '@/lib/api'
 import { useRouter } from 'expo-router'
@@ -37,6 +37,9 @@ const ProfileSettingsScreen = () => {
   const [bio, setBio] = useState<string>(
     (user?.personal_info?.bio as string | undefined) || ''
   );
+  const [lookingFor, setLookingFor] = useState<string | null>(
+    (user?.personal_info?.looking_for as string | undefined) || null
+  );
   const [customQuestionLove, setCustomQuestionLove] = useState<string>(
     (user?.personal_info?.custom_question as any)?.love || ''
   );
@@ -59,6 +62,7 @@ const ProfileSettingsScreen = () => {
   const [showDateModal, setShowDateModal] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [showOrientationModal, setShowOrientationModal] = useState(false);
+  const [showLookingForModal, setShowLookingForModal] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -236,6 +240,7 @@ const ProfileSettingsScreen = () => {
           birthday: birthday || undefined,
           gender: gender || undefined,
           sexual_orientation: sexualOrientation || undefined,
+          looking_for: lookingFor || undefined,
           bio: bio || undefined,
           custom_question: {
             love: customQuestionLove || undefined,
@@ -406,12 +411,24 @@ const ProfileSettingsScreen = () => {
               </Pressable>
             </View>
 
+            {/* Looking For */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>訊號</Text>
+              <Pressable onPress={() => !loading && setShowLookingForModal(true)}>
+                <View style={styles.selectButton}>
+                  <Text style={[styles.selectButtonText, !lookingFor && styles.selectButtonPlaceholder]}>
+                    {lookingFor ? LOOKING_FOR_OPTIONS.find(opt => opt.value === lookingFor)?.label : '你在尋找什麼？'}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+
             {/* Bio */}
             <View style={styles.section}>
               <Text style={styles.inputLabel}>簡介</Text>
               <TextInput
                 value={bio}
-                placeholder="沒人看見時的你，是什麼樣子？"
+                placeholder="你最快樂的時候，是什麼樣子？"
                 onChangeText={setBio}
                 editable={!loading}
                 multiline
@@ -707,6 +724,49 @@ const ProfileSettingsScreen = () => {
                 ]}>
                   {option.label}
                 </Text>
+              </Button>
+            ))}
+          </ScrollView>
+        </View>
+      </BottomSheetModal>
+
+      {/* Looking For Modal */}
+      <BottomSheetModal
+        visible={showLookingForModal}
+        onClose={() => setShowLookingForModal(false)}
+        containerStyle={styles.modalContainer}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>你在尋找什麼？</Text>
+          <ScrollView style={styles.optionsList} showsVerticalScrollIndicator={false}>
+            {LOOKING_FOR_OPTIONS.map((option) => (
+              <Button
+                key={option.value}
+                onPress={() => {
+                  setLookingFor(option.value);
+                  setShowLookingForModal(false);
+                }}
+                style={[
+                  styles.option,
+                  lookingFor === option.value && styles.optionSelected
+                ]}
+              >
+                <View style={styles.optionContent}>
+                  <Text style={[
+                    styles.optionText,
+                    lookingFor === option.value && styles.optionTextSelected
+                  ]}>
+                    {option.label}
+                  </Text>
+                  {option.description && (
+                    <Text style={[
+                      styles.optionDescription,
+                      lookingFor === option.value && styles.optionDescriptionSelected
+                    ]}>
+                      {option.description}
+                    </Text>
+                  )}
+                </View>
               </Button>
             ))}
           </ScrollView>

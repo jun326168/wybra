@@ -111,8 +111,8 @@ const ProfileScreen = () => {
               </View>
             </View>
             <Text style={[styles.profileInfoTextMbti, { color: colors.primary }]}>{user?.personal_info?.mbti === 'UNKNOWN' ? 'MBTI: ' : ''}{MBTI_OPTIONS.find(option => option.value === user?.personal_info?.mbti)?.label}</Text>
-            <Text style={styles.profileInfoTextInterests}>{(user?.personal_info?.interests as string[])?.map(i => INTEREST_TAGS.find(tag => tag.id === i)?.label).join(' ')}</Text>
-            <Text style={styles.profileInfoTextIntroductionTitle}>在沒人的時候</Text>
+            <Text style={styles.profileInfoTextInterests}>{(user?.personal_info?.interests as string[])?.map(i => i.startsWith('#') ? i : INTEREST_TAGS.find(tag => tag.id === i)?.label).join(' ')}</Text>
+            <Text style={styles.profileInfoTextIntroductionTitle}>真實的我</Text>
             {user?.personal_info?.bio ? (
               <Text style={styles.profileInfoTextIntroductionText}>{user?.personal_info?.bio as string}</Text>
             ) : (

@@ -16,3 +16,4 @@ const EyeIcon = ({ size = 20, color = '#000000' }: { size?: number; color?: stri
 
 export default EyeIcon;
 
+

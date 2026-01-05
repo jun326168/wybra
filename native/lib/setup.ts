@@ -1,18 +1,18 @@
 import { colors } from "./colors";
 
-export const PHOTO_BLUR_AMOUNT = 30;
+export const PHOTO_BLUR_AMOUNT = 20;
 
 export const COLOR_OPTIONS = [
-  { id: 'cyber_blue', value: '#3B82F6', label: '邏輯藍' }, // Cyber Blue
-  { id: 'mystic_purple', value: '#8B5CF6', label: '神秘紫' }, // Neon Purple
-  { id: 'hot_pink', value: '#EC4899', label: '熱情粉' }, // Hot Pink
-  { id: 'sunset_orange', value: '#F97316', label: '餘暉橘' }, // Sunset Orange
-  { id: 'gold_dust', value: '#EAB308', label: '星塵黃' }, // Gold Dust
-  { id: 'crimson_red', value: '#EF4444', label: '警戒紅' }, // Crimson Red
-  { id: 'aqua_cyan', value: '#06B6D4', label: '流動青' }, // Aqua Cyan
-  { id: 'ghost_white', value: '#F8FAFC', label: '純粹白' }, // Ghost White
-  { id: 'leaf_green', value: '#22C55E', label: '森之綠' }, // Leaf Green
-  { id: 'dark', value: colors.background, label: '深色' },
+  { id: 'cyber_blue', value: '#64D2FF' },
+  { id: 'sakura_pink', value: '#D499B9' },
+  { id: 'concrete_gray', value: '#9E9E9E' },
+  { id: 'taro_orange', value: '#C4A796' },
+  { id: 'mustard_yellow', value: '#E3C567' },
+  { id: 'midnight_blue', value: '#6B8EAD' },
+  { id: 'rust_red', value: '#D98E73' },
+  { id: 'matcha_green', value: '#9CBFA7' },
+  { id: 'wybra_fog', value: '#A5A6F6' },
+  { id: 'dark', value: colors.background },
 ];
 
 export const GENERATION_OPTIONS = [
@@ -85,32 +85,32 @@ export const LOOKING_FOR_OPTIONS = [
 
 export const INTEREST_TAGS = [
   // 1. 娛樂與內容 (Entertainment)
-  { id: 'movie', label: '#電影', value: 'Movie' },
-  { id: 'music', label: '#音樂', value: 'Music' },
-  { id: 'gaming', label: '#遊戲', value: 'Gaming' },
-  { id: 'anime', label: '#動漫', value: 'Anime' },
-  { id: 'drama', label: '#追劇', value: 'Drama' },
-  { id: 'reading', label: '#閱讀', value: 'Reading' },
+  { id: 'movie', label: '#電影' },
+  { id: 'music', label: '#音樂' },
+  { id: 'gaming', label: '#遊戲' },
+  { id: 'anime', label: '#動漫' },
+  { id: 'drama', label: '#追劇' },
+  { id: 'reading', label: '#閱讀' },
 
   // 2. 生活與飲食 (Lifestyle)
-  { id: 'foodie', label: '#美食', value: 'Foodie' },
-  { id: 'cooking', label: '#烹飪', value: 'Cooking' },
-  { id: 'sleep', label: '#睡覺', value: 'Sleep' }, // I 人最愛
-  { id: 'sports', label: '#運動', value: 'Sports' },
-  { id: 'fitness', label: '#健身', value: 'Fitness' },
+  { id: 'foodie', label: '#美食' },
+  { id: 'cooking', label: '#烹飪' },
+  { id: 'sleep', label: '#睡覺' }, // I 人最愛
+  { id: 'sports', label: '#運動' },
+  { id: 'fitness', label: '#健身' },
 
   // 3. 毛孩與自然 (Nature & Pets)
-  { id: 'outdoor', label: '#戶外', value: 'Outdoor' }, // 露營/爬山
-  { id: 'walk', label: '#散步', value: 'Walk' }, // 取代 Night Walk
-  { id: 'travel', label: '#旅行', value: 'Travel' },
+  { id: 'outdoor', label: '#戶外' }, // 露營/爬山
+  { id: 'walk', label: '#散步' }, // 取代 Night Walk
+  { id: 'travel', label: '#旅行' },
 
   // 4. 技能與創造 (Creativity & Tech)
-  { id: 'tech', label: '#科技', value: 'Tech' },
-  { id: 'coding', label: '#寫作', value: 'Coding' }, // 或是 #程式
-  { id: 'design', label: '#設計', value: 'Design' },
-  { id: 'art', label: '#藝術', value: 'Art' },
-  { id: 'photo', label: '#攝影', value: 'Photo' },
-  { id: 'science', label: '#科學', value: 'Science' },
+  { id: 'tech', label: '#科技' },
+  { id: 'coding', label: '#寫作' }, // 或是 #程式
+  { id: 'design', label: '#設計' },
+  { id: 'art', label: '#藝術' },
+  { id: 'photo', label: '#攝影' },
+  { id: 'science', label: '#科學' },
 ];
 
 // CATEGORY 1: ATMOSPHERE & TEXTURE (80+ words)

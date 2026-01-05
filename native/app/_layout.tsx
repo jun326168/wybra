@@ -1,6 +1,15 @@
 import { ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import { useEffect } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  Merriweather_400Regular,
+  Merriweather_700Bold,
+  Merriweather_400Regular_Italic,
+  Merriweather_700Bold_Italic,
+} from '@expo-google-fonts/merriweather';
 import 'react-native-reanimated';
 
 import { colors } from '@/lib/colors';
@@ -37,6 +46,23 @@ const customTheme = {
 };
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    'Merriweather': Merriweather_400Regular,
+    'Merriweather-Bold': Merriweather_700Bold,
+    'Merriweather-Italic': Merriweather_400Regular_Italic,
+    'Merriweather-Bold-Italic': Merriweather_700Bold_Italic,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <AppProvider>
       <ThemeProvider value={customTheme}>

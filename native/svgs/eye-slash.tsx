@@ -14,3 +14,4 @@ const EyeSlashIcon = ({ size = 20, color = '#000000' }: { size?: number; color?:
 
 export default EyeSlashIcon;
 
+

@@ -28,11 +28,12 @@ const LogoIcon = ({ size = 120, color = '#EAE8FF', stroke = '#121418', floatingY
       true
     );
 
+    const blinkDelay = 4000 + Math.random() * 1000;
     // Blinking animation
     blink.value = withRepeat(
       withSequence(
-        withDelay(4000, withTiming(1, { duration: 0 })), // Switch to closed eyes instantly
-        withDelay(150, withTiming(0, { duration: 0 }))   // Switch back to open eyes instantly
+        withDelay(blinkDelay, withTiming(1, { duration: 0 })), // Switch to closed eyes instantly
+        withDelay(200, withTiming(0, { duration: 0 }))   // Switch back to open eyes instantly
       ),
       -1,
       false
