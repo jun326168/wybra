@@ -152,9 +152,9 @@ export const uploadUserPhoto = async (
   return data.avatarUrl as string;
 };
 
-export const fetchProfiles = async (lookingFor: 'romantic' | 'random' | 'team'): Promise<User[]> => {
+export const fetchProfiles = async (): Promise<User[]> => {
   const headers = await getAuthHeaders();
-  const response = await fetch(`${API_URL}/profiles?lookingFor=${lookingFor}`, {
+  const response = await fetch(`${API_URL}/profiles`, {
     headers,
   });
 
@@ -164,5 +164,5 @@ export const fetchProfiles = async (lookingFor: 'romantic' | 'random' | 'team'):
   }
 
   const data = await response.json();
-  return data as User[];
+  return data.users as User[];
 };

@@ -13,6 +13,8 @@ import {
 import { PlayfairDisplay_400Regular, PlayfairDisplay_700Bold, PlayfairDisplay_400Regular_Italic, PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/playfair-display';
 import { Nunito_400Regular, Nunito_700Bold } from '@expo-google-fonts/nunito';
 import { NotoSerifJP_400Regular, NotoSerifJP_700Bold } from '@expo-google-fonts/noto-serif-jp';
+import { MPLUSRounded1c_400Regular, MPLUSRounded1c_700Bold } from '@expo-google-fonts/m-plus-rounded-1c';
+import { HachiMaruPop_400Regular } from '@expo-google-fonts/hachi-maru-pop';
 import 'react-native-reanimated';
 
 import { colors } from '@/lib/colors';
@@ -62,6 +64,9 @@ export default function RootLayout() {
     'PlayfairDisplay-Bold-Italic': PlayfairDisplay_700Bold_Italic,
     'NotoSerifJP': NotoSerifJP_400Regular,
     'NotoSerifJP-Bold': NotoSerifJP_700Bold,
+    'MPLUSRounded1c': MPLUSRounded1c_400Regular,
+    'MPLUSRounded1c-Bold': MPLUSRounded1c_700Bold,
+    'HachiMaruPop': HachiMaruPop_400Regular,
   });
 
   useEffect(() => {
@@ -81,14 +86,8 @@ export default function RootLayout() {
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="setup" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen 
-            name="profile-settings" 
-            options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} 
-          />
-          <Stack.Screen 
-            name="preference-settings" 
-            options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} 
-          />
+          <Stack.Screen name="profile-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="preference-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
         </Stack>
         <StatusBar style="light" />
       </ThemeProvider>

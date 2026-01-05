@@ -64,7 +64,8 @@
         {
           "photosPermission": "Wybra 需要存取你的相簿，以便你上傳頭像或其它相片。"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

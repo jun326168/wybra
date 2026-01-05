@@ -106,11 +106,11 @@ const ProfileScreen = () => {
           <View style={styles.profileInfoContainer}>
             <View style={styles.profileInfoTextContainer}>
               <Text style={styles.profileInfoText}>{user?.username}</Text>
-              <View style={[styles.profileInfoTextGenerationContainer, { backgroundColor: generationColor + '1A', borderColor: generationColor + '80' }]}>
+              {/* <View style={[styles.profileInfoTextGenerationContainer, { backgroundColor: generationColor + '1A', borderColor: generationColor + '80' }]}>
                 <Text style={[styles.profileInfoTextGeneration, { color: generationColor }]}>{GENERATION_OPTIONS.find(option => option.value === generation)?.label}</Text>
-              </View>
+              </View> */}
             </View>
-            <Text style={[styles.profileInfoTextMbti, { color: colors.primary }]}>{user?.personal_info?.mbti === 'UNKNOWN' ? 'MBTI: ' : ''}{MBTI_OPTIONS.find(option => option.value === user?.personal_info?.mbti)?.label}</Text>
+            <Text style={[styles.profileInfoTextMbti, { color: user?.personal_info?.color === colors.background ? colors.primary : user?.personal_info?.color }]}>{user?.personal_info?.mbti === 'UNKNOWN' ? 'MBTI: ' : ''}{MBTI_OPTIONS.find(option => option.value === user?.personal_info?.mbti)?.label}</Text>
             <Text style={styles.profileInfoTextInterests}>{(user?.personal_info?.interests as string[])?.map(i => i.startsWith('#') ? i : INTEREST_TAGS.find(tag => tag.id === i)?.label).join(' ')}</Text>
             <Text style={styles.profileInfoTextIntroductionTitle}>真實的我</Text>
             {user?.personal_info?.bio ? (
@@ -120,17 +120,17 @@ const ProfileScreen = () => {
                 <Text style={styles.editProfileButtonText}>新增簡介</Text>
               </Button>
             )}
-            <Text style={styles.profileInfoTextIntroductionTitle}>關於我的城市</Text>
+            <Text style={styles.profileInfoTextIntroductionTitle}>關於我住的地方</Text>
             <Text style={styles.profileInfoTextIntroductionText}>我最喜歡: {(user?.personal_info?.custom_question as any)?.love as string}</Text>
             <Text style={styles.profileInfoTextIntroductionText}>我最討厭: {(user?.personal_info?.custom_question as any)?.hate as string}</Text>
           </View>
         </View>
 
         {/* divider */}
-        <View style={styles.divider} />
+        {/* <View style={styles.divider} /> */}
 
         {/* Stats */}
-        <View style={styles.statsRow}>
+        {/* <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{user?.personal_info?.friends_count as number || 0}</Text>
             <Text style={styles.statLabel}>已解鎖好友</Text>
@@ -143,7 +143,7 @@ const ProfileScreen = () => {
             <Text style={styles.statNumber}>8d</Text>
             <Text style={styles.statLabel}>最久聊天記錄</Text>
           </View>
-        </View>
+        </View> */}
 
         {/* divider */}
         <View style={styles.divider} />

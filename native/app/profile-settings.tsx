@@ -357,7 +357,7 @@ const ProfileSettingsScreen = () => {
               <Text style={styles.inputLabel}>代號</Text>
               <Input
                 value={username}
-                placeholder="別透露你的真名喔"
+                placeholder="別透露你的真實身份喔"
                 onChangeText={setUsername}
                 editable={!loading}
               />
@@ -377,7 +377,7 @@ const ProfileSettingsScreen = () => {
 
             {/* MBTI */}
             <View style={styles.section}>
-              <Text style={styles.inputLabel}>屬性 (MBTI)</Text>
+              <Text style={styles.inputLabel}>MBTI</Text>
               <Pressable onPress={() => !loading && setShowMbtiModal(true)}>
                 <View style={styles.selectButton}>
                   <Text style={[styles.selectButtonText, !mbti && styles.selectButtonPlaceholder]}>
@@ -447,7 +447,7 @@ const ProfileSettingsScreen = () => {
 
             {/* Custom Question */}
             <View style={styles.section}>
-              <Text style={styles.inputLabel}>在你所在的城市，你最喜歡和最討厭什麼？</Text>
+              <Text style={styles.inputLabel}>在你住的地方，你最喜歡和最討厭什麼？</Text>
               <TextInput
                 value={customQuestionLove}
                 placeholder="我最喜歡..."

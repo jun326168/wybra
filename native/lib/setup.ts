@@ -1,6 +1,6 @@
 import { colors } from "./colors";
 
-export const PHOTO_BLUR_AMOUNT = 20;
+export const PHOTO_BLUR_AMOUNT = 25;
 
 export const COLOR_OPTIONS = [
   { id: 'cyber_blue', value: '#64D2FF' },

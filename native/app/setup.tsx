@@ -315,7 +315,7 @@ const SetupScreen = () => {
         {/* Fixed header */}
         <View style={styles.header}>
           <LogoIcon size={36} floatingY={4} />
-          <Text style={styles.title}>建立你的數位替身</Text>
+          <Text style={styles.title}>建立你的數位靈魂</Text>
         </View>
 
         {/* Step indicator */}
@@ -373,7 +373,7 @@ const SetupScreen = () => {
                     <Text style={styles.inputLabel}>代號</Text>
                     <Input
                       value={username}
-                      placeholder="別透露你的真名喔"
+                      placeholder="別透露你的真實身份喔"
                       onChangeText={setUsername}
                       editable={!loading}
                     />
@@ -413,7 +413,7 @@ const SetupScreen = () => {
                   </View> */}
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>屬性 (MBTI)</Text>
+                    <Text style={styles.inputLabel}>MBTI</Text>
                     <Pressable onPress={() => !loading && setShowMbtiModal(true)}>
                       <View style={styles.selectButton}>
                         <Text style={[styles.selectButtonText, !mbti && styles.selectButtonPlaceholder]}>
@@ -473,7 +473,7 @@ const SetupScreen = () => {
                     </View>
 
                     <View style={styles.inputContainer}>
-                      <Text style={styles.inputLabel}>在你所在的城市，你最喜歡和最討厭什麼？</Text>
+                      <Text style={styles.inputLabel}>在你住的地方，你最喜歡和最討厭什麼？</Text>
                       <TextInput
                         value={customQuestionLove}
                         placeholder="我最喜歡..."
@@ -591,7 +591,7 @@ const SetupScreen = () => {
                 <View style={styles.inputsContainer}>
                   <Text style={styles.vibeTitle}>選擇一張有你的相片</Text>
                   <Text style={styles.vibeDescription}>
-                    相片會以「模糊狀態」顯示。在配對聊天滿 7 天後，你可以決定是否解鎖給對方看。
+                    相片會模糊顯示，直到與對方聊天滿 3 天後，才會互相揭露身份。
                   </Text>
 
                   <View style={styles.avatarContainer}>
@@ -657,7 +657,7 @@ const SetupScreen = () => {
                   </View>
 
                   <Text style={styles.photoWarning}>
-                    請勿上傳不雅照，解鎖時若被檢舉將導致永久封鎖！
+                    請勿上傳不雅照，若被檢舉將導致永久封鎖。
                   </Text>
                 </View>
               </ScrollView>

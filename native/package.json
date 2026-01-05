@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@expo-google-fonts/arimo": "^0.4.2",
+    "@expo-google-fonts/hachi-maru-pop": "^0.4.1",
+    "@expo-google-fonts/m-plus-rounded-1c": "^0.4.2",
     "@expo-google-fonts/merriweather": "^0.4.2",
     "@expo-google-fonts/noto-sans-tc": "^0.4.2",
     "@expo-google-fonts/noto-serif-jp": "^0.4.2",
