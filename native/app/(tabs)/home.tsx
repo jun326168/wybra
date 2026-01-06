@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Dimensions, ScrollView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Dimensions, ScrollView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/lib/colors';
 import { createChat, fetchProfiles } from '@/lib/api';
@@ -180,8 +180,8 @@ export default function FeedScreen() {
         />
         <View style={styles.actionContainer}>
           <Button style={[styles.signalButton, {
-            borderColor: currentProfile?.personal_info?.color + '88',
-            backgroundColor: (currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color) + '40'
+            borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color) + '88',
+            backgroundColor: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color) + '40'
           }]} onPress={() => {
             if (currentProfile?.has_chat) {
               router.push(`/chat?other_id=${currentProfile.id}`);
@@ -190,7 +190,7 @@ export default function FeedScreen() {
               setShowSendSignalModal(true);
             }
           }}>
-            <Text style={[styles.signalButtonText, { color: currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color }]}>
+            <Text style={[styles.signalButtonText, { color: currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color }]}>
               {currentProfile?.has_chat ? '繼續聊天' : '開啟對話'}
             </Text>
           </Button>
@@ -299,12 +299,12 @@ export default function FeedScreen() {
               style={[
                 styles.sendButton,
                 {
-                  backgroundColor: (currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color) + '40',
-                  borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color),
+                  backgroundColor: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color) + '40',
+                  borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color),
                 }
               ]}
             >
-              {isCreatingChat ? <LoadingSpinner size={20} color={(currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color)} strokeWidth={3} /> : <Text style={[styles.sendButtonText, { color: (currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color) }]}>發送</Text>}
+              {isCreatingChat ? <LoadingSpinner size={20} color={(currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color)} strokeWidth={3} /> : <Text style={[styles.sendButtonText, { color: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color) }]}>發送</Text>}
             </Button>
           </View>
         </View>

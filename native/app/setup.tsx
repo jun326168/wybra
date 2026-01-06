@@ -699,7 +699,7 @@ const SetupScreen = () => {
 
                   <View style={styles.completionMessageContainer}>
                     <Text style={styles.completionText}>
-                      設定完成，開始漫遊，看看命運連上了誰？
+                      設定完成，開始漫遊，看命運帶你連上了誰？
                     </Text>
                   </View>
                 </View>

@@ -186,3 +186,18 @@ export const createChat = async (
   const data = await response.json();
   return data.chat as Chat;
 };
+
+export const fetchChats = async (): Promise<Chat[]> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/chats`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch chats');
+  }
+
+  const data = await response.json();
+  return data.chats as Chat[];
+};

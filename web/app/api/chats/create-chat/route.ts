@@ -98,11 +98,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 3: Update the chat with the message ID
+    // Step 3: Update the chat with the message ID and progress
     await queryOne<Chat>(
       `
       UPDATE chats
-      SET last_message_id = $1
+      SET 
+        last_message_id = $1,
+        chat_info = jsonb_set(
+          COALESCE(chat_info, '{}'::jsonb),
+          '{user_1_progress}',
+          '3'::jsonb,
+          true
+        )
       WHERE id = $2
       RETURNING *
       `,
