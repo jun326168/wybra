@@ -22,6 +22,7 @@ const ProfileSettingsScreen = () => {
 
   // Form states
   const [username, setUsername] = useState(user?.username || '');
+  const [realName, setRealName] = useState(user?.personal_info?.real_name || '');
   const [mbti, setMbti] = useState<string | null>(
     (user?.personal_info?.mbti as string | undefined) || null
   );
@@ -236,6 +237,7 @@ const ProfileSettingsScreen = () => {
         username,
         personal_info: {
           ...user.personal_info,
+          real_name: realName || undefined,
           mbti: mbti || undefined,
           birthday: birthday || undefined,
           gender: gender || undefined,
@@ -269,7 +271,7 @@ const ProfileSettingsScreen = () => {
             <Text style={styles.cancelButtonText}>取消</Text>
           </Button>
           <Text style={styles.title}>個人資料</Text>
-          <Button onPress={handleSave} disabled={loading || !username || !birthday || !mbti || !gender /* || !sexualOrientation */} style={styles.saveButton}>
+          <Button onPress={handleSave} disabled={loading || !username || !realName || !birthday || !mbti || !gender /* || !sexualOrientation */} style={styles.saveButton}>
             {loading ? (
               <LoadingSpinner size={16} color={colors.primary} strokeWidth={3} />
             ) : (
@@ -359,6 +361,16 @@ const ProfileSettingsScreen = () => {
                 value={username}
                 placeholder="別透露你的真實身份喔"
                 onChangeText={setUsername}
+                readOnly
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>真實姓名</Text>
+              <Input
+                value={realName}
+                placeholder="輸入你的真實姓名"
+                onChangeText={setRealName}
                 editable={!loading}
               />
             </View>

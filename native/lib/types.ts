@@ -4,6 +4,7 @@ export interface User {
   username: string;
   provider: string;
   personal_info?: {
+    real_name: string;
     color: string;
     template: string;
     mbti: string;
@@ -47,3 +48,11 @@ export interface Chat {
   };
 }
 
+export interface Message {
+  id: string;
+  chat_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  message_info: Record<string, unknown>;
+}

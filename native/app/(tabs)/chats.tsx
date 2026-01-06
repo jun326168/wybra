@@ -101,12 +101,8 @@ export default function ChatsScreen() {
 
     // 4. Determine which user is current user and get progress accordingly
     const isUser1 = user?.id === item.user_1;
-    const currentUserProgress = isUser1 
-      ? (item.chat_info?.user_1_progress as number)
-      : (item.chat_info?.user_2_progress as number);
-    const otherUserProgress = isUser1
-      ? (item.chat_info?.user_2_progress as number)
-      : (item.chat_info?.user_1_progress as number);
+    const currentUserProgress = Math.min(100, isUser1 ? (item.chat_info?.user_1_progress as number) : (item.chat_info?.user_2_progress as number));
+    const otherUserProgress = Math.min(100, isUser1 ? (item.chat_info?.user_2_progress as number) : (item.chat_info?.user_1_progress as number));
 
     return (
       <Button
@@ -159,19 +155,21 @@ export default function ChatsScreen() {
 
           <View style={styles.bottomRow}>
             <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBarLeft, { 
-                shadowColor: themeColor,
-                backgroundColor: themeColor,
-                width: `${otherUserProgress}%`
-              }]} />
+              <View style={styles.progressBarLeftContainer}>
+                <View style={[styles.progressBarLeft, { 
+                  shadowColor: themeColor,
+                  backgroundColor: themeColor,
+                  width: `${otherUserProgress}%`
+                }]} />
+              </View>
 
-              <View style={styles.progressBarMid} />
-
-              <View style={[styles.progressBarRight, {
-                shadowColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
-                backgroundColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
-                width: `${currentUserProgress}%`
-              }]} />
+              <View style={styles.progressBarRightContainer}>
+                <View style={[styles.progressBarRight, {
+                  shadowColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
+                  backgroundColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
+                  width: `${currentUserProgress}%`
+                }]} />
+              </View>
             </View>
           </View>
         </View>
@@ -349,11 +347,29 @@ const styles = StyleSheet.create({
   },
   progressBarContainer: {
     marginTop: 4,
-    position: 'relative',
     width: '100%',
     height: 6,
     borderRadius: 4,
-    backgroundColor: colors.textSecondary + '40',
+    flexDirection: 'row',
+    gap: 3,
+  },
+  progressBarLeftContainer: {
+    position: 'relative',
+    flex: 1,
+    borderTopLeftRadius: 4,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 1,
+    borderTopRightRadius: 1,
+    backgroundColor: colors.textSecondary + '20',
+  },
+  progressBarRightContainer: {
+    position: 'relative',
+    flex: 1,
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
+    borderBottomLeftRadius: 1,
+    borderTopLeftRadius: 1,
+    backgroundColor: colors.textSecondary + '20',
   },
   progressBarLeft: {
     height: '100%',
@@ -366,14 +382,8 @@ const styles = StyleSheet.create({
     elevation: 5,
     borderTopLeftRadius: 4,
     borderBottomLeftRadius: 4,
-  },
-  progressBarMid: {
-    position: 'absolute',
-    top: 0,
-    left: '50%',
-    height: '100%',
-    width: 1,
-    backgroundColor: colors.textSecondary + '80',
+    borderBottomRightRadius: 1,
+    borderTopRightRadius: 1,
   },
   progressBarRight: {
     height: '100%',
@@ -386,6 +396,8 @@ const styles = StyleSheet.create({
     elevation: 5,
     borderTopRightRadius: 4,
     borderBottomRightRadius: 4,
+    borderBottomLeftRadius: 1,
+    borderTopLeftRadius: 1,
   },
   username: {
     fontSize: 17,

@@ -25,6 +25,7 @@ const SetupScreen = () => {
 
   // Step 1 - Basic Info + Gender & Orientation
   const [username, setUsername] = useState(user?.username || '');
+  const [realName, setRealName] = useState(user?.personal_info?.real_name || '');
   const [birthday, setBirthday] = useState<string>(
     (user?.personal_info?.birthday as string | undefined) || ''
   );
@@ -261,6 +262,7 @@ const SetupScreen = () => {
       const updatedUser = await updateUserProfile(user.id, {
         username,
         personal_info: {
+          real_name: realName || undefined,
           gender: gender || undefined,
           // sexual_orientation: sexualOrientation || undefined,
           // looking_for: lookingFor || undefined,
@@ -286,7 +288,7 @@ const SetupScreen = () => {
     }
   };
 
-  const isStep1Valid = username && birthday && mbti && gender /* && sexualOrientation */;
+  const isStep1Valid = username && realName && birthday && mbti && gender /* && sexualOrientation */;
   const isStep2Valid = /* lookingFor && */ bio.length >= 30 && customQuestionLove.trim() && customQuestionHate.trim();
   const isStep3Valid = selectedInterests.length > 0;
   const isStep4Valid = photoUri !== null;
@@ -364,8 +366,19 @@ const SetupScreen = () => {
                     <Text style={styles.inputLabel}>代號</Text>
                     <Input
                       value={username}
-                      placeholder="別透露你的真實身份喔"
+                      placeholder=""
+                      readOnly
                       onChangeText={setUsername}
+                      editable={!loading}
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>真實姓名</Text>
+                    <Input
+                      value={realName}
+                      placeholder="輸入你的真實姓名"
+                      onChangeText={setRealName}
                       editable={!loading}
                     />
                   </View>

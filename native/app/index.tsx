@@ -48,6 +48,7 @@ export default function SplashAuthScreen() {
     const customQuestion = user.personal_info?.custom_question as { love?: string; hate?: string } | undefined;
     
     return (
+      !user.personal_info?.real_name ||
       !user.personal_info?.birthday || 
       !user.personal_info?.mbti ||
       !user.personal_info?.gender ||

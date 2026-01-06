@@ -107,7 +107,7 @@ export default function FeedScreen() {
     setProfiles(profiles.map(profile => profile.id === currentProfile.id ? { ...profile, has_chat: true } : profile));
     setCurrentProfile({ ...currentProfile, has_chat: true });
     setTimeout(() => {
-      router.push(`/chat?other_id=${currentProfile.id}`);
+      router.push(`/chat?other_user_id=${currentProfile.id}`);
     }, 100);
   };
 
@@ -184,7 +184,7 @@ export default function FeedScreen() {
             backgroundColor: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color) + '40'
           }]} onPress={() => {
             if (currentProfile?.has_chat) {
-              router.push(`/chat?other_id=${currentProfile.id}`);
+              router.push(`/chat?other_user_id=${currentProfile.id}`);
             } else {
               setMessage('');
               setShowSendSignalModal(true);

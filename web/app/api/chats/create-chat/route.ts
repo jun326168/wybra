@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         chat_info = jsonb_set(
           COALESCE(chat_info, '{}'::jsonb),
           '{user_1_progress}',
-          '3'::jsonb,
+          '5'::jsonb,
           true
         )
       WHERE id = $2

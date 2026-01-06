@@ -1,4 +1,4 @@
-import type { User, Chat } from './types';
+import type { User, Chat, Message } from './types';
 import { storage } from './storage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -200,4 +200,19 @@ export const fetchChats = async (): Promise<Chat[]> => {
 
   const data = await response.json();
   return data.chats as Chat[];
+};
+
+export const fetchChat = async (chatId?: string, otherUserId?: string): Promise<{ chat: Chat, messages: Message[] }> => {
+  const queryString = chatId ? `chat_id=${chatId}` : otherUserId ? `other_user_id=${otherUserId}` : '';
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/chats/one?${queryString}`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch chat');
+  }
+  const data = await response.json();
+  return { chat: data.chat as Chat, messages: data.messages as Message[] };
 };
