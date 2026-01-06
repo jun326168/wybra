@@ -10,9 +10,11 @@ CREATE TABLE users (
 
 CREATE TABLE chats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  users UUID[] NOT NULL, -- 2 users
-  last_message_id UUID NOT NULL, -- last message id
-  chat_info JSONB NOT NULL DEFAULT '{}', -- chat info
+  user_1 UUID NOT NULL, -- sender id
+  user_2 UUID NOT NULL, -- receiver id
+  last_message_id UUID, -- last message id
+  chat_info JSONB NOT NULL DEFAULT '{ "accepted": false, "user_1_progress": 0, "user_2_progress": 0, "user_1_unlocked": false, "user_2_unlocked": false }', -- chat info (accepted, user_1_progress, user_2_progress, user_1_unlocked, user_2_unlocked)
+  quiz_info JSONB NOT NULL DEFAULT '{ "user_1_quiz": [], "user_2_quiz": [] }', -- quiz info (user_1_quiz, user_2_quiz)
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
 );
@@ -20,9 +22,10 @@ CREATE TABLE chats (
 CREATE TABLE messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chat_id UUID NOT NULL,
+  user_id UUID NOT NULL,
   content TEXT NOT NULL,
-  sender_id UUID NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
+  message_info JSONB NOT NULL DEFAULT '{}',
   FOREIGN KEY (chat_id) REFERENCES chats(id),
-  FOREIGN KEY (sender_id) REFERENCES users(id),
+  FOREIGN KEY (user_id) REFERENCES users(id),
 );

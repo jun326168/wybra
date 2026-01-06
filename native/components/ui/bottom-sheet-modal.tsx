@@ -7,6 +7,8 @@ import {
   View,
   Dimensions,
   type ViewStyle,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -83,21 +85,23 @@ export default function BottomSheetModal({
         <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
-        <Animated.View
-          style={[
-            styles.sheet,
-            containerStyle,
-            {
-              transform: [{ translateY }],
-              maxHeight: MAX_SHEET_HEIGHT,
-            },
-          ]}
-          onLayout={(event) => {
-            setContentHeight(event.nativeEvent.layout.height);
-          }}
-        >
-          {children}
-        </Animated.View>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <Animated.View
+            style={[
+              styles.sheet,
+              containerStyle,
+              {
+                transform: [{ translateY }],
+                maxHeight: MAX_SHEET_HEIGHT,
+              },
+            ]}
+            onLayout={(event) => {
+              setContentHeight(event.nativeEvent.layout.height);
+            }}
+          >
+            {children}
+          </Animated.View>
+        </TouchableWithoutFeedback>
         {overlayContent}
       </View>
     </Modal>

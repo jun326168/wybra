@@ -1,4 +1,4 @@
-import type { User } from './types';
+import type { User, Chat } from './types';
 import { storage } from './storage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -165,4 +165,24 @@ export const fetchProfiles = async (): Promise<User[]> => {
 
   const data = await response.json();
   return data.users as User[];
+};
+
+export const createChat = async (
+  user_2: string,
+  message?: string
+): Promise<Chat> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/chats/create-chat`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ user_2, message }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create chat');
+  }
+
+  const data = await response.json();
+  return data.chat as Chat;
 };

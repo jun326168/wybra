@@ -59,7 +59,7 @@ export default function SplashAuthScreen() {
       bio.length < 30 ||
       !customQuestion?.love ||
       !customQuestion?.hate
-    ) ? '/setup' : '/(tabs)/home';
+    ) ? '/setup' : ((user.has_chat) ? '/(tabs)/chats' : '/(tabs)/home');
   };
 
   const handleGoogleResponse = useCallback(async (accessToken?: string) => {
@@ -185,7 +185,7 @@ export default function SplashAuthScreen() {
         <Animated.View style={[styles.authContent, authContentStyle]} pointerEvents={showAuth ? 'auto' : 'none'}>
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Wybra</Text>
-            <Text style={styles.subtitle}>在看見臉龐之前，先聽見靈魂</Text>
+            <Text style={styles.subtitle}>在雜訊之中，捕捉一個與你契合的靈魂。</Text>
           </View>
 
           <View style={styles.formContainer}>

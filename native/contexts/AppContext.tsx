@@ -59,7 +59,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     setTimeout(() => {
       fetchUser();
-    }, 2000);
+    }, 1000);
   }, [fetchUser]);
 
   return (

@@ -83,15 +83,6 @@ const SetupScreen = () => {
   // Animation
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  // Redirect if user already completed setup
-  useEffect(() => {
-    if (!userLoading && user?.personal_info?.bio && 
-        user?.personal_info?.custom_question &&
-        (user?.personal_info?.bio as string)?.length >= 30) {
-      router.replace('/(tabs)/home');
-    }
-  }, [user, userLoading, router]);
-
   // Date picker logic
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 50 }, (_, i) => currentYear - 18 - i);
@@ -589,9 +580,9 @@ const SetupScreen = () => {
                 showsVerticalScrollIndicator={false}
               >
                 <View style={styles.inputsContainer}>
-                  <Text style={styles.vibeTitle}>選擇一張有你的相片</Text>
+                  <Text style={styles.vibeTitle}>選擇一張有你的照片</Text>
                   <Text style={styles.vibeDescription}>
-                    相片會模糊顯示，直到與對方聊天滿 3 天後，才會互相揭露身份。
+                    聊天時，解鎖一場默契小遊戲，通過才能互相看見對方的照片。
                   </Text>
 
                   <View style={styles.avatarContainer}>
@@ -657,7 +648,7 @@ const SetupScreen = () => {
                   </View>
 
                   <Text style={styles.photoWarning}>
-                    請勿上傳不雅照，若被檢舉將導致永久封鎖。
+                    請勿上傳不雅照，解鎖後若被檢舉將導致永久封鎖。
                   </Text>
                 </View>
               </ScrollView>
@@ -708,7 +699,7 @@ const SetupScreen = () => {
 
                   <View style={styles.completionMessageContainer}>
                     <Text style={styles.completionText}>
-                      設定完成，開始尋找頻率相符的夥伴吧！
+                      設定完成，開始漫遊，看看命運連上了誰？
                     </Text>
                   </View>
                 </View>
@@ -725,7 +716,7 @@ const SetupScreen = () => {
             disabled={loading || !canProceed}
           >
             {loading ? (
-              <LoadingSpinner size={20} color={colors.text} strokeWidth={3} />
+              <LoadingSpinner size={20} color={colors.primary} strokeWidth={3} />
             ) : (
               <Text style={styles.buttonText}>{buttonText}</Text>
             )}
@@ -1337,12 +1328,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
+    borderWidth: 2,
   },
   buttonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.text,
+    // color: colors.text,
+    color: colors.primary,
   },
   modalContainer: {
     backgroundColor: colors.card,

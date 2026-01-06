@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Dimensions, ScrollView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/lib/colors';
-import { fetchProfiles } from '@/lib/api';
+import { createChat, fetchProfiles } from '@/lib/api';
 import LoadingSpinner from '@/svgs/spinner';
 import LogoIcon from '@/svgs/logo';
 import {
@@ -15,20 +15,49 @@ import {
 import type { User } from '@/lib/types';
 import Button from '@/components/ui/button';
 import ProfileModal from '@/components/ui/profile-modal';
+import BottomSheetModal from '@/components/ui/bottom-sheet-modal';
+import Input from '@/components/ui/input';
+import { INTEREST_TAGS, MBTI_OPTIONS } from '@/lib/setup';
+import { router } from 'expo-router';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 80;
 const CARD_SPACING = 32;
 
 export default function FeedScreen() {
-  const [profiles, setProfiles] = useState<User[]>([]);
+  const [profiles, setProfiles] = useState<(User & { has_chat?: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<(User & { has_chat?: boolean }) | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [currentProfile, setCurrentProfile] = useState<User | null>(null);
+  const [currentProfile, setCurrentProfile] = useState<(User & { has_chat?: boolean }) | null>(null);
+
+  const [showSendSignalModal, setShowSendSignalModal] = useState(false);
+  const [message, setMessage] = useState('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
   }, []);
 
   const loadData = async () => {
@@ -61,9 +90,25 @@ export default function FeedScreen() {
     const offsetX = event.nativeEvent.contentOffset.x;
     const index = Math.round(offsetX / (CARD_WIDTH + CARD_SPACING));
     const selectedProfile = profiles[index];
-    if (selectedProfile && selectedProfile.id !== currentProfile?.id) {
+    if (selectedProfile && selectedProfile.id !== currentProfile?.id && !showSendSignalModal) {
       setCurrentProfile(selectedProfile);
     }
+  };
+
+  // Send message and create chat
+  const handleSendSignal = async () => {
+    if (!currentProfile?.id) return;
+
+    setIsCreatingChat(true);
+    Keyboard.dismiss();
+    await createChat(currentProfile.id, message);
+    setIsCreatingChat(false);
+    setShowSendSignalModal(false);
+    setProfiles(profiles.map(profile => profile.id === currentProfile.id ? { ...profile, has_chat: true } : profile));
+    setCurrentProfile({ ...currentProfile, has_chat: true });
+    setTimeout(() => {
+      router.push(`/chat?other_id=${currentProfile.id}`);
+    }, 100);
   };
 
   const renderItem = ({ item }: { item: User }) => {
@@ -113,7 +158,7 @@ export default function FeedScreen() {
       </View>
 
       <View style={styles.headerDescriptionContainer}>
-        <Text style={styles.headerDescription}>今日的 10 個小靈魂</Text>
+        <Text style={styles.headerDescription}>今日的 {profiles.length} 個小幽靈</Text>
       </View>
 
       <View style={styles.feedContainer}>
@@ -134,11 +179,20 @@ export default function FeedScreen() {
           disableIntervalMomentum={true}
         />
         <View style={styles.actionContainer}>
-          <Button style={[styles.signalButton, { 
-            borderColor: currentProfile?.personal_info?.color + '88', 
-            // backgroundColor: (currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color) + '40' 
-          }]} onPress={() => {}}>
-            <Text style={[styles.signalButtonText, { color: colors.text }]}>發送訊號給 {currentProfile?.username}</Text>
+          <Button style={[styles.signalButton, {
+            borderColor: currentProfile?.personal_info?.color + '88',
+            backgroundColor: (currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color) + '40'
+          }]} onPress={() => {
+            if (currentProfile?.has_chat) {
+              router.push(`/chat?other_id=${currentProfile.id}`);
+            } else {
+              setMessage('');
+              setShowSendSignalModal(true);
+            }
+          }}>
+            <Text style={[styles.signalButtonText, { color: currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color }]}>
+              {currentProfile?.has_chat ? '繼續聊天' : '開啟對話'}
+            </Text>
           </Button>
         </View>
       </View>
@@ -149,6 +203,112 @@ export default function FeedScreen() {
         onClose={handleCloseModal}
         user={selectedUser}
       />
+
+      {/* Send Signal Modal */}
+      <BottomSheetModal
+        visible={showSendSignalModal}
+        containerStyle={{
+          ...styles.modalContainer,
+          ...(keyboardHeight > 0 && { marginBottom: keyboardHeight - 28 })
+        }}
+        onClose={() => {
+          Keyboard.dismiss();
+          setShowSendSignalModal(false);
+        }}
+      >
+        <View>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>和 {currentProfile?.username} 開啟對話</Text>
+
+            {/* Message Input */}
+            <Input
+              value={message}
+              onChangeText={setMessage}
+              placeholder="你的訊息..."
+              multiline
+              style={[styles.messageInput, { borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color) + '80' }]}
+            />
+
+            {/* Interest Tags Horizontal Scroll */}
+            <View style={styles.interestSection}>
+              <Text style={styles.interestLabel}>懶人標籤</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.interestScrollContent}
+                style={styles.interestScroll}
+                nestedScrollEnabled
+              >
+                {/* Just wave */}
+                <Button style={[styles.interestTag, {
+                  borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color) + '40',
+                }]} onPress={() => {
+                  setMessage(message === '嗨！' ? '哈囉！' : (message === '哈囉！' ? '你好！' : '嗨！'));
+                }}>
+                  <Text style={[styles.interestTagText, {
+                    color: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color),
+                  }]}>打個招呼 👋🏼</Text>
+                </Button>
+                {/* MBTI */}
+                {(currentProfile?.personal_info?.mbti !== 'UNKNOWN') && <Button style={[styles.interestTag, {
+                  borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color) + '40',
+                }]} onPress={() => {
+                  const mbti = MBTI_OPTIONS.find(option => option.value === currentProfile?.personal_info?.mbti)?.value;
+                  setMessage(`嗨！我注意到你是 ${mbti}`);
+                }}>
+                  <Text style={[styles.interestTagText, {
+                    color: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color),
+                  }]}>{MBTI_OPTIONS.find(option => option.value === currentProfile?.personal_info?.mbti)?.value}</Text>
+                </Button>}
+                {/* Interests */}
+                {currentProfile?.personal_info?.interests.map((interest) => {
+                  return (
+                    <Button
+                      key={interest}
+                      onPress={() => {
+                        setMessage(`嗨！我注意到你喜歏 ${(interest.startsWith('#') ? interest : INTEREST_TAGS.find(tag => tag.id === interest)?.label || interest).replace('#', '')}`);
+                      }}
+                      style={[
+                        styles.interestTag,
+                        {
+                          borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color) + '40',
+                        }
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.interestTagText,
+                          {
+                            color: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color),
+                            fontWeight: 'bold',
+                          }
+                        ]}
+                      >
+                        {interest.startsWith('#') ? interest : INTEREST_TAGS.find(tag => tag.id === interest)?.label}
+                      </Text>
+                    </Button>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {/* Send Button */}
+            <Button
+              disabled={message.trim() === '' || isCreatingChat}
+              onPress={handleSendSignal}
+              style={[
+                styles.sendButton,
+                {
+                  backgroundColor: (currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color) + '40',
+                  borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color),
+                }
+              ]}
+            >
+              {isCreatingChat ? <LoadingSpinner size={20} color={(currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color)} strokeWidth={3} /> : <Text style={[styles.sendButtonText, { color: (currentProfile?.personal_info?.color === colors.background ? colors.primary : currentProfile?.personal_info?.color) }]}>發送</Text>}
+            </Button>
+          </View>
+        </View>
+      </BottomSheetModal>
     </SafeAreaView>
   );
 }
@@ -208,14 +368,80 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 16,
-    // borderWidth: 1.5,
-    backgroundColor: colors.primary + '88',
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '20',
   },
   signalButtonText: {
     fontSize: 15,
     textAlign: 'center',
     fontWeight: 'bold',
-    color: colors.text,
+    // color: colors.text,
+    color: colors.primary,
     letterSpacing: 1.5,
+  },
+  modalContainer: {
+    backgroundColor: colors.card,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  modalContent: {
+    width: '100%',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  messageInput: {
+    marginBottom: 20,
+    minHeight: 80,
+  },
+  interestSection: {
+    marginBottom: 24,
+  },
+  interestLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  interestScroll: {
+    marginHorizontal: -4,
+  },
+  interestScrollContent: {
+    paddingHorizontal: 4,
+    gap: 8,
+  },
+  interestTag: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  interestTagText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: 'bold',
+  },
+  sendButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    borderWidth: 2,
+  },
+  sendButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.background,
+    letterSpacing: 1,
   },
 });

@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     shadowColor: colors.text,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 5,
   },
@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   zineInterestText: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.text,
     fontWeight: '600',
     letterSpacing: 0.5,

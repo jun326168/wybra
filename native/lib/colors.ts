@@ -6,7 +6,7 @@ export const colors = {
   border: '#242930',
   card: '#1c1f24',
   warning: '#FFA500',
-  error: '#d15e7f',
+  error: '#ba496a',
   generation: {
     gen_alpha: '#e3349b',
     gen_z: '#06B6E4',

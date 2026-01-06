@@ -22,5 +22,28 @@ export interface User {
   };
   settings?: Record<string, unknown>;
   created_at?: string;
+  has_chat?: boolean;
+}
+
+export interface Chat {
+  id: string;
+  user_1: string;
+  user_2: string;
+  last_message_id: string;
+  chat_info?: Record<string, unknown>;
+  quiz_info?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  other_user?: {
+    id: string;
+    username: string | null;
+    personal_info: Record<string, unknown> | null;
+  };
+  last_message?: {
+    id: string;
+    content: string | null;
+    sender_id: string | null;
+    created_at: string | null;
+  };
 }
 

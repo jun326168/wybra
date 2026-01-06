@@ -1,26 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { query } from '@/lib/postgres';
+import { User } from '@/lib/type';
 
-type DbUser = {
-  id: string;
-  email: string;
-  username: string | null;
-  provider: string;
-  personal_info: Record<string, unknown>;
-  settings: Record<string, unknown>;
-  created_at?: string;
-};
-
+// --- Config ---
 const OPPOSE_GENDER_RATIO = 0.6;
 const TOTAL_LIMIT = 10;
 const AGE_RANGE = 5;
 
+// --- Helpers ---
+
 function getOppositeGender(gender: string): string | null {
-  const g = gender.trim().toLowerCase();
+  const g = gender?.trim().toLowerCase() || '';
   if (g === 'male') return 'female';
   if (g === 'female') return 'male';
-  return null; // For non-binary, we can default to 'random' or handle separately
+  return null;
 }
 
 function shuffleInPlace<T>(arr: T[]): T[] {
@@ -31,7 +25,14 @@ function shuffleInPlace<T>(arr: T[]): T[] {
   return arr;
 }
 
-// --- The Trojan Horse Logic ---
+function getTodayString(): string {
+  // Returns "YYYY-MM-DD" in UTC (or shift to Taiwan time UTC+8 if strictly local)
+  const today = new Date();
+  today.setHours(today.getHours() + 8);
+  return today.toISOString().split('T')[0];
+}
+
+// --- Main Handler ---
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,7 +42,54 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 1. Extract Requester Data
+    const today = getTodayString();
+    
+    // Get all user IDs that the current user already has chats with
+    const existingChats = await query<{ other_user_id: string }>(
+      `
+      SELECT 
+        CASE 
+          WHEN user_1 = $1 THEN user_2
+          ELSE user_1
+        END as other_user_id
+      FROM chats
+      WHERE user_1 = $1 OR user_2 = $1
+      `,
+      [user.id]
+    );
+    
+    const existingChatUserIds = new Set(existingChats.map(c => c.other_user_id));
+    
+    // ---------------------------------------------------------
+    // 1. CHECK CACHE: Do we already have a feed for today?
+    // ---------------------------------------------------------
+    const storedFeed = user.personal_info?.feed as { date: string; ids: string[] } | undefined;
+    
+    if (storedFeed && storedFeed.date === today && Array.isArray(storedFeed.ids) && storedFeed.ids.length > 0) {
+      // HIT: Fetch the exact profiles stored in the feed
+      const feedIds = storedFeed.ids;
+      
+      const cachedUsers = await query<User>(
+        `SELECT id, username, personal_info FROM users WHERE id = ANY($1::uuid[])`,
+        [feedIds]
+      );
+
+      // Restore the original shuffled order (SQL doesn't guarantee order by IN array)
+      const orderedUsers = feedIds
+        .map((id: string) => cachedUsers.find(u => u.id === id))
+        .filter((u): u is User => u !== undefined) // Filter out any users that might have been deleted
+        .map((u) => ({
+          ...u,
+          has_chat: existingChatUserIds.has(u.id),
+        }));
+
+      return NextResponse.json({ users: orderedUsers });
+    }
+
+    // ---------------------------------------------------------
+    // 2. CACHE MISS: Generate New Trojan Horse Feed
+    // ---------------------------------------------------------
+    
     const requesterGender = typeof user.personal_info?.gender === 'string' 
       ? user.personal_info.gender 
       : 'unknown';
@@ -50,87 +98,78 @@ export async function GET(request: NextRequest) {
       ? user.personal_info.birthday 
       : null;
 
-    // 2. Calculate Age Range (Default: +/- 5 years)
-    let lowAge = 18; // Safety floor
+    // Calculate Age Range
+    let lowAge = 18;
     let highAge = 99;
     
     if (requesterBirthday) {
       const birthYear = new Date(requesterBirthday).getFullYear();
       const currentYear = new Date().getFullYear();
       const age = currentYear - birthYear;
-      
-      // For Launch: Widen this if you only have 10 users! 
-      // Maybe use +/- 10 years for the first month?
       lowAge = Math.max(18, age - AGE_RANGE); 
       highAge = age + AGE_RANGE;
     }
 
-    // 3. Define the "Secret Mix" (The Trojan Horse)
-    // We want roughly 60% Opposite Gender (Romance Potential) + 40% Same Gender (Friend Potential)
     const oppositeGender = getOppositeGender(requesterGender);
+    let combined: User[] = [];
+
+    // Build exclusion list: current user + users already in chats
+    const excludeIds = [user.id, ...Array.from(existingChatUserIds)];
     
-    // If gender is unknown or non-binary, we just do pure random
+    // --- Generation Logic (Same as your design) ---
     if (!oppositeGender || requesterGender === 'unknown') {
-      const randomUsers = await query<DbUser>(
-        `SELECT id, username, personal_info FROM users WHERE id <> $1 ORDER BY random() LIMIT $2`,
-        [user.id, TOTAL_LIMIT]
+      // Pure Random for NB or Unknown
+      combined = await query<User>(
+        `SELECT id, username, personal_info FROM users WHERE id <> ALL($1::uuid[]) ORDER BY random() LIMIT $2`,
+        [excludeIds, TOTAL_LIMIT]
       );
-      return NextResponse.json({ users: randomUsers });
+    } else {
+      // Biased Mix
+      let targetOpposite = 0;
+      for (let i = 0; i < TOTAL_LIMIT; i++) {
+        if (Math.random() < OPPOSE_GENDER_RATIO) targetOpposite++; 
+      }
+      const targetSame = TOTAL_LIMIT - targetOpposite;
+
+      const [oppositeResults, sameResults] = await Promise.all([
+        query<User>(
+          `
+          SELECT id, username, personal_info 
+          FROM users
+          WHERE id <> ALL($1::uuid[])
+            AND (personal_info->>'birthday') ~ '^\\d{4}-\\d{2}-\\d{2}$'
+            AND date_part('year', age(current_date, (personal_info->>'birthday')::date))::int BETWEEN $2 AND $3
+            AND lower(personal_info->>'gender') = lower($4)
+          ORDER BY random()
+          LIMIT $5
+          `,
+          [excludeIds, lowAge, highAge, oppositeGender, targetOpposite]
+        ),
+        query<User>(
+          `
+          SELECT id, username, personal_info 
+          FROM users
+          WHERE id <> ALL($1::uuid[])
+            AND (personal_info->>'birthday') ~ '^\\d{4}-\\d{2}-\\d{2}$'
+            AND date_part('year', age(current_date, (personal_info->>'birthday')::date))::int BETWEEN $2 AND $3
+            AND lower(personal_info->>'gender') = lower($4)
+          ORDER BY random()
+          LIMIT $5
+          `,
+          [excludeIds, lowAge, highAge, requesterGender, targetSame]
+        )
+      ]);
+
+      combined = [...oppositeResults, ...sameResults];
     }
 
-    // Determine target counts (Biased Randomness)
-    // This creates natural variation so it doesn't feel like a rigid algorithm
-    let targetOpposite = 0;
-    for (let i = 0; i < TOTAL_LIMIT; i++) {
-      if (Math.random() < OPPOSE_GENDER_RATIO) targetOpposite++; 
-    }
-    const targetSame = TOTAL_LIMIT - targetOpposite;
-
-    // 4. Parallel Execution (Faster Response Time)
-    // We run both queries at once instead of waiting for one to finish
-    const [oppositeResults, sameResults] = await Promise.all([
-      // Fetch Opposite Gender Candidates
-      query<DbUser>(
-        `
-        SELECT id, username, personal_info 
-        FROM users
-        WHERE id <> $1
-          AND (personal_info->>'birthday') ~ '^\\d{4}-\\d{2}-\\d{2}$'
-          AND date_part('year', age(current_date, (personal_info->>'birthday')::date))::int BETWEEN $2 AND $3
-          AND lower(personal_info->>'gender') = lower($4)
-        ORDER BY random()
-        LIMIT $5
-        `,
-        [user.id, lowAge, highAge, oppositeGender, targetOpposite]
-      ),
-      // Fetch Same Gender Candidates
-      query<DbUser>(
-        `
-        SELECT id, username, personal_info 
-        FROM users
-        WHERE id <> $1
-          AND (personal_info->>'birthday') ~ '^\\d{4}-\\d{2}-\\d{2}$'
-          AND date_part('year', age(current_date, (personal_info->>'birthday')::date))::int BETWEEN $2 AND $3
-          AND lower(personal_info->>'gender') = lower($4)
-        ORDER BY random()
-        LIMIT $5
-        `,
-        [user.id, lowAge, highAge, requesterGender, targetSame]
-      )
-    ]);
-
-    // 5. Merge & Deduplicate
-    const combined = [...oppositeResults, ...sameResults];
+    // Desperation Fill
     const seenIds = new Set(combined.map(u => u.id));
-
-    // 6. The "Desperation Fill" (Crucial for MVP/Launch)
-    // If we didn't find 10 people (because the filters were too strict), 
-    // fill the remaining slots with ANYONE active, ignoring Age/Gender preference.
     if (combined.length < TOTAL_LIMIT) {
       const missingCount = TOTAL_LIMIT - combined.length;
-      const excludeIds = [user.id, ...Array.from(seenIds)];
+      const finalExcludeIds = [...excludeIds, ...Array.from(seenIds)];
       
-      const fillers = await query<DbUser>(
+      const fillers = await query<User>(
         `
         SELECT id, username, personal_info 
         FROM users
@@ -138,16 +177,41 @@ export async function GET(request: NextRequest) {
         ORDER BY random()
         LIMIT $2
         `,
-        [excludeIds, missingCount]
+        [finalExcludeIds, missingCount]
       );
-      
       combined.push(...fillers);
     }
 
-    // 7. Final Shuffle (The Illusion)
+    // Final Shuffle
     const finalFeed = shuffleInPlace(combined);
 
-    return NextResponse.json({ users: finalFeed });
+    // ---------------------------------------------------------
+    // 3. SAVE TO DB: Update user's personal_info with new feed
+    // ---------------------------------------------------------
+    
+    const feedData = {
+      date: today,
+      ids: finalFeed.map(u => u.id)
+    };
+
+    // Use Postgres JSONB concatenation (||) to merge the "feed" key into personal_info
+    // This preserves existing bio, avatar, etc., and just adds/updates "feed"
+    await query(
+      `
+      UPDATE users 
+      SET personal_info = personal_info || $1::jsonb 
+      WHERE id = $2
+      `,
+      [JSON.stringify({ feed: feedData }), user.id]
+    );
+
+    // Add has_chat flag to each user (should be false for newly generated feed, but check anyway)
+    const usersWithChatFlag = finalFeed.map((u) => ({
+      ...u,
+      has_chat: existingChatUserIds.has(u.id),
+    }));
+
+    return NextResponse.json({ users: usersWithChatFlag });
 
   } catch (error) {
     console.error('Feed generation error:', error);
