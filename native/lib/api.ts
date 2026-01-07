@@ -216,3 +216,20 @@ export const fetchChat = async (chatId?: string, otherUserId?: string): Promise<
   const data = await response.json();
   return { chat: data.chat as Chat, messages: data.messages as Message[] };
 };
+
+export const sendMessage = async (userId: string, chatId: string, message: string): Promise<{ message: Message, chat: Chat }> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/send-message`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ user_id: userId, chat_id: chatId, content: message }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to send message');
+  }
+
+  const data = await response.json();
+  return { message: data.message as Message, chat: data.chat as Chat };
+};

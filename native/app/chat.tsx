@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { brightenHexColor, colors } from '@/lib/colors';
 import LoadingSpinner from '@/svgs/spinner';
 import LogoIcon from '@/svgs/logo';
-import { fetchChat } from '@/lib/api';
+import { fetchChat, sendMessage } from '@/lib/api';
 import { Chat, Message, User } from '@/lib/types';
 import { router, useLocalSearchParams } from 'expo-router';
 import Button from '@/components/ui/button';
@@ -14,6 +14,7 @@ import Input from '@/components/ui/input';
 import { Entypo } from '@expo/vector-icons';
 import ProfileModal from '@/components/ui/profile-modal';
 import { formatMessageTime } from '@/lib/functions';
+import ChatTips from '@/components/ui/chat-tips';
 
 const ChatScreen = () => {
 
@@ -30,6 +31,8 @@ const ChatScreen = () => {
   const [sending, setSending] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [showTips, setShowTips] = useState(false);
+  const [tipStep, setTipStep] = useState(1);
 
   const themeColor = chat?.other_user?.personal_info?.color === colors.background ? colors.textSecondary : chat?.other_user?.personal_info?.color as string;
   const userColor = user?.personal_info?.color === colors.background ? colors.textSecondary : user?.personal_info?.color as string;
@@ -64,13 +67,35 @@ const ChatScreen = () => {
     const { chat, messages } = await fetchChat(chat_id as string, other_user_id as string);
     setChat(chat);
     setMessages(messages);
-    setCurrentUserProgress(Math.min(100, user?.id === chat?.user_1 ? (chat?.chat_info?.user_1_progress as number) : (chat?.chat_info?.user_2_progress as number)));
-    setOtherUserProgress(Math.min(100, user?.id === chat?.user_1 ? (chat?.chat_info?.user_2_progress as number) : (chat?.chat_info?.user_1_progress as number)));
+    setCurrentUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_1_progress as number) : (chat?.chat_info?.user_2_progress as number));
+    setOtherUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_2_progress as number) : (chat?.chat_info?.user_1_progress as number));
     setLoading(false);
+    if (messages.length <= 1) {
+      setShowTips(true);
+    }
   };
 
   const handleSendMessage = async () => {
-    
+    const messageContent = inputText;
+    setInputText('');
+    const newMessage: Message = {
+      id: '',
+      chat_id: chat?.id as string,
+      user_id: user?.id as string,
+      content: messageContent,
+      created_at: new Date().toISOString(),
+      message_info: {},
+    };
+    setMessages([...messages, newMessage]);
+    await sendMessage(user?.id as string, chat?.id as string, messageContent);
+  };
+
+  const handleTipPress = () => {
+    if (tipStep === 1) {
+      setTipStep(2);
+    } else {
+      setShowTips(false);
+    }
   };
 
   const renderMessage = ({ item, isSameUser }: { item: Message, isSameUser: boolean }) => {
@@ -89,7 +114,7 @@ const ChatScreen = () => {
           </View>
         )}
         <View style={[styles.messageBubble, { 
-          backgroundColor: (item.user_id === user?.id ? lighterUserColor : lighterThemeColor) + '80',
+          backgroundColor: (item.user_id === user?.id ? lighterUserColor : lighterThemeColor) + 'A0',
         }]}>
           <Text style={styles.messageText}>{item.content}</Text>
         </View>
@@ -100,6 +125,32 @@ const ChatScreen = () => {
         )}
       </View>
     );
+  };
+
+  const renderTip = () => {
+    if (tipStep === 1) {
+      return <Text style={styles.tipText}>在一天之中，只有<Text style={styles.tipHighlight}>下午 6 點</Text>到<Text style={styles.tipHighlight}>午夜 12 點</Text>可以聊天，把握時間了解對方吧！</Text>;
+    } else {
+      return <View>
+        <View style={[styles.progressBarContainer, { marginTop: 0, marginBottom: 12, height: 6 }]}>
+          <View style={[styles.progressBarLeftContainer, { height: 6 }]}>
+            <View style={[styles.progressBarLeft, {
+              width: '100%',
+              backgroundColor: (chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color) as string,
+              shadowColor: (chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color) as string,
+            }]} />
+          </View>
+          <View style={[styles.progressBarRightContainer, { height: 6 }]}>
+            <View style={[styles.progressBarRight, {
+              width: '100%',
+              backgroundColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
+              shadowColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
+            }]} />
+          </View>
+        </View>
+        <Text style={styles.tipText}>盡情聊天吧！小幽靈會持續捕捉你們的<Text style={styles.tipHighlight}>契合度</Text>。隨著話題深入，畫面上方的進度線會逐漸向中間靠攏。當線條相遇，會發動「默契問答」！只要通過，就能解鎖對方的照片嘍！</Text>
+      </View>
+    }
   };
 
   if (loading) {
@@ -151,17 +202,22 @@ const ChatScreen = () => {
             <View style={[styles.progressBarLeft, {
               backgroundColor: (chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color) as string,
               shadowColor: (chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color) as string,
-              width: `${otherUserProgress}%`,
+              width: `${Math.min(100, otherUserProgress)}%`,
             }]} />
           </View>
           <View style={styles.progressBarRightContainer}>
             <View style={[styles.progressBarRight, {
               backgroundColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
               shadowColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
-              width: `${currentUserProgress}%`,
+              width: `${Math.min(100, currentUserProgress)}%`,
             }]} />
           </View>
         </View>
+        {/* progress bar labels */}
+        {/* <View style={styles.progressBarLabels}>
+          <Text style={styles.progressBarLabel}>{otherUserProgress}</Text>
+          <Text style={styles.progressBarLabel}>{currentUserProgress}</Text>
+        </View> */}
       </View>
 
       <KeyboardAvoidingView
@@ -211,6 +267,14 @@ const ChatScreen = () => {
         onClose={() => setShowProfileModal(false)}
         user={chat?.other_user as User}
       />
+
+      {/* Chat Tips */}
+      <ChatTips 
+        visible={showTips}
+        onPress={handleTipPress}
+      >
+        {renderTip()}
+      </ChatTips>
     </SafeAreaView>
   );
 }
@@ -234,7 +298,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    gap: 8,
+    gap: 4,
   },
   headerTitleContainer: {
     flexDirection: 'row',
@@ -245,12 +309,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
-    letterSpacing: 1,
   },
   avatarContainer: {
-    width: 42,
-    height: 42,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1.5,
     overflow: 'hidden',
     backgroundColor: colors.background, // Fallback
@@ -273,11 +336,22 @@ const styles = StyleSheet.create({
   },
 
   progressBarContainer: {
-    marginTop: 6,
+    marginTop: 8,
     width: '100%',
     borderRadius: 4,
     flexDirection: 'row',
     gap: 4,
+  },
+  progressBarLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 4,
+  },
+  progressBarLabel: {
+    fontSize: 10,
+    color: colors.textSecondary + 'A0',
+    fontWeight: 'bold',
   },
   progressBarRightContainer: {
     position: 'relative',
@@ -343,8 +417,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   timeText: {
-    fontSize: 10,
-    color: colors.textSecondary + 'A0',
+    fontSize: 9,
+    color: colors.textSecondary + '40',
   },
   messageBubble: {
     backgroundColor: colors.card,
@@ -392,6 +466,15 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
 
+  tipText: {
+    fontSize: 15,
+    lineHeight: 20,
+    color: colors.text,
+  },
+  tipHighlight: {
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
 });
 
 export default ChatScreen

@@ -4,7 +4,7 @@ import { query } from '@/lib/postgres';
 import { User } from '@/lib/type';
 
 // --- Config ---
-const OPPOSE_GENDER_RATIO = 0.6;
+const OPPOSE_GENDER_RATIO = 0.7;
 const TOTAL_LIMIT = 10;
 const AGE_RANGE = 5;
 
@@ -26,9 +26,7 @@ function shuffleInPlace<T>(arr: T[]): T[] {
 }
 
 function getTodayString(): string {
-  // Returns "YYYY-MM-DD" in UTC (or shift to Taiwan time UTC+8 if strictly local)
   const today = new Date();
-  today.setHours(today.getHours() + 8);
   return today.toISOString().split('T')[0];
 }
 

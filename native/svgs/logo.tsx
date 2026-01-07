@@ -11,6 +11,8 @@ import Animated, {
   useAnimatedProps,
 } from 'react-native-reanimated';
 
+// personalities - flower, star, cloud, feather, top hat, glasses, sprout, beanie
+
 const AnimatedG = Animated.createAnimatedComponent(G);
 
 const LogoIcon = ({ size = 120, color = '#EAE8FF', stroke = '#121418', floatingY = 16 }: { size?: number, color?: string, stroke?: string, floatingY?: number }) => {

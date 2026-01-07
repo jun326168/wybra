@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     color: colors.text,
     lineHeight: 19,
-    fontWeight: '200',
+    fontWeight: '300',
     marginTop: 4,
   },
   // quote
