@@ -87,7 +87,9 @@ const ChatScreen = () => {
       message_info: {},
     };
     setMessages([...messages, newMessage]);
-    await sendMessage(user?.id as string, chat?.id as string, messageContent);
+    const { message, chat: updatedChat } = await sendMessage(user?.id as string, chat?.id as string, messageContent);
+    setChat(updatedChat);
+    setMessages(prev => prev.slice(0, -1).concat(message));
   };
 
   const handleTipPress = () => {
@@ -106,7 +108,7 @@ const ChatScreen = () => {
     return (
       <View style={[styles.messageContainer, {
         justifyContent: item.user_id === user?.id ? 'flex-end' : 'flex-start',
-        marginBottom: isSameUser ? 8 : 16,
+        marginBottom: isSameUser ? 8 : 12,
       }]}>
         {item.user_id === user?.id && (
           <View style={styles.timeTextContainer}>
@@ -229,7 +231,7 @@ const ChatScreen = () => {
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
-          renderItem={(item) => renderMessage({ item: item.item, isSameUser: item.index > 0 && item.item.user_id === messages[item.index - 1].user_id })}
+          renderItem={(item) => renderMessage({ item: item.item, isSameUser: item.item.user_id === messages[item.index + 1]?.user_id })}
           contentContainerStyle={styles.listContent}
           inverted={false}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}

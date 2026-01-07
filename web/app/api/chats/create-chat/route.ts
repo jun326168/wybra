@@ -109,7 +109,8 @@ export async function POST(request: NextRequest) {
           '{user_1_progress}',
           '5'::jsonb,
           true
-        )
+        ),
+        message_count = message_count + 1
       WHERE id = $2
       RETURNING *
       `,
