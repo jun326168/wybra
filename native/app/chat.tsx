@@ -1,17 +1,19 @@
-import { View, Text, StyleSheet, Image, FlatList, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, StyleSheet, Image, FlatList, KeyboardAvoidingView, Platform, Pressable, Keyboard } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useRef, useState } from 'react'
-import { colors } from '@/lib/colors';
+import { brightenHexColor, colors } from '@/lib/colors';
 import LoadingSpinner from '@/svgs/spinner';
 import LogoIcon from '@/svgs/logo';
-import { Feather } from '@expo/vector-icons';
 import { fetchChat } from '@/lib/api';
-import { Chat, Message } from '@/lib/types';
+import { Chat, Message, User } from '@/lib/types';
 import { router, useLocalSearchParams } from 'expo-router';
 import Button from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { PHOTO_BLUR_AMOUNT } from '@/lib/setup';
 import Input from '@/components/ui/input';
+import { Entypo } from '@expo/vector-icons';
+import ProfileModal from '@/components/ui/profile-modal';
+import { formatMessageTime } from '@/lib/functions';
 
 const ChatScreen = () => {
 
@@ -26,13 +28,36 @@ const ChatScreen = () => {
   const flatListRef = useRef<FlatList<Message>>(null);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-  const themeColor = chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color as string;
+  const themeColor = chat?.other_user?.personal_info?.color === colors.background ? colors.textSecondary : chat?.other_user?.personal_info?.color as string;
+  const userColor = user?.personal_info?.color === colors.background ? colors.textSecondary : user?.personal_info?.color as string;
 
   const showImage = false;
 
   useEffect(() => {
     loadChat();
+  }, []);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        setIsKeyboardVisible(true);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setIsKeyboardVisible(false);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
   }, []);
 
   const loadChat = async () => {
@@ -48,10 +73,31 @@ const ChatScreen = () => {
     
   };
 
-  const renderMessage = ({ item }: { item: Message }) => {
+  const renderMessage = ({ item, isSameUser }: { item: Message, isSameUser: boolean }) => {
+
+    const lighterUserColor = brightenHexColor(userColor, 0.1);
+    const lighterThemeColor = brightenHexColor(themeColor, 0.1);
+
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageText}>{item.content}</Text>
+      <View style={[styles.messageContainer, {
+        justifyContent: item.user_id === user?.id ? 'flex-end' : 'flex-start',
+        marginBottom: isSameUser ? 8 : 16,
+      }]}>
+        {item.user_id === user?.id && (
+          <View style={styles.timeTextContainer}>
+            <Text style={styles.timeText}>{formatMessageTime(item.created_at)}</Text>
+          </View>
+        )}
+        <View style={[styles.messageBubble, { 
+          backgroundColor: (item.user_id === user?.id ? lighterUserColor : lighterThemeColor) + '80',
+        }]}>
+          <Text style={styles.messageText}>{item.content}</Text>
+        </View>
+        {item.user_id !== user?.id && (
+          <View style={styles.timeTextContainer}>
+            <Text style={styles.timeText}>{formatMessageTime(item.created_at)}</Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -71,9 +117,9 @@ const ChatScreen = () => {
       <View style={styles.header}>
         <View style={styles.headerTitleContainer}>
           <Button onPress={() => router.back()}>
-            <Feather name="chevron-left" size={24} color={colors.text} />
+            <Entypo name="chevron-thin-left" size={24} color={colors.text} />
           </Button>
-          <View style={[styles.avatarContainer, { borderColor: themeColor }]}>
+          <Pressable onPress={() => setShowProfileModal(true)} style={[styles.avatarContainer, { borderColor: themeColor }]}>
             {chat?.other_user?.personal_info?.avatar_url ? (
               <Image
                 source={{ uri: chat?.other_user.personal_info.avatar_url as string }}
@@ -94,8 +140,10 @@ const ChatScreen = () => {
                 </View>
               </View>
             )}
-          </View>
-          <Text style={styles.headerTitle}>{chat?.other_user?.username}</Text>
+          </Pressable>
+          <Pressable onPress={() => setShowProfileModal(true)}>
+            <Text style={styles.headerTitle}>{chat?.other_user?.username}</Text>
+          </Pressable>
         </View>
         {/* progress bar */}
         <View style={styles.progressBarContainer}>
@@ -122,39 +170,47 @@ const ChatScreen = () => {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <FlatList
-          // ref={flatListRef}
+          ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
+          renderItem={(item) => renderMessage({ item: item.item, isSameUser: item.index > 0 && item.item.user_id === messages[item.index - 1].user_id })}
           contentContainerStyle={styles.listContent}
           inverted={false}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        // ListFooterComponent={renderQuizTrigger}
+          // ListFooterComponent={() => <View style={styles.listFooter} />}
         />
 
         {/* --- INPUT --- */}
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { paddingBottom: isKeyboardVisible ? 12 : 40 }]}>
           <Input
             style={[styles.inputField, { borderColor: themeColor + '40' }]}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="發送訊號..."
+            placeholder="你的訊息..."
             placeholderTextColor={colors.textSecondary}
-            multiline
+            multiline={true}
+            textAlignVertical="top"
           />
           <Button
             onPress={handleSendMessage}
             disabled={!inputText.trim() || sending}
-            style={[styles.sendButton, { backgroundColor: inputText.trim() ? themeColor : colors.card }]}
+            style={[styles.sendButton, { backgroundColor: inputText.trim() ? themeColor : colors.card, }]}
           >
             {sending ? (
               <LoadingSpinner size={16} color={colors.background} />
             ) : (
-              <Text style={[styles.sendIcon, { color: inputText.trim() ? colors.background : colors.textSecondary }]}>↑</Text>
+              <Text style={[styles.sendIcon]}>↑</Text>
             )}
           </Button>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Profile Modal */}
+      <ProfileModal
+        visible={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={chat?.other_user as User}
+      />
     </SafeAreaView>
   );
 }
@@ -271,6 +327,71 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 2,
     borderTopLeftRadius: 2,
   },
+
+  listContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  messageContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  timeTextContainer: {
+    marginBottom: 2,
+  },
+  timeText: {
+    fontSize: 10,
+    color: colors.textSecondary + 'A0',
+  },
+  messageBubble: {
+    backgroundColor: colors.card,
+    padding: 12,
+    borderRadius: 20,
+    maxWidth: '75%',
+  },
+  messageText: {
+    fontSize: 15,
+    color: colors.text,
+  },
+
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 12,
+  },
+  inputField: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    borderRadius: 24,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    minHeight: 50,
+    maxHeight: 120,
+  },
+  sendButton: {
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 25,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  sendIcon: {
+    fontSize: 24,
+    color: colors.text,
+  },
+
 });
 
 export default ChatScreen

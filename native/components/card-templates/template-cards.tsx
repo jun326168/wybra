@@ -38,7 +38,7 @@ export const ClassicCard = ({ user, themeColor }: TemplateCardProps) => {
   let isDefault = themeColor === colors.background;
 
   if (isDefault) {
-    themeColor = colors.text;
+    themeColor = colors.textSecondary;
   }
 
   return (
@@ -53,7 +53,7 @@ export const ClassicCard = ({ user, themeColor }: TemplateCardProps) => {
           <View style={[styles.classicContentAvatarContainer, { borderColor: themeColor }]}>
             <Image source={{ uri: user.personal_info.avatar_url }} style={styles.classicContentAvatar} blurRadius={PHOTO_BLUR_AMOUNT} />
             <View style={styles.classicContentAvatarOverlay}>
-              <LogoIcon size={28} floatingY={0} stroke={isDefault ? colors.background : themeColor} />
+              <LogoIcon size={28} floatingY={0} stroke={themeColor} />
             </View>
           </View>
           {/* gen */}
@@ -85,7 +85,7 @@ export const QuoteCard = ({ user, themeColor }: TemplateCardProps) => {
   let isDefault = themeColor === colors.background;
 
   if (isDefault) {
-    themeColor = colors.text;
+    themeColor = colors.textSecondary;
   }
 
   const darkenedColor = darkenHexColor(themeColor, 0.2);
@@ -114,7 +114,7 @@ export const QuoteCard = ({ user, themeColor }: TemplateCardProps) => {
           <View style={styles.quoteContentAuthorAvatarContainer}>
             <Image source={{ uri: user.personal_info.avatar_url }} style={[styles.quoteContentAuthorAvatar, { borderColor: themeColor }]} blurRadius={PHOTO_BLUR_AMOUNT} />
             <View style={styles.quoteContentAuthorAvatarOverlay}>
-              <LogoIcon size={20} floatingY={0} stroke={isDefault ? colors.background : themeColor} />
+              <LogoIcon size={20} floatingY={0} stroke={themeColor} />
             </View>
           </View>
           <Text style={styles.quoteContentAuthorName}>{user.username}</Text>
@@ -135,7 +135,7 @@ export const ZineCard = ({ user, themeColor }: TemplateCardProps) => {
   let isDefault = themeColor === colors.background;
 
   if (isDefault) {
-    themeColor = colors.text;
+    themeColor = colors.textSecondary;
   }
 
   // Random angles for sticker effect (-2 to +2 degrees)
@@ -149,7 +149,7 @@ export const ZineCard = ({ user, themeColor }: TemplateCardProps) => {
         <View style={[styles.zineAvatarWrapper, { borderColor: themeColor, transform: [{ rotate: `${stickerAngles[0]}deg` }] }]}>
           <Image source={{ uri: user.personal_info.avatar_url }} style={styles.zineAvatar} blurRadius={PHOTO_BLUR_AMOUNT} />
           <View style={styles.zineAvatarOverlay}>
-            <LogoIcon size={36} floatingY={0} stroke={isDefault ? colors.background : themeColor} />
+            <LogoIcon size={36} floatingY={0} stroke={themeColor} />
           </View>
         </View>
       </View>
@@ -229,7 +229,7 @@ export const PolaroidCard = ({ user, themeColor }: TemplateCardProps) => {
       <View style={styles.polaroidImageFrame}>
         <Image source={{ uri: user.personal_info.avatar_url }} style={styles.polaroidImage} blurRadius={PHOTO_BLUR_AMOUNT + 15} />
         <View style={styles.polaroidOverlay}>
-          <LogoIcon size={120} floatingY={0} stroke={isDefault ? colors.background : themeColor} />
+          <LogoIcon size={120} floatingY={0} stroke={isDefault ? colors.textSecondary : themeColor} />
         </View>
       </View>
 
@@ -258,7 +258,7 @@ export const PolaroidCard = ({ user, themeColor }: TemplateCardProps) => {
 export const TicketCard = ({ user, themeColor }: TemplateCardProps) => {
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
-  if (isDefault) themeColor = colors.text;
+  if (isDefault) themeColor = colors.textSecondary;
 
   // Fixed barcode pattern for consistent rendering
   const barcodeBars = [ { width: 2, height: 30 }, { width: 1, height: 30 }, { width: 2, height: 30 }, { width: 3, height: 30 }, { width: 2, height: 30 }, { width: 4, height: 30 }, { width: 1, height: 30 }, { width: 3, height: 30 }, { width: 2, height: 30 }, { width: 4, height: 30 }, { width: 1, height: 30 }, { width: 3, height: 30 }, { width: 2, height: 30 }, { width: 4, height: 30 }, { width: 2, height: 30 } ];
@@ -281,7 +281,7 @@ export const TicketCard = ({ user, themeColor }: TemplateCardProps) => {
           <View style={[styles.ticketAvatarContainer, { borderColor: themeColor }]}>
             <Image source={{ uri: user.personal_info.avatar_url }} style={styles.ticketAvatar} blurRadius={PHOTO_BLUR_AMOUNT} />
             <View style={styles.ticketAvatarOverlay}>
-              <LogoIcon size={20} floatingY={0} stroke={isDefault ? colors.background : themeColor} />
+              <LogoIcon size={20} floatingY={0} stroke={themeColor} />
             </View>
           </View>
         </View>

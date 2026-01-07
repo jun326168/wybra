@@ -18,7 +18,7 @@ const ProfileSettingsScreen = () => {
   const { user, setUser } = useAppContext();
   const router = useRouter();
 
-  const logoStrokeColor = (user?.personal_info?.color as string | undefined) || colors.background;
+  const logoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string | undefined);
 
   // Form states
   const [username, setUsername] = useState(user?.username || '');

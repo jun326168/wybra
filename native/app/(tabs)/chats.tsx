@@ -12,27 +12,7 @@ import { fetchChats } from '@/lib/api';
 import { Chat } from '@/lib/types'; // Ensure your types file is correct
 import LoadingSpinner from '@/svgs/spinner';
 import { PHOTO_BLUR_AMOUNT } from '@/lib/setup'; // Import your global blur constant
-
-// Helper to format time (e.g. "10:30" or "Yesterday")
-const formatMessageTime = (dateString: string | null) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  const now = new Date();
-
-  const isToday = date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear();
-
-  if (isToday) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-  } else {
-    // Check if it's this year
-    const isThisYear = date.getFullYear() === now.getFullYear();
-    return isThisYear
-      ? date.toLocaleDateString([], { month: 'numeric', day: 'numeric' })
-      : date.toLocaleDateString([], { year: '2-digit', month: 'numeric', day: 'numeric' });
-  }
-};
+import { formatMessageTime } from '@/lib/functions';
 
 export default function ChatsScreen() {
   const { user } = useAppContext();

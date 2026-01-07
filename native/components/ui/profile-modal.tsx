@@ -15,7 +15,7 @@ interface ProfileModalProps {
 export default function ProfileModal({ visible, onClose, user }: ProfileModalProps) {
 
   const avatarUrl = user?.personal_info?.avatar_url as string | undefined;
-  const logoStrokeColor = (user?.personal_info?.color as string | undefined) || colors.background;
+  const logoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string | undefined);
   const showImage = false;
 
   return (

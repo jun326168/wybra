@@ -19,7 +19,7 @@ const ProfileScreen = () => {
   const avatarUrl = user?.personal_info?.avatar_url as string | undefined;
   const generation = getGeneration(new Date(user?.personal_info?.birthday as string).getFullYear());
   const generationColor = colors.generation[generation as keyof typeof colors.generation];
-  const logoStrokeColor = (user?.personal_info?.color as string | undefined) || colors.background;
+  const logoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string | undefined);
 
   // Redirect to auth screen if user is signed out
   useEffect(() => {
