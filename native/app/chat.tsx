@@ -70,7 +70,7 @@ const ChatScreen = () => {
     setCurrentUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_1_progress as number) : (chat?.chat_info?.user_2_progress as number));
     setOtherUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_2_progress as number) : (chat?.chat_info?.user_1_progress as number));
     setLoading(false);
-    if (messages.length <= 1) {
+    if (messages.length <= 1 || new Date().getTime() - new Date(messages[messages.length - 1].created_at).getTime() > 21600000) { // 6 hours
       setShowTips(true);
     }
   };
@@ -93,7 +93,7 @@ const ChatScreen = () => {
   };
 
   const handleTipPress = () => {
-    if (tipStep === 1) {
+    if (tipStep === 1 && messages.length <= 1) {
       setTipStep(2);
     } else {
       setShowTips(false);
@@ -130,6 +130,11 @@ const ChatScreen = () => {
   };
 
   const renderTip = () => {
+    // along side tips
+    if (messages.length > 1 && new Date().getTime() - new Date(messages[messages.length - 1].created_at).getTime() > 21600000) {
+      return <Text style={styles.tipText}>點擊頭像複習一下對方的自介或興趣標籤，也許有新發現喔！</Text>;
+    }
+    // first time tips
     if (tipStep === 1) {
       return <Text style={styles.tipText}>在一天之中，只有<Text style={styles.tipHighlight}>下午 6 點</Text>到<Text style={styles.tipHighlight}>午夜 12 點</Text>可以聊天，把握時間了解對方吧！</Text>;
     } else {

@@ -224,13 +224,13 @@ export default function FeedScreen() {
             <Input
               value={message}
               onChangeText={setMessage}
-              placeholder="你的訊息..."
+              placeholder="從對方的自介找話題，或是簡單說聲 Hi 吧！"
               multiline
               style={[styles.messageInput, { borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color) + '80' }]}
             />
 
             {/* Interest Tags Horizontal Scroll */}
-            <View style={styles.interestSection}>
+            {/* <View style={styles.interestSection}>
               <Text style={styles.interestLabel}>懶人標籤</Text>
               <ScrollView
                 horizontal
@@ -239,7 +239,6 @@ export default function FeedScreen() {
                 style={styles.interestScroll}
                 nestedScrollEnabled
               >
-                {/* Just wave */}
                 <Button style={[styles.interestTag, {
                   borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color) + '40',
                 }]} onPress={() => {
@@ -249,7 +248,6 @@ export default function FeedScreen() {
                     color: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color),
                   }]}>打個招呼 👋🏼</Text>
                 </Button>
-                {/* MBTI */}
                 {(currentProfile?.personal_info?.mbti !== 'UNKNOWN') && <Button style={[styles.interestTag, {
                   borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color) + '40',
                 }]} onPress={() => {
@@ -260,7 +258,6 @@ export default function FeedScreen() {
                     color: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color),
                   }]}>{MBTI_OPTIONS.find(option => option.value === currentProfile?.personal_info?.mbti)?.value}</Text>
                 </Button>}
-                {/* Interests */}
                 {currentProfile?.personal_info?.interests.map((interest) => {
                   return (
                     <Button
@@ -290,7 +287,7 @@ export default function FeedScreen() {
                   );
                 })}
               </ScrollView>
-            </View>
+            </View> */}
 
             {/* Send Button */}
             <Button
