@@ -77,7 +77,7 @@ export default function ChatsScreen() {
     // 3. Unread Logic (Mock logic: if the last message is NOT from me, highlight it)
     // You can replace this with a real `unread_count` field later
     const isLastMessageFromMe = item.last_message?.sender_id === user?.id;
-    const isUnread = !isLastMessageFromMe && item.last_message;
+    const isUnread = !isLastMessageFromMe && !item.last_message_read;
 
     // 4. Determine which user is current user and get progress accordingly
     const isUser1 = user?.id === item.user_1;
@@ -86,7 +86,7 @@ export default function ChatsScreen() {
 
     return (
       <Button
-        style={StyleSheet.flatten([styles.chatItem, { borderColor: isUnread ? themeColor : colors.border }])}
+        style={StyleSheet.flatten([styles.chatItem, { borderColor: isUnread ? colors.primary : colors.border }])}
         onPress={() => handlePressChat(item.id)}
       >
         {/* Left: Haze Avatar */}

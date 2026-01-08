@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { brightenHexColor, colors } from '@/lib/colors';
 import LoadingSpinner from '@/svgs/spinner';
 import LogoIcon from '@/svgs/logo';
-import { fetchChat, sendMessage } from '@/lib/api';
+import { fetchChat, sendMessage, markMessageAsRead } from '@/lib/api';
 import { Chat, Message, User } from '@/lib/types';
 import { router, useLocalSearchParams } from 'expo-router';
 import Button from '@/components/ui/button';
@@ -113,6 +113,24 @@ const ChatScreen = () => {
     setOtherUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_2_progress as number) : (chat?.chat_info?.user_1_progress as number));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chat]);
+
+  // Watch messages and mark as read if last message is from other user
+  useEffect(() => {
+    if (!messages.length || !chat?.id || !user?.id) return;
+
+    const lastMessage = messages[messages.length - 1];
+    
+    // If the last message is from the other user (not current user) and not already read
+    if (lastMessage.user_id !== user.id && !chat.last_message_read) {
+      markMessageAsRead(chat.id)
+        .then((updatedChat) => {
+          setChat(prevChat => prevChat ? { ...prevChat, last_message_read: updatedChat.last_message_read } : null);
+        })
+        .catch((error) => {
+          console.error('Error marking message as read:', error);
+        });
+    }
+  }, [messages, chat?.id, chat?.last_message_read, user?.id]);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -497,7 +515,7 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 9,
-    color: colors.textSecondary + '40',
+    color: colors.textSecondary + '80',
   },
   messageBubble: {
     backgroundColor: colors.card,

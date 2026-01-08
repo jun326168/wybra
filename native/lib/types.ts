@@ -32,6 +32,7 @@ export interface Chat {
   user_2: string;
   last_message_id: string;
   message_count: number;
+  last_message_read?: boolean;
   chat_info?: Record<string, unknown>;
   quiz_info?: Record<string, unknown>;
   created_at: string;

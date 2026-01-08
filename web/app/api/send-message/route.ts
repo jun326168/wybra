@@ -75,13 +75,14 @@ export async function POST(request: NextRequest) {
 
     const newMessageCount = existingChat.message_count + 1;
 
-    // Update the chat with the new last_message_id and increment message_count
+    // Update the chat with the new last_message_id, increment message_count, and set last_message_read to false
     await queryOne<Chat>(
       `
       UPDATE chats
       SET 
         last_message_id = $1,
-        message_count = $3
+        message_count = $3,
+        last_message_read = false
       WHERE id = $2
       RETURNING *
       `,
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
         c.user_2,
         c.last_message_id,
         c.message_count,
+        c.last_message_read,
         c.chat_info,
         c.quiz_info,
         c.created_at,
@@ -140,6 +142,7 @@ export async function POST(request: NextRequest) {
       user_2: chatWithDetails.user_2,
       last_message_id: chatWithDetails.last_message_id,
       message_count: chatWithDetails.message_count,
+      last_message_read: chatWithDetails.last_message_read ?? false,
       chat_info: chatWithDetails.chat_info,
       quiz_info: chatWithDetails.quiz_info,
       created_at: chatWithDetails.created_at,

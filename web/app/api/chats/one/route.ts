@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
           c.user_2,
           c.last_message_id,
           c.message_count,
+          c.last_message_read,
           c.chat_info,
           c.quiz_info,
           c.created_at,
@@ -86,6 +87,7 @@ export async function GET(request: NextRequest) {
           c.user_2,
           c.last_message_id,
           c.message_count,
+          c.last_message_read,
           c.chat_info,
           c.quiz_info,
           c.created_at,
@@ -140,6 +142,7 @@ export async function GET(request: NextRequest) {
       user_2: chatWithDetails.user_2,
       last_message_id: chatWithDetails.last_message_id,
       message_count: chatWithDetails.message_count,
+      last_message_read: chatWithDetails.last_message_read ?? false,
       chat_info: chatWithDetails.chat_info,
       quiz_info: chatWithDetails.quiz_info,
       created_at: chatWithDetails.created_at,
@@ -194,11 +197,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { chat_info, quiz_info } = body;
+    const { chat_info, quiz_info, last_message_read } = body;
 
     // Build update query
     const updates: string[] = [];
-    const values: (string | Record<string, unknown>)[] = [];
+    const values: (string | Record<string, unknown> | boolean)[] = [];
     let paramCount = 1;
 
     if (chat_info !== undefined) {
@@ -210,6 +213,12 @@ export async function PATCH(request: NextRequest) {
     if (quiz_info !== undefined) {
       updates.push(`quiz_info = $${paramCount}`);
       values.push(quiz_info);
+      paramCount++;
+    }
+
+    if (last_message_read !== undefined) {
+      updates.push(`last_message_read = $${paramCount}`);
+      values.push(last_message_read);
       paramCount++;
     }
 
@@ -246,30 +255,31 @@ export async function PATCH(request: NextRequest) {
       other_personal_info: Record<string, unknown> | null;
     }>(
       `
-      SELECT 
-        c.id,
-        c.user_1,
-        c.user_2,
-        c.last_message_id,
-        c.message_count,
-        c.chat_info,
-        c.quiz_info,
-        c.created_at,
-        c.updated_at,
-        CASE 
-          WHEN c.user_1 = $1 THEN c.user_2
-          ELSE c.user_1
-        END as other_user_id,
-        u.username as other_username,
-        u.personal_info as other_personal_info,
-      FROM chats c
-      LEFT JOIN users u ON (
-        CASE 
-          WHEN c.user_1 = $1 THEN u.id = c.user_2
-          ELSE u.id = c.user_1
-        END
-      )
-      WHERE c.id = $2
+        SELECT 
+          c.id,
+          c.user_1,
+          c.user_2,
+          c.last_message_id,
+          c.message_count,
+          c.last_message_read,
+          c.chat_info,
+          c.quiz_info,
+          c.created_at,
+          c.updated_at,
+          CASE 
+            WHEN c.user_1 = $1 THEN c.user_2
+            ELSE c.user_1
+          END as other_user_id,
+          u.username as other_username,
+          u.personal_info as other_personal_info
+        FROM chats c
+        LEFT JOIN users u ON (
+          CASE 
+            WHEN c.user_1 = $1 THEN u.id = c.user_2
+            ELSE u.id = c.user_1
+          END
+        )
+        WHERE c.id = $2
       `,
       [user.id, chatId]
     );
@@ -288,6 +298,7 @@ export async function PATCH(request: NextRequest) {
       user_2: chatWithDetails.user_2,
       last_message_id: chatWithDetails.last_message_id,
       message_count: chatWithDetails.message_count,
+      last_message_read: chatWithDetails.last_message_read ?? false,
       chat_info: chatWithDetails.chat_info,
       quiz_info: chatWithDetails.quiz_info,
       created_at: chatWithDetails.created_at,

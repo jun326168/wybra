@@ -233,3 +233,20 @@ export const sendMessage = async (userId: string, chatId: string, message: strin
   const data = await response.json();
   return { message: data.message as Message, chat: data.chat as Chat };
 };
+
+export const markMessageAsRead = async (chatId: string): Promise<Chat> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/chats/one?chat_id=${chatId}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ last_message_read: true }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to mark message as read');
+  }
+
+  const data = await response.json();
+  return data.chat as Chat;
+};
