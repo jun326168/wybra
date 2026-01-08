@@ -16,6 +16,7 @@ import ProfileModal from '@/components/ui/profile-modal';
 import { formatMessageTime } from '@/lib/functions';
 import ChatTips from '@/components/ui/chat-tips';
 import { subscribeToChat } from '@/lib/real-time';
+import { Pusher } from '@pusher/pusher-websocket-react-native';
 
 
 const ChatScreen = () => {
@@ -37,7 +38,6 @@ const ChatScreen = () => {
   const [tipStep, setTipStep] = useState(1);
 
   const themeColor = chat?.other_user?.personal_info?.color === colors.background ? colors.textSecondary : chat?.other_user?.personal_info?.color as string;
-  const userColor = user?.personal_info?.color === colors.background ? colors.textSecondary : user?.personal_info?.color as string;
 
   const showImage = false;
 
@@ -57,6 +57,7 @@ const ChatScreen = () => {
         chat.id,
         (newMessage: Message) => {
           // Only add message if it's not already in the list and it's from the other user
+          console.log('newMessage', newMessage);
           if (newMessage.user_id !== user?.id) {
             setMessages(prev => {
               const exists = prev.some(msg => msg.id === newMessage.id);
@@ -70,7 +71,20 @@ const ChatScreen = () => {
           }
         },
         (updatedChat: Chat) => {
-          setChat({ ...updatedChat } as Chat);
+          setChat(prevChat => {
+            if (!prevChat) return prevChat;
+            
+            return {
+              ...prevChat,
+              // Only update these fields from the event
+              last_message_id: updatedChat.last_message_id,
+              message_count: updatedChat.message_count,
+              chat_info: updatedChat.chat_info,
+              quiz_info: updatedChat.quiz_info,
+              updated_at: updatedChat.updated_at,
+              // Keep existing other_user data unchanged
+            };
+          });  
         }
       );
     };
@@ -84,6 +98,15 @@ const ChatScreen = () => {
       }
     };
   }, [chat?.id, user?.id]);
+
+  useEffect(() => {
+    const checkPusherStatus = async () => {
+      const pusher = Pusher.getInstance();
+      const state = pusher.connectionState;
+      console.log('[Chat] Pusher connection state:', state);
+    };
+    checkPusherStatus();
+  }, []);
 
   useEffect(() => {
     setCurrentUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_1_progress as number) : (chat?.chat_info?.user_2_progress as number));
@@ -126,7 +149,7 @@ const ChatScreen = () => {
   };
 
   const handleSendMessage = async () => {
-    const messageContent = inputText;
+    const messageContent = inputText.trim();
     setInputText('');
     const newMessage: Message = {
       id: '',
@@ -152,8 +175,7 @@ const ChatScreen = () => {
 
   const renderMessage = ({ item, isSameUser }: { item: Message, isSameUser: boolean }) => {
 
-    const lighterUserColor = brightenHexColor(userColor, 0.1);
-    const lighterThemeColor = brightenHexColor(themeColor, 0.1);
+    const lighterThemeColor = brightenHexColor(themeColor, 0.3);
 
     return (
       <View style={StyleSheet.flatten([styles.messageContainer, {
@@ -166,7 +188,7 @@ const ChatScreen = () => {
           </View>
         )}
         <View style={StyleSheet.flatten([styles.messageBubble, { 
-          backgroundColor: (item.user_id === user?.id ? lighterUserColor : lighterThemeColor) + 'A0',
+          backgroundColor: (item.user_id === user?.id ? colors.primary : lighterThemeColor + 'A0'),
         }])}>
           <Text style={styles.messageText}>{item.content}</Text>
         </View>
@@ -289,7 +311,7 @@ const ChatScreen = () => {
           renderItem={(item) => renderMessage({ item: item.item, isSameUser: item.item.user_id === messages[item.index + 1]?.user_id })}
           contentContainerStyle={styles.listContent}
           inverted={false}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onContentSizeChange={() => flatListRef.current?.scrollToOffset({ offset: 999999, animated: true })}
           // ListFooterComponent={() => <View style={styles.listFooter} />}
         />
 
@@ -460,7 +482,7 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingVertical: 16,
   },

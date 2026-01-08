@@ -9,11 +9,14 @@ let pusherInitialized = false;
  */
 export async function initializePusher(): Promise<void> {
   if (pusherInitialized) {
+    console.log('[Pusher] Already initialized');
     return;
   }
 
   const key = process.env.EXPO_PUBLIC_PUSHER_KEY;
   const cluster = process.env.EXPO_PUBLIC_PUSHER_CLUSTER || 'ap1';
+
+  console.log('[Pusher] Initializing with key:', key?.substring(0, 5) + '...');
 
   if (!key) {
     console.warn(
@@ -30,8 +33,9 @@ export async function initializePusher(): Promise<void> {
     });
     await pusher.connect();
     pusherInitialized = true;
+    console.log('[Pusher] Successfully initialized and connected');
   } catch (error) {
-    console.error('Error initializing Pusher:', error);
+    console.error('[Pusher] Error initializing:', error);
   }
 }
 
@@ -57,34 +61,68 @@ export async function subscribeToChat(
   const pusher = getPusherClient();
   const channelName = `chat-${chatId}`;
 
+  console.log('[Pusher] Subscribing to channel:', channelName);
+
   try {
     await pusher.subscribe({
       channelName,
       onEvent: (event) => {
-        if (event.eventName === 'new-message') {
-          const data = event.data as { message: Message };
-          if (data?.message) {
-            onNewMessage(data.message);
+        console.log('[Pusher] Raw event received');
+        
+        try {
+          // Parse event data if it's a string
+          let eventData = event.data;
+          if (typeof eventData === 'string') {
+            console.log('[Pusher] Parsing string data...');
+            eventData = JSON.parse(eventData);
           }
-        } else if (event.eventName === 'chat-updated') {
-          const data = event.data as { chat: Chat };
-          if (data?.chat) {
-            onChatUpdate(data.chat);
+
+          console.log('[Pusher] Event name:', event.eventName);
+
+          if (event.eventName === 'new-message') {
+            const data = eventData as { message: Message };
+            if (data?.message) {
+              console.log('[Pusher] New message received:', data.message.id);
+              onNewMessage(data.message);
+            } else {
+              console.warn('[Pusher] new-message event missing message data');
+            }
+          } else if (event.eventName === 'chat-updated') {
+            const data = eventData as { chat: Chat };
+            if (data?.chat) {
+              console.log('[Pusher] Chat updated:', data.chat.id);
+              onChatUpdate(data.chat);
+            } else {
+              console.warn('[Pusher] chat-updated event missing chat data');
+            }
+          } else {
+            console.log('[Pusher] Unknown event type:', event.eventName);
           }
+        } catch (parseError) {
+          console.error('[Pusher] Error parsing event data:', parseError);
         }
       },
+      onSubscriptionSucceeded: (data) => {
+        console.log('[Pusher] Subscription succeeded for channel:', channelName, data);
+      },
+      onSubscriptionError: (error) => {
+        console.error('[Pusher] Subscription error for channel:', channelName, error);
+      },
     });
+
+    console.log('[Pusher] Successfully subscribed to:', channelName);
 
     // Return unsubscribe function
     return async () => {
       try {
+        console.log('[Pusher] Unsubscribing from channel:', channelName);
         await pusher.unsubscribe({ channelName });
       } catch (error) {
-        console.error('Error unsubscribing from channel:', error);
+        console.error('[Pusher] Error unsubscribing from channel:', error);
       }
     };
   } catch (error) {
-    console.error('Error subscribing to channel:', error);
+    console.error('[Pusher] Error subscribing to channel:', error);
     // Return a no-op unsubscribe function if subscription fails
     return async () => {};
   }
@@ -96,9 +134,12 @@ export async function subscribeToChat(
  */
 export async function unsubscribeFromChat(chatId: string): Promise<void> {
   const pusher = getPusherClient();
+  const channelName = `chat-${chatId}`;
+  console.log('[Pusher] Unsubscribing from:', channelName);
   try {
-    await pusher.unsubscribe({ channelName: `chat-${chatId}` });
+    await pusher.unsubscribe({ channelName });
+    console.log('[Pusher] Successfully unsubscribed from:', channelName);
   } catch (error) {
-    console.error('Error unsubscribing from channel:', error);
+    console.error('[Pusher] Error unsubscribing from channel:', error);
   }
 }

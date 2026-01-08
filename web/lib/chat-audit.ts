@@ -34,7 +34,7 @@ interface User {
 
 async function getScorePrompt(conversationText: string): Promise<string> {
   return `Analyze this conversation between two people and rate their conversation quality and meaningfulness on a scale of 1-15, where:
-- 1-5: Low quality (short messages, no depth, disengaged)
+- 0-5: Low quality (short messages, no depth, disengaged)
 - 6-10: Medium quality (decent engagement, some meaningful exchanges)
 - 11-15: High quality (deep conversations, thoughtful responses, strong engagement)
 
@@ -112,7 +112,7 @@ export function calculateProgressIncrement(
 ): number {
   if (messageCount <= 6) {
     // Hook stage: if message > 2 chars, add +3
-    return messageContent.length > 2 ? 3 : 0;
+    return messageContent.length > 2 ? 2 : 0;
   } else {
     // Passive stage: if message > 5 chars, add +0.5
     return messageContent.length > 5 ? 0.5 : 0;
@@ -209,7 +209,6 @@ export async function getLastMessages(
 export async function scoreConversation(
   messages: Message[],
   chatUser1Id: string,
-  _chatUser2Id: string
 ): Promise<{ user_1_score: number; user_2_score: number }> {
   try {
     const ai = getGeminiClient();
@@ -451,7 +450,6 @@ export async function auditMessage(
     const { user_1_score, user_2_score } = await scoreConversation(
       lastMessages,
       chat.user_1,
-      chat.user_2
     );
 
     // Combine both progress increment and AI scores in one DB write

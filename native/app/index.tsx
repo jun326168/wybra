@@ -184,7 +184,7 @@ export default function SplashAuthScreen() {
           <LogoIcon size={100} />
         </Animated.View>
 
-        <Animated.View style={StyleSheet.flatten([styles.authContent, authContentStyle])} pointerEvents={showAuth ? 'auto' : 'none'}>
+        <Animated.View style={[styles.authContent, authContentStyle]} pointerEvents={showAuth ? 'auto' : 'none'}>
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Wybra</Text>
             <Text style={styles.subtitle}>在雜訊之中，捕捉一個與你契合的靈魂。</Text>
@@ -192,7 +192,7 @@ export default function SplashAuthScreen() {
 
           <View style={styles.formContainer}>
             <Button
-              style={StyleSheet.flatten([styles.button, styles.googleButton])}
+              style={[styles.button, styles.googleButton]}
               onPress={handleGoogleSignIn}
               disabled={googleLoading || appleLoading}
             >
@@ -205,7 +205,7 @@ export default function SplashAuthScreen() {
 
             {Platform.OS === 'ios' && (
               <Button
-                style={StyleSheet.flatten([styles.button, styles.appleButton])}
+                style={[styles.button, styles.appleButton]}
                 onPress={handleAppleSignIn}
                 disabled={googleLoading || appleLoading}
               >
