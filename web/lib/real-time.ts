@@ -1,0 +1,73 @@
+import Pusher from 'pusher';
+import { Chat, Message } from './type';
+
+let pusherClient: Pusher | null = null;
+
+/**
+ * Initialize and return Pusher client
+ * Uses singleton pattern to reuse the same client instance
+ */
+export function getPusherClient(): Pusher {
+  if (!pusherClient) {
+    const appId = process.env.PUSHER_APP_ID;
+    const key = process.env.PUSHER_KEY;
+    const secret = process.env.PUSHER_SECRET;
+    const cluster = process.env.PUSHER_CLUSTER || 'ap1';
+
+    if (!appId || !key || !secret) {
+      throw new Error(
+        'Pusher environment variables are not set. Please set PUSHER_APP_ID, PUSHER_KEY, and PUSHER_SECRET'
+      );
+    }
+
+    pusherClient = new Pusher({
+      appId,
+      key,
+      secret,
+      cluster,
+      useTLS: true,
+    });
+  }
+
+  return pusherClient;
+}
+
+export async function triggerPusherEvent(
+  channel: string,
+  event: string,
+  data: unknown
+): Promise<void> {
+  try {
+    const pusher = getPusherClient();
+    await pusher.trigger(channel, event, data);
+  } catch (error) {
+    console.error('Error triggering Pusher event:', error);
+    throw error;
+  }
+}
+
+export async function triggerNewMessage(
+  chatId: string,
+  message: Message
+): Promise<void> {
+  const channel = `chat-${chatId}`;
+  try {
+    await triggerPusherEvent(channel, 'new-message', { message: message });
+  } catch (error) {
+    console.error('Error triggering Pusher event:', error);
+    throw error;
+  }
+}
+
+export async function triggerChatUpdate(
+  chatId: string,
+  chat: Chat
+): Promise<void> {
+  const channel = `chat-${chatId}`;
+  try {
+    await triggerPusherEvent(channel, 'chat-updated', { chat: chat });
+  } catch (error) {
+    console.error('Error triggering Pusher event:', error);
+    throw error;
+  }
+}

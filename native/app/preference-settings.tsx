@@ -174,11 +174,11 @@ const PreferenceSettingsScreen = () => {
                   <Button
                     key={color.id}
                     onPress={() => setSelectedColor(color.value)}
-                    style={[
+                    style={StyleSheet.flatten([
                       styles.colorOption,
                       { backgroundColor: color.value },
                       selectedColor === color.value && styles.colorOptionSelected
-                    ]}
+                    ])}
                   >
                     {selectedColor === color.value && (
                       <View style={styles.colorCheckmark}>
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 70,
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
@@ -281,14 +281,14 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
   colorOptionSelected: {
     borderColor: colors.text,
-    borderWidth: 2,
+    borderWidth: 1.5,
   },
   colorCheckmark: {
     width: '100%',

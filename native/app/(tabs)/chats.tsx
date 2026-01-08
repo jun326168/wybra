@@ -86,11 +86,11 @@ export default function ChatsScreen() {
 
     return (
       <Button
-        style={[styles.chatItem, { borderColor: isUnread ? themeColor : colors.border }]}
+        style={StyleSheet.flatten([styles.chatItem, { borderColor: isUnread ? themeColor : colors.border }])}
         onPress={() => handlePressChat(item.id)}
       >
         {/* Left: Haze Avatar */}
-        <View style={[styles.avatarContainer, { borderColor: themeColor }]}>
+        <View style={StyleSheet.flatten([styles.avatarContainer, { borderColor: themeColor }])}>
           {item.other_user?.personal_info?.avatar_url ? (
             <Image
               source={{ uri: item.other_user.personal_info.avatar_url as string }}
@@ -98,7 +98,7 @@ export default function ChatsScreen() {
               blurRadius={PHOTO_BLUR_AMOUNT}
             />
           ) : (
-            <View style={[styles.avatar, { backgroundColor: colors.card }]} />
+            <View style={StyleSheet.flatten([styles.avatar, { backgroundColor: colors.card }])} />
           )}
           {!showImage && (
             <View style={styles.blurOverlay}>
@@ -116,17 +116,17 @@ export default function ChatsScreen() {
         {/* Center: Info */}
         <View style={styles.chatInfo}>
           <View style={styles.topRow}>
-            <Text style={[styles.username, { color: themeColor }]} numberOfLines={1}>
+            <Text style={StyleSheet.flatten([styles.username, { color: themeColor }])} numberOfLines={1}>
               {item.other_user?.username}
             </Text>
             <Text style={styles.timeText}>{timeDisplay}</Text>
           </View>
 
           <Text
-            style={[
+            style={StyleSheet.flatten([
               styles.lastMessage,
               isUnread && { color: colors.text, fontWeight: '600' }
-            ]}
+            ])}
             numberOfLines={1}
           >
             {isLastMessageFromMe && <Text style={{ color: colors.textSecondary }}>你: </Text>}
@@ -136,19 +136,19 @@ export default function ChatsScreen() {
           <View style={styles.bottomRow}>
             <View style={styles.progressBarContainer}>
               <View style={styles.progressBarLeftContainer}>
-                <View style={[styles.progressBarLeft, { 
+                <View style={StyleSheet.flatten([styles.progressBarLeft, { 
                   shadowColor: themeColor,
                   backgroundColor: themeColor,
                   width: `${otherUserProgress}%`
-                }]} />
+                }])} />
               </View>
 
               <View style={styles.progressBarRightContainer}>
-                <View style={[styles.progressBarRight, {
+                <View style={StyleSheet.flatten([styles.progressBarRight, {
                   shadowColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
                   backgroundColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
                   width: `${currentUserProgress}%`
-                }]} />
+                }])} />
               </View>
             </View>
           </View>

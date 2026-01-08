@@ -73,10 +73,10 @@ const ProfileScreen = () => {
               >
                 <Image
                   source={{ uri: avatarUrl }}
-                  style={[
+                  style={StyleSheet.flatten([
                     styles.avatarImage,
                     !showImage && styles.avatarImageBlurred
-                  ]}
+                  ])}
                   blurRadius={showImage ? 0 : PHOTO_BLUR_AMOUNT}
                 />
                 {!showImage && (
@@ -110,7 +110,7 @@ const ProfileScreen = () => {
                 <Text style={[styles.profileInfoTextGeneration, { color: generationColor }]}>{GENERATION_OPTIONS.find(option => option.value === generation)?.label}</Text>
               </View> */}
             </View>
-            <Text style={[styles.profileInfoTextMbti, { color: user?.personal_info?.color === colors.background ? colors.primary : user?.personal_info?.color }]}>{user?.personal_info?.mbti === 'UNKNOWN' ? 'MBTI: ' : ''}{MBTI_OPTIONS.find(option => option.value === user?.personal_info?.mbti)?.label}</Text>
+            <Text style={StyleSheet.flatten([styles.profileInfoTextMbti, { color: user?.personal_info?.color === colors.background ? colors.primary : user?.personal_info?.color }])}>{user?.personal_info?.mbti === 'UNKNOWN' ? 'MBTI: ' : ''}{MBTI_OPTIONS.find(option => option.value === user?.personal_info?.mbti)?.label}</Text>
             <Text style={styles.profileInfoTextInterests}>{(user?.personal_info?.interests as string[])?.map(i => i.startsWith('#') ? i : INTEREST_TAGS.find(tag => tag.id === i)?.label).join(' ')}</Text>
             <Text style={styles.profileInfoTextIntroductionTitle}>真實的我</Text>
             {user?.personal_info?.bio ? (
@@ -166,7 +166,7 @@ const ProfileScreen = () => {
         <View style={styles.divider} />
 
         {/* About Section */}
-        <View style={[styles.settingsView]}>
+        <View style={StyleSheet.flatten([styles.settingsView])}>
           <View>
             <Text style={styles.sectionTitle}>關於</Text>
             <Button style={styles.linkRow} onPress={() => openLink('https://wybra.vercel.app/privacy')}>
@@ -179,7 +179,7 @@ const ProfileScreen = () => {
         <View style={styles.divider} />
 
         {/* Sign Out Section */}
-        <View style={[styles.settingsView, { paddingBottom: 100 }]}>
+        <View style={StyleSheet.flatten([styles.settingsView, { paddingBottom: 100 }])}>
           <View>
             <Button style={styles.signOutButton} onPress={handleSignOut}>
               <Text style={styles.signOutText}>登出</Text>
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   },
   editProfileButton: {
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 16,
     paddingVertical: 8,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 48,
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   profileInfoTextGenerationContainer: {
-    borderWidth: 2,
+    borderWidth: 1,
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: 16,
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
   },
   settingLabel: {
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
   },
   linkLabel: {
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.error + '1A',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.error + '40',
   },
   signOutText: {
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 16,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.error + '40',
     backgroundColor: colors.error + '1A',
     alignItems: 'center',
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     backgroundColor: colors.background,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
   },

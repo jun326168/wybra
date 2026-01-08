@@ -10,12 +10,12 @@ CREATE TABLE users (
 
 CREATE TABLE chats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_1 UUID NOT NULL, -- sender id
+  user_1 UUID NOT NULL, -- conversation starter id
   user_2 UUID NOT NULL, -- receiver id
   message_count INT NOT NULL DEFAULT 0, -- message count
   last_message_id UUID, -- last message id
   chat_info JSONB NOT NULL DEFAULT '{ "accepted": false, "user_1_progress": 0, "user_2_progress": 0, "user_1_unlocked": false, "user_2_unlocked": false }', -- chat info (accepted, user_1_progress, user_2_progress, user_1_unlocked, user_2_unlocked)
-  quiz_info JSONB NOT NULL DEFAULT '{ "user_1_quiz": [], "user_2_quiz": [] }', -- quiz info (user_1_quiz, user_2_quiz)
+  quiz_info JSONB NOT NULL DEFAULT '{ "user_1_quiz": [], "user_2_quiz": [], "last_quiz_level": 0 }', -- quiz info (user_1_quiz, user_2_quiz, last_quiz_level)
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
 );

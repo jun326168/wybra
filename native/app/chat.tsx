@@ -15,6 +15,8 @@ import { Entypo } from '@expo/vector-icons';
 import ProfileModal from '@/components/ui/profile-modal';
 import { formatMessageTime } from '@/lib/functions';
 import ChatTips from '@/components/ui/chat-tips';
+import { subscribeToChat } from '@/lib/real-time';
+
 
 const ChatScreen = () => {
 
@@ -41,7 +43,53 @@ const ChatScreen = () => {
 
   useEffect(() => {
     loadChat();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Subscribe to Pusher events when chat is loaded
+  useEffect(() => {
+    if (!chat?.id) return;
+
+    let unsubscribeFn: (() => Promise<void>) | null = null;
+
+    const setupSubscription = async () => {
+      unsubscribeFn = await subscribeToChat(
+        chat.id,
+        (newMessage: Message) => {
+          // Only add message if it's not already in the list and it's from the other user
+          if (newMessage.user_id !== user?.id) {
+            setMessages(prev => {
+              const exists = prev.some(msg => msg.id === newMessage.id);
+              if (exists) return prev;
+              return [...prev, newMessage];
+            });
+            // Scroll to bottom when new message arrives
+            setTimeout(() => {
+              flatListRef.current?.scrollToEnd({ animated: true });
+            }, 100);
+          }
+        },
+        (updatedChat: Chat) => {
+          setChat({ ...updatedChat } as Chat);
+        }
+      );
+    };
+
+    setupSubscription();
+
+    // Cleanup subscription on unmount or when chat changes
+    return () => {
+      if (unsubscribeFn) {
+        unsubscribeFn();
+      }
+    };
+  }, [chat?.id, user?.id]);
+
+  useEffect(() => {
+    setCurrentUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_1_progress as number) : (chat?.chat_info?.user_2_progress as number));
+    setOtherUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_2_progress as number) : (chat?.chat_info?.user_1_progress as number));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat]);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -67,11 +115,13 @@ const ChatScreen = () => {
     const { chat, messages } = await fetchChat(chat_id as string, other_user_id as string);
     setChat(chat);
     setMessages(messages);
-    setCurrentUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_1_progress as number) : (chat?.chat_info?.user_2_progress as number));
-    setOtherUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_2_progress as number) : (chat?.chat_info?.user_1_progress as number));
     setLoading(false);
-    if (messages.length <= 1 || new Date().getTime() - new Date(messages[messages.length - 1].created_at).getTime() > 21600000) { // 6 hours
+    if ((messages.length <= 1)) {
       setShowTips(true);
+    } else {
+      if (messages.length < 10 && new Date().getTime() - new Date(messages[messages.length - 1].created_at).getTime() > 21600000) { // 6 hours
+        setShowTips(true);
+      }
     }
   };
 
@@ -106,18 +156,18 @@ const ChatScreen = () => {
     const lighterThemeColor = brightenHexColor(themeColor, 0.1);
 
     return (
-      <View style={[styles.messageContainer, {
+      <View style={StyleSheet.flatten([styles.messageContainer, {
         justifyContent: item.user_id === user?.id ? 'flex-end' : 'flex-start',
         marginBottom: isSameUser ? 8 : 12,
-      }]}>
+      }])}>
         {item.user_id === user?.id && (
           <View style={styles.timeTextContainer}>
             <Text style={styles.timeText}>{formatMessageTime(item.created_at)}</Text>
           </View>
         )}
-        <View style={[styles.messageBubble, { 
+        <View style={StyleSheet.flatten([styles.messageBubble, { 
           backgroundColor: (item.user_id === user?.id ? lighterUserColor : lighterThemeColor) + 'A0',
-        }]}>
+        }])}>
           <Text style={styles.messageText}>{item.content}</Text>
         </View>
         {item.user_id !== user?.id && (
@@ -139,23 +189,23 @@ const ChatScreen = () => {
       return <Text style={styles.tipText}>在一天之中，只有<Text style={styles.tipHighlight}>下午 6 點</Text>到<Text style={styles.tipHighlight}>午夜 12 點</Text>可以聊天，把握時間了解對方吧！</Text>;
     } else {
       return <View>
-        <View style={[styles.progressBarContainer, { marginTop: 0, marginBottom: 12, height: 6 }]}>
-          <View style={[styles.progressBarLeftContainer, { height: 6 }]}>
-            <View style={[styles.progressBarLeft, {
+        <View style={StyleSheet.flatten([styles.progressBarContainer, { marginTop: 0, marginBottom: 12, height: 6 }])}>
+          <View style={StyleSheet.flatten([styles.progressBarLeftContainer, { height: 6 }])}>
+            <View style={StyleSheet.flatten([styles.progressBarLeft, {
               width: '100%',
               backgroundColor: (chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color) as string,
               shadowColor: (chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color) as string,
-            }]} />
+            }])} />
           </View>
-          <View style={[styles.progressBarRightContainer, { height: 6 }]}>
-            <View style={[styles.progressBarRight, {
+          <View style={StyleSheet.flatten([styles.progressBarRightContainer, { height: 6 }])}>
+            <View style={StyleSheet.flatten([styles.progressBarRight, {
               width: '100%',
               backgroundColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
               shadowColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
-            }]} />
+            }])} />
           </View>
         </View>
-        <Text style={styles.tipText}>盡情聊天吧！小幽靈會持續捕捉你們的<Text style={styles.tipHighlight}>契合度</Text>。隨著話題深入，畫面上方的進度線會逐漸向中間靠攏。當線條相遇，會發動「默契問答」！只要通過，就能解鎖對方的照片嘍！</Text>
+        <Text style={styles.tipText}>小幽靈會持續捕捉你們的<Text style={styles.tipHighlight}>契合度</Text>。隨著話題深入，畫面上方的進度線會逐漸向中間靠攏，直到發動「默契問答」！通過就能解鎖對方的照片嘍！</Text>
       </View>
     }
   };
@@ -177,7 +227,7 @@ const ChatScreen = () => {
           <Button onPress={() => router.back()}>
             <Entypo name="chevron-thin-left" size={24} color={colors.text} />
           </Button>
-          <Pressable onPress={() => setShowProfileModal(true)} style={[styles.avatarContainer, { borderColor: themeColor }]}>
+          <Pressable onPress={() => setShowProfileModal(true)} style={StyleSheet.flatten([styles.avatarContainer, { borderColor: themeColor }])}>
             {chat?.other_user?.personal_info?.avatar_url ? (
               <Image
                 source={{ uri: chat?.other_user.personal_info.avatar_url as string }}
@@ -185,7 +235,7 @@ const ChatScreen = () => {
                 blurRadius={PHOTO_BLUR_AMOUNT}
               />
             ) : (
-              <View style={[styles.avatar, { backgroundColor: colors.card }]} />
+              <View style={StyleSheet.flatten([styles.avatar, { backgroundColor: colors.card }])} />
             )}
             {!showImage && (
               <View style={styles.blurOverlay}>
@@ -206,18 +256,18 @@ const ChatScreen = () => {
         {/* progress bar */}
         <View style={styles.progressBarContainer}>
           <View style={styles.progressBarLeftContainer}>
-            <View style={[styles.progressBarLeft, {
+            <View style={StyleSheet.flatten([styles.progressBarLeft, {
               backgroundColor: (chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color) as string,
               shadowColor: (chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color) as string,
               width: `${Math.min(100, otherUserProgress)}%`,
-            }]} />
+            }])} />
           </View>
           <View style={styles.progressBarRightContainer}>
-            <View style={[styles.progressBarRight, {
+            <View style={StyleSheet.flatten([styles.progressBarRight, {
               backgroundColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
               shadowColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
               width: `${Math.min(100, currentUserProgress)}%`,
-            }]} />
+            }])} />
           </View>
         </View>
         {/* progress bar labels */}
@@ -244,9 +294,9 @@ const ChatScreen = () => {
         />
 
         {/* --- INPUT --- */}
-        <View style={[styles.inputContainer, { paddingBottom: isKeyboardVisible ? 12 : 40 }]}>
+        <View style={StyleSheet.flatten([styles.inputContainer, { paddingBottom: isKeyboardVisible ? 12 : 40 }])}>
           <Input
-            style={[styles.inputField, { borderColor: themeColor + '40' }]}
+            style={StyleSheet.flatten([styles.inputField, { borderColor: themeColor + '40' }])}
             value={inputText}
             onChangeText={setInputText}
             placeholder="你的訊息..."
@@ -257,12 +307,12 @@ const ChatScreen = () => {
           <Button
             onPress={handleSendMessage}
             disabled={!inputText.trim() || sending}
-            style={[styles.sendButton, { backgroundColor: inputText.trim() ? themeColor : colors.card, }]}
+            style={StyleSheet.flatten([styles.sendButton, { backgroundColor: inputText.trim() ? themeColor : colors.card, }])}
           >
             {sending ? (
               <LoadingSpinner size={16} color={colors.background} />
             ) : (
-              <Text style={[styles.sendIcon]}>↑</Text>
+              <Text style={StyleSheet.flatten([styles.sendIcon])}>↑</Text>
             )}
           </Button>
         </View>
@@ -465,7 +515,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 25,
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
   },
   sendIcon: {

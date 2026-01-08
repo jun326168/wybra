@@ -300,10 +300,10 @@ const ProfileSettingsScreen = () => {
                     <View style={styles.avatarImageWrapper}>
                       <Image
                         source={{ uri: photoUri }}
-                        style={[
+                        style={StyleSheet.flatten([
                           styles.avatarImage,
                           !showImage && styles.avatarImageBlurred
-                        ]}
+                        ])}
                         blurRadius={showImage ? 0 : PHOTO_BLUR_AMOUNT}
                       />
                       {!showImage && (
@@ -330,7 +330,7 @@ const ProfileSettingsScreen = () => {
                 ) : (
                   <Pressable
                     onPress={handlePickImage}
-                    style={[styles.avatarPlaceholder, { borderWidth: 2 }]}
+                    style={StyleSheet.flatten([styles.avatarPlaceholder, { borderWidth: 1 }])}
                     disabled={uploadingPhoto}
                   >
                     <View style={styles.emptyAvatar}>
@@ -380,7 +380,7 @@ const ProfileSettingsScreen = () => {
               <Text style={styles.inputLabel}>生日</Text>
               <Pressable onPress={() => !loading && setShowDateModal(true)}>
                 <View style={styles.selectButton}>
-                  <Text style={[styles.selectButtonText, !birthday && styles.selectButtonPlaceholder]}>
+                  <Text style={StyleSheet.flatten([styles.selectButtonText, !birthday && styles.selectButtonPlaceholder])}>
                     {birthday || '輸入生日'}
                   </Text>
                 </View>
@@ -392,7 +392,7 @@ const ProfileSettingsScreen = () => {
               <Text style={styles.inputLabel}>MBTI</Text>
               <Pressable onPress={() => !loading && setShowMbtiModal(true)}>
                 <View style={styles.selectButton}>
-                  <Text style={[styles.selectButtonText, !mbti && styles.selectButtonPlaceholder]}>
+                  <Text style={StyleSheet.flatten([styles.selectButtonText, !mbti && styles.selectButtonPlaceholder])}>
                     {mbti ? MBTI_OPTIONS.find(opt => opt.value === mbti)?.label || mbti : '選擇你的 MBTI'}
                   </Text>
                 </View>
@@ -404,7 +404,7 @@ const ProfileSettingsScreen = () => {
               <Text style={styles.inputLabel}>性別</Text>
               <Pressable onPress={() => !loading && setShowGenderModal(true)}>
                 <View style={styles.selectButton}>
-                  <Text style={[styles.selectButtonText, !gender && styles.selectButtonPlaceholder]}>
+                  <Text style={StyleSheet.flatten([styles.selectButtonText, !gender && styles.selectButtonPlaceholder])}>
                     {gender ? GENDER_OPTIONS.find(opt => opt.value === gender)?.label : '選擇你的性別'}
                   </Text>
                 </View>
@@ -449,10 +449,10 @@ const ProfileSettingsScreen = () => {
                 placeholderTextColor={colors.textSecondary}
                 maxLength={150}
               />
-              <Text style={[
+              <Text style={StyleSheet.flatten([
                 styles.bioCount,
                 bio.length < 30 && styles.bioCountWarning
-              ]}>
+              ])}>
                 {bio.length}/150 {bio.length < 30 && `(至少 30 字)`}
               </Text>
             </View>
@@ -512,16 +512,16 @@ const ProfileSettingsScreen = () => {
                   <Pressable
                     key={tag}
                     onPress={() => removeCustomTag(tag)}
-                    style={[
+                    style={StyleSheet.flatten([
                       styles.interestTag,
                       styles.interestTagSelected,
                       styles.customInterestTag
-                    ]}
+                    ])}
                   >
-                    <Text style={[
+                    <Text style={StyleSheet.flatten([
                       styles.interestTagText,
                       styles.interestTagTextSelected
-                    ]}>
+                    ])}>
                       {tag}
                     </Text>
                   </Pressable>
@@ -532,15 +532,15 @@ const ProfileSettingsScreen = () => {
                   <Pressable
                     key={interest.id}
                     onPress={() => toggleInterest(interest.id)}
-                    style={[
+                    style={StyleSheet.flatten([
                       styles.interestTag,
                       selectedInterests.includes(interest.id) && styles.interestTagSelected
-                    ]}
+                    ])}
                   >
-                    <Text style={[
+                    <Text style={StyleSheet.flatten([
                       styles.interestTagText,
                       selectedInterests.includes(interest.id) && styles.interestTagTextSelected
-                    ]}>
+                    ])}>
                       {interest.label}
                     </Text>
                   </Pressable>
@@ -564,23 +564,23 @@ const ProfileSettingsScreen = () => {
               <Button
                 key={option.value}
                 onPress={() => handleMbtiSelect(option.value)}
-                style={[
+                style={StyleSheet.flatten([
                   styles.option,
                   mbti === option.value && styles.optionSelected
-                ]}
+                ])}
               >
                 <View style={styles.optionContent}>
-                  <Text style={[
+                  <Text style={StyleSheet.flatten([
                     styles.optionText,
                     mbti === option.value && styles.optionTextSelected
-                  ]}>
+                  ])}>
                     {option.label}
                   </Text>
                   {option.description && (
-                    <Text style={[
+                    <Text style={StyleSheet.flatten([
                       styles.optionDescription,
                       mbti === option.value && styles.optionDescriptionSelected
-                    ]}>
+                    ])}>
                       {option.description}
                     </Text>
                   )}
@@ -607,15 +607,15 @@ const ProfileSettingsScreen = () => {
                   <Button
                     key={year}
                     onPress={() => handleYearChange(year)}
-                    style={[
+                    style={StyleSheet.flatten([
                       styles.dateOption,
                       selectedYear === year && styles.dateOptionSelected
-                    ]}
+                    ])}
                   >
-                    <Text style={[
+                    <Text style={StyleSheet.flatten([
                       styles.dateOptionText,
                       selectedYear === year && styles.dateOptionTextSelected
-                    ]}>
+                    ])}>
                       {year}
                     </Text>
                   </Button>
@@ -629,15 +629,15 @@ const ProfileSettingsScreen = () => {
                   <Button
                     key={month}
                     onPress={() => handleMonthChange(month)}
-                    style={[
+                    style={StyleSheet.flatten([
                       styles.dateOption,
                       selectedMonth === month && styles.dateOptionSelected
-                    ]}
+                    ])}
                   >
-                    <Text style={[
+                    <Text style={StyleSheet.flatten([
                       styles.dateOptionText,
                       selectedMonth === month && styles.dateOptionTextSelected
-                    ]}>
+                    ])}>
                       {month}
                     </Text>
                   </Button>
@@ -651,15 +651,15 @@ const ProfileSettingsScreen = () => {
                   <Button
                     key={day}
                     onPress={() => setSelectedDay(day)}
-                    style={[
+                    style={StyleSheet.flatten([
                       styles.dateOption,
                       selectedDay === day && styles.dateOptionSelected
-                    ]}
+                    ])}
                   >
-                    <Text style={[
+                    <Text style={StyleSheet.flatten([
                       styles.dateOptionText,
                       selectedDay === day && styles.dateOptionTextSelected
-                    ]}>
+                    ])}>
                       {day}
                     </Text>
                   </Button>
@@ -669,7 +669,7 @@ const ProfileSettingsScreen = () => {
           </View>
           <Button
             onPress={handleDateConfirm}
-            style={[styles.button, styles.modalButton]}
+            style={StyleSheet.flatten([styles.button, styles.modalButton])}
           >
             <Text style={styles.buttonText}>確定</Text>
           </Button>
@@ -692,15 +692,15 @@ const ProfileSettingsScreen = () => {
                   setGender(option.value);
                   setShowGenderModal(false);
                 }}
-                style={[
+                style={StyleSheet.flatten([
                   styles.option,
                   gender === option.value && styles.optionSelected
-                ]}
+                ])}
               >
-                <Text style={[
+                <Text style={StyleSheet.flatten([
                   styles.optionText,
                   gender === option.value && styles.optionTextSelected
-                ]}>
+                ])}>
                   {option.label}
                 </Text>
               </Button>
@@ -857,7 +857,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
     minHeight: 52,
     justifyContent: 'center',
@@ -875,7 +875,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
     fontSize: 16,
     color: colors.text,
@@ -897,7 +897,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
     fontSize: 16,
     color: colors.text,
@@ -914,7 +914,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
     fontSize: 16,
     color: colors.text,
@@ -931,7 +931,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
   },
   interestTagSelected: {
@@ -957,7 +957,7 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 80,
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1046,7 +1046,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     backgroundColor: colors.background,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 12,
     alignItems: 'center',
@@ -1099,7 +1099,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 12,
     backgroundColor: colors.background,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 8,
     alignItems: 'center',

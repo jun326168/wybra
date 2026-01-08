@@ -19,6 +19,7 @@ import 'react-native-reanimated';
 
 import { colors } from '@/lib/colors';
 import { AppProvider } from '@/contexts/AppContext';
+import { initializePusher } from '@/lib/real-time';
 
 const customTheme = {
   dark: true,
@@ -74,6 +75,13 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
+  // Initialize Pusher when app starts
+  useEffect(() => {
+    initializePusher().catch((error) => {
+      console.error('Failed to initialize Pusher:', error);
+    });
+  }, []);
 
   if (!fontsLoaded && !fontError) {
     return null;

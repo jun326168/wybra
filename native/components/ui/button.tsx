@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleProp, ViewStyle, StyleSheet } from 'react-native';
+import { Pressable, StyleProp, ViewStyle, StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,6 +26,7 @@ export default function Button({
 
   // Flatten the style prop to safely extract backgroundColor
   const flattenedStyle = StyleSheet.flatten(style);
+  const combinedStaticStyle = StyleSheet.flatten([styles.button, flattenedStyle]);
   const backgroundColor = (flattenedStyle && typeof flattenedStyle === 'object' && 'backgroundColor' in flattenedStyle)
     ? flattenedStyle.backgroundColor
     : '#000000';
@@ -58,9 +59,9 @@ export default function Button({
         containerStyle,
       ]}
     >
-      <Animated.View style={[styles.button, style, animatedStyle]}>
+      <View style={StyleSheet.flatten([combinedStaticStyle])}>
         {children}
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }

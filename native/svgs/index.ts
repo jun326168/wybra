@@ -24,4 +24,3 @@ export interface SvgProps {
 
 export { default as EyeIcon } from './eye';
 export { default as EyeSlashIcon } from './eye-slash';
-

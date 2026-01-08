@@ -179,10 +179,10 @@ export default function FeedScreen() {
           disableIntervalMomentum={true}
         />
         <View style={styles.actionContainer}>
-          <Button style={[styles.signalButton, {
+          <Button style={StyleSheet.flatten([styles.signalButton, {
             borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color) + '88',
             backgroundColor: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color) + '40'
-          }]} onPress={() => {
+          }])} onPress={() => {
             if (currentProfile?.has_chat) {
               router.push(`/chat?other_user_id=${currentProfile.id}`);
             } else {
@@ -190,7 +190,7 @@ export default function FeedScreen() {
               setShowSendSignalModal(true);
             }
           }}>
-            <Text style={[styles.signalButtonText, { color: currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color }]}>
+            <Text style={StyleSheet.flatten([styles.signalButtonText, { color: currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color }])}>
               {currentProfile?.has_chat ? '繼續聊天' : '開啟對話'}
             </Text>
           </Button>
@@ -226,7 +226,7 @@ export default function FeedScreen() {
               onChangeText={setMessage}
               placeholder="從對方的自介找話題，或是簡單說聲 Hi 吧！"
               multiline
-              style={[styles.messageInput, { borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color) + '80' }]}
+              style={StyleSheet.flatten([styles.messageInput, { borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.text : currentProfile?.personal_info?.color) + '80' }])}
             />
 
             {/* Interest Tags Horizontal Scroll */}
@@ -293,15 +293,15 @@ export default function FeedScreen() {
             <Button
               disabled={message.trim() === '' || isCreatingChat}
               onPress={handleSendSignal}
-              style={[
+              style={StyleSheet.flatten([
                 styles.sendButton,
                 {
                   backgroundColor: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color) + '40',
                   borderColor: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color),
                 }
-              ]}
+              ])}
             >
-              {isCreatingChat ? <LoadingSpinner size={20} color={(currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color)} strokeWidth={3} /> : <Text style={[styles.sendButtonText, { color: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color) }]}>發送</Text>}
+              {isCreatingChat ? <LoadingSpinner size={20} color={(currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color)} strokeWidth={3} /> : <Text style={StyleSheet.flatten([styles.sendButtonText, { color: (currentProfile?.personal_info?.color === colors.background ? colors.textSecondary : currentProfile?.personal_info?.color) }])}>發送</Text>}
             </Button>
           </View>
         </View>
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 16,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.primary,
     backgroundColor: colors.primary + '20',
   },
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
-    borderWidth: 2,
+    borderWidth: 1,
   },
   sendButtonText: {
     fontSize: 16,

@@ -181,10 +181,10 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.tabBarIcon, {
+            <View style={StyleSheet.flatten([styles.tabBarIcon, {
               backgroundColor: focused ? colors.primary + '15' : 'transparent',
               borderColor: focused ? colors.primary + '28' : 'transparent',
-            }]}>
+            }])}>
               <AnimatedRadarIcon color={color} size={focused ? 24 : 26} focused={focused} trigger={triggers.home} />
             </View>
           ),
@@ -198,10 +198,10 @@ export default function TabLayout() {
         options={{
           title: 'Chats',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.tabBarIcon, {
+            <View style={StyleSheet.flatten([styles.tabBarIcon, {
               backgroundColor: focused ? colors.primary + '15' : 'transparent',
               borderColor: focused ? colors.primary + '28' : 'transparent',
-            }]}>
+            }])}>
               <AnimatedChatIcon color={color} size={focused ? 24 : 26} focused={focused} trigger={triggers.chats} />
             </View>
           ),
@@ -215,10 +215,10 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.tabBarIcon, {
+            <View style={StyleSheet.flatten([styles.tabBarIcon, {
               backgroundColor: focused ? colors.primary + '15' : 'transparent',
               borderColor: focused ? colors.primary + '28' : 'transparent',
-            }]}>
+            }])}>
               <AnimatedGhostIcon color={color} size={focused ? 24 : 26} focused={focused} trigger={triggers.profile} />
             </View>
           ),
