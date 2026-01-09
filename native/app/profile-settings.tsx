@@ -1,18 +1,92 @@
 import { View, Text, StyleSheet, Pressable, ScrollView, Image, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
 import React, { useState, useEffect } from 'react'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import Animated, { useSharedValue, useAnimatedStyle, SharedValue, useAnimatedReaction, runOnJS } from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { colors } from '@/lib/colors'
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
 import { useAppContext } from '@/contexts/AppContext'
-import { MBTI_OPTIONS, GENDER_OPTIONS, ORIENTATION_OPTIONS, PHOTO_BLUR_AMOUNT, INTEREST_TAGS, LOOKING_FOR_OPTIONS } from '@/lib/setup'
+import { MBTI_OPTIONS, GENDER_OPTIONS, ORIENTATION_OPTIONS, INTEREST_TAGS, LOOKING_FOR_OPTIONS } from '@/lib/setup'
 import LoadingSpinner from '@/svgs/spinner'
 import { updateUserProfile, uploadUserPhoto } from '@/lib/api'
 import { useRouter } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import LogoIcon from '@/svgs/logo'
-import { EyeIcon, EyeSlashIcon } from '@/svgs'
+
+interface GhostDraggableProps {
+  ghostX: SharedValue<number>;
+  ghostY: SharedValue<number>;
+  ghostSize: SharedValue<number>;
+  overlayDimensions: { width: number; height: number } | null;
+  logoStrokeColor: string | undefined;
+}
+
+const GhostDraggable = ({ ghostX, ghostY, ghostSize, overlayDimensions, logoStrokeColor }: GhostDraggableProps) => {
+  const startX = useSharedValue(0);
+  const startY = useSharedValue(0);
+
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      startX.value = ghostX.value;
+      startY.value = ghostY.value;
+    })
+    .onUpdate((e) => {
+      if (!overlayDimensions) return;
+      
+      const newX = startX.value + e.translationX;
+      const newY = startY.value + e.translationY;
+      const currentSize = ghostSize.value;
+      
+      // Constrain to overlay bounds - ensure ghost doesn't exceed edges
+      const maxX = overlayDimensions.width - currentSize;
+      const maxY = overlayDimensions.height - currentSize;
+      
+      ghostX.value = Math.max(0, Math.min(newX, maxX));
+      ghostY.value = Math.max(0, Math.min(newY, maxY));
+    })
+    .onEnd(() => {
+      // No additional action needed on end
+    });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const currentSize = ghostSize.value;
+    return {
+      position: 'absolute',
+      left: ghostX.value,
+      top: ghostY.value,
+      width: currentSize,
+      height: currentSize,
+    };
+  });
+
+  // Get current size for LogoIcon (needs to be reactive)
+  const [iconSize, setIconSize] = React.useState(92);
+  
+  // Update icon size when ghostSize changes
+  useAnimatedReaction(
+    () => ghostSize.value,
+    (size) => {
+      runOnJS(setIconSize)(Math.max(size, 20));
+    }
+  );
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <Animated.View
+        style={[
+          styles.ghostContainer,
+          animatedStyle,
+        ]}
+      >
+        <View style={styles.lockedStateContent}>
+          <LogoIcon size={iconSize} floatingY={0} stroke={logoStrokeColor} />
+        </View>
+      </Animated.View>
+    </GestureDetector>
+  );
+};
 
 const ProfileSettingsScreen = () => {
   const { user, setUser } = useAppContext();
@@ -56,7 +130,47 @@ const ProfileSettingsScreen = () => {
     (user?.personal_info?.avatar_url as string | undefined) || null
   );
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [showImage, setShowImage] = useState(false);
+  const [overlayDimensions, setOverlayDimensions] = useState<{ width: number; height: number } | null>(null);
+  
+  // Ghost position (relative to overlay container, starting at center)
+  const ghostX = useSharedValue(0);
+  const ghostY = useSharedValue(0);
+  const ghostSize = useSharedValue(92); // Default size, will be updated
+  const baseSize = useSharedValue(92); // Base size (50% of container)
+  const scale = useSharedValue(1); // Scale multiplier
+  const startScale = useSharedValue(1);
+
+  // Update ghost position when user data or overlay dimensions change
+  React.useEffect(() => {
+    if (overlayDimensions && user?.personal_info?.ghost_pos) {
+      const { width, height } = overlayDimensions;
+      const savedGhostPos = user.personal_info.ghost_pos as { x: number; y: number; size: number };
+      const containerSize = Math.min(width, height);
+      
+      // Convert percentages to pixels
+      const size = (savedGhostPos.size / 100) * containerSize;
+      const x = (savedGhostPos.x / 100) * width;
+      const y = (savedGhostPos.y / 100) * height;
+      
+      baseSize.value = containerSize * 0.5; // Base is always 50%
+      ghostSize.value = size;
+      scale.value = size / (containerSize * 0.5); // Calculate scale from base
+      ghostX.value = Math.max(0, Math.min(x, width - size));
+      ghostY.value = Math.max(0, Math.min(y, height - size));
+    } else if (overlayDimensions && !user?.personal_info?.ghost_pos) {
+      // Default: center, 50% size
+      const { width, height } = overlayDimensions;
+      const containerSize = Math.min(width, height);
+      const size = containerSize * 0.5;
+      
+      baseSize.value = size;
+      ghostSize.value = size;
+      scale.value = 1;
+      ghostX.value = (width - size) / 2;
+      ghostY.value = (height - size) / 2;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.personal_info?.ghost_pos, overlayDimensions]);
 
   // Modal states
   const [showMbtiModal, setShowMbtiModal] = useState(false);
@@ -233,6 +347,21 @@ const ProfileSettingsScreen = () => {
 
     try {
       setLoading(true);
+      
+      // Calculate ghost position as percentages
+      let ghostPos = undefined;
+      if (overlayDimensions && photoUri) {
+        const xPercent = (ghostX.value / overlayDimensions.width) * 100;
+        const yPercent = (ghostY.value / overlayDimensions.height) * 100;
+        const sizePercent = (ghostSize.value / Math.min(overlayDimensions.width, overlayDimensions.height)) * 100;
+        
+        ghostPos = {
+          x: Math.max(0, Math.min(100, xPercent)),
+          y: Math.max(0, Math.min(100, yPercent)),
+          size: Math.max(20, Math.min(70, sizePercent)),
+        };
+      }
+      
       const updatedUser = await updateUserProfile(user.id, {
         username,
         personal_info: {
@@ -250,6 +379,7 @@ const ProfileSettingsScreen = () => {
           },
           interests: selectedInterests.length > 0 ? selectedInterests : undefined,
           avatar_url: photoUri || undefined,
+          ghost_pos: ghostPos,
         }
       });
       setUser(updatedUser);
@@ -291,42 +421,73 @@ const ProfileSettingsScreen = () => {
             {/* Photo */}
             <View style={styles.section}>
               <Text style={styles.inputLabel}>相片</Text>
+              {photoUri && (
+                <Text style={styles.ghostInstructionText}>用雙指縮放和拖曳小幽靈來擋住你的臉</Text>
+              )}
               <View style={styles.avatarContainer}>
                 {photoUri ? (
-                  <Button
-                    onPress={() => setShowImage(!showImage)}
-                    style={styles.avatarPlaceholder}
-                  >
+                  <View style={styles.avatarPlaceholder}>
                     <View style={styles.avatarImageWrapper}>
                       <Image
                         source={{ uri: photoUri }}
-                        style={StyleSheet.flatten([
-                          styles.avatarImage,
-                          !showImage && styles.avatarImageBlurred
-                        ])}
-                        blurRadius={showImage ? 0 : PHOTO_BLUR_AMOUNT}
+                        style={styles.avatarImage}
                       />
-                      {!showImage && (
-                        <View style={styles.blurOverlay}>
+                      <GestureDetector
+                        gesture={Gesture.Simultaneous(
+                          Gesture.Pinch()
+                            .onStart(() => {
+                              startScale.value = scale.value;
+                            })
+                            .onUpdate((e) => {
+                              if (!overlayDimensions) return;
+                              
+                              const newScale = startScale.value * e.scale;
+                              
+                              // Calculate min and max scale values (20% to 70% of container)
+                              const containerMinSize = Math.min(overlayDimensions.width, overlayDimensions.height) * 0.2;
+                              const containerMaxSize = Math.min(overlayDimensions.width, overlayDimensions.height) * 0.7;
+                              const minScale = containerMinSize / baseSize.value;
+                              const maxScale = containerMaxSize / baseSize.value;
+                              
+                              // Clamp scale to min/max bounds
+                              const clampedScale = Math.max(minScale, Math.min(newScale, maxScale));
+                              const clampedSize = baseSize.value * clampedScale;
+                              
+                              scale.value = clampedScale;
+                              ghostSize.value = clampedSize;
+                              
+                              // Adjust position to keep ghost within bounds when scaling
+                              const maxX = overlayDimensions.width - clampedSize;
+                              const maxY = overlayDimensions.height - clampedSize;
+                              
+                              ghostX.value = Math.max(0, Math.min(ghostX.value, maxX));
+                              ghostY.value = Math.max(0, Math.min(ghostY.value, maxY));
+                            })
+                        )}
+                      >
+                        <View 
+                          style={styles.blurOverlay}
+                          onLayout={(e) => {
+                            const { width, height } = e.nativeEvent.layout;
+                            setOverlayDimensions({ width, height });
+                            // The useEffect will handle updating the ghost position based on user data
+                          }}
+                        >
                           {uploadingPhoto ? (
                             <LoadingSpinner size={30} color={colors.text} strokeWidth={3} />
                           ) : (
-                            <View style={styles.lockedStateContent}>
-                              <LogoIcon size={92} floatingY={0} stroke={logoStrokeColor} />
-                            </View>
+                            <GhostDraggable
+                              ghostX={ghostX}
+                              ghostY={ghostY}
+                              ghostSize={ghostSize}
+                              overlayDimensions={overlayDimensions}
+                              logoStrokeColor={logoStrokeColor}
+                            />
                           )}
                         </View>
-                      )}
+                      </GestureDetector>
                     </View>
-                    {/* Eye icon indicator */}
-                    <View style={styles.eyeIconContainer}>
-                      {showImage ? (
-                        <EyeIcon size={18} color={colors.text} />
-                      ) : (
-                        <EyeSlashIcon size={18} color={colors.textSecondary} />
-                      )}
-                    </View>
-                  </Button>
+                  </View>
                 ) : (
                   <Pressable
                     onPress={handlePickImage}
@@ -851,6 +1012,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
+  ghostInstructionText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 12,
+    lineHeight: 20,
+  },
   selectButton: {
     width: '100%',
     paddingVertical: 16,
@@ -1004,6 +1171,11 @@ const styles = StyleSheet.create({
   lockedStateContent: {
     alignItems: 'center',
     gap: 8,
+  },
+  ghostContainer: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyAvatar: {
     alignItems: 'center',

@@ -13,10 +13,37 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ visible, onClose, user }: ProfileModalProps) {
+  const [overlaySize, setOverlaySize] = React.useState<number | null>(null);
+  const [overlayDimensions, setOverlayDimensions] = React.useState<{ width: number; height: number } | null>(null);
+  const [ghostPosition, setGhostPosition] = React.useState<{ x: number; y: number } | null>(null);
 
   const avatarUrl = user?.personal_info?.avatar_url as string | undefined;
   const logoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string | undefined);
   const showImage = false;
+
+  // Update ghost position when dimensions or user data changes
+  React.useEffect(() => {
+    if (overlayDimensions && user?.personal_info?.ghost_pos) {
+      const { width, height } = overlayDimensions;
+      const savedGhostPos = user.personal_info.ghost_pos as { x: number; y: number; size: number };
+      const containerSize = Math.min(width, height);
+      
+      // Convert percentages to pixels
+      const size = (savedGhostPos.size / 100) * containerSize;
+      const x = (savedGhostPos.x / 100) * width;
+      const y = (savedGhostPos.y / 100) * height;
+      
+      setOverlaySize(Math.max(20, size));
+      setGhostPosition({ x, y });
+    } else if (overlayDimensions && !user?.personal_info?.ghost_pos) {
+      // Default: center, 50% size
+      const { width, height } = overlayDimensions;
+      const containerSize = Math.min(width, height);
+      const size = containerSize * 0.5;
+      setOverlaySize(size);
+      setGhostPosition({ x: (width - size) / 2, y: (height - size) / 2 });
+    }
+  }, [user?.personal_info?.ghost_pos, overlayDimensions]);
 
   return (
     <BottomSheetModal
@@ -46,10 +73,27 @@ export default function ProfileModal({ visible, onClose, user }: ProfileModalPro
                       blurRadius={showImage ? 0 : PHOTO_BLUR_AMOUNT}
                     />
                     {!showImage && (
-                      <View style={styles.blurOverlay}>
-                        <View style={styles.lockedStateContent}>
+                      <View 
+                        style={styles.blurOverlay}
+                        onLayout={(e) => {
+                          const { width, height } = e.nativeEvent.layout;
+                          setOverlayDimensions({ width, height });
+                        }}
+                      >
+                        <View 
+                          style={[
+                            styles.lockedStateContent,
+                            ghostPosition && overlaySize ? {
+                              position: 'absolute',
+                              left: ghostPosition.x,
+                              top: ghostPosition.y,
+                              width: overlaySize,
+                              height: overlaySize,
+                            } : {},
+                          ]}
+                        >
                           <LogoIcon
-                            size={60}
+                            size={overlaySize || 60}
                             floatingY={0}
                             stroke={logoStrokeColor}
                           />

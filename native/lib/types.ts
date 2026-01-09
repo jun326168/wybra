@@ -4,6 +4,7 @@ export interface User {
   username: string;
   provider: string;
   personal_info?: {
+    ghost_pos?: { x: number; y: number; size: number };
     real_name: string;
     color: string;
     template: string;

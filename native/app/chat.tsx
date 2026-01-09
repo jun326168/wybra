@@ -44,6 +44,33 @@ const ChatScreen = () => {
   const themeColor = chat?.other_user?.personal_info?.color === colors.background ? colors.textSecondary : chat?.other_user?.personal_info?.color as string;
 
   const showImage = false;
+  const [overlaySize, setOverlaySize] = useState<number | null>(null);
+  const [overlayDimensions, setOverlayDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [ghostPosition, setGhostPosition] = useState<{ x: number; y: number } | null>(null);
+
+  // Update ghost position when dimensions or other user data changes
+  useEffect(() => {
+    if (overlayDimensions && chat?.other_user?.personal_info?.ghost_pos) {
+      const { width, height } = overlayDimensions;
+      const savedGhostPos = chat.other_user.personal_info.ghost_pos as { x: number; y: number; size: number };
+      const containerSize = Math.min(width, height);
+      
+      // Convert percentages to pixels
+      const size = (savedGhostPos.size / 100) * containerSize;
+      const x = (savedGhostPos.x / 100) * width;
+      const y = (savedGhostPos.y / 100) * height;
+      
+      setOverlaySize(Math.max(20, size));
+      setGhostPosition({ x, y });
+    } else if (overlayDimensions && !chat?.other_user?.personal_info?.ghost_pos) {
+      // Default: center, 50% size
+      const { width, height } = overlayDimensions;
+      const containerSize = Math.min(width, height);
+      const size = containerSize * 0.5;
+      setOverlaySize(size);
+      setGhostPosition({ x: (width - size) / 2, y: (height - size) / 2 });
+    }
+  }, [chat?.other_user?.personal_info?.ghost_pos, overlayDimensions]);
 
   useEffect(() => {
     loadChat();
@@ -316,10 +343,27 @@ const ChatScreen = () => {
               <View style={StyleSheet.flatten([styles.avatar, { backgroundColor: colors.card }])} />
             )}
             {!showImage && (
-              <View style={styles.blurOverlay}>
-                <View style={styles.lockedStateContent}>
+              <View 
+                style={styles.blurOverlay}
+                onLayout={(e) => {
+                  const { width, height } = e.nativeEvent.layout;
+                  setOverlayDimensions({ width, height });
+                }}
+              >
+                <View 
+                  style={[
+                    styles.lockedStateContent,
+                    ghostPosition && overlaySize ? {
+                      position: 'absolute',
+                      left: ghostPosition.x,
+                      top: ghostPosition.y,
+                      width: overlaySize,
+                      height: overlaySize,
+                    } : {},
+                  ]}
+                >
                   <LogoIcon
-                    size={20}
+                    size={overlaySize || 20}
                     floatingY={0}
                     stroke={themeColor}
                   />

@@ -33,9 +33,36 @@ export const TEMPLATE_OPTIONS = [
 ];
 
 export const ClassicCard = ({ user, themeColor }: TemplateCardProps) => {
+  const [overlaySize, setOverlaySize] = React.useState<number | null>(null);
+  const [overlayDimensions, setOverlayDimensions] = React.useState<{ width: number; height: number } | null>(null);
+  const [ghostPosition, setGhostPosition] = React.useState<{ x: number; y: number } | null>(null);
 
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
+
+  // Update ghost position when dimensions or user data changes
+  React.useEffect(() => {
+    if (overlayDimensions && user.personal_info?.ghost_pos) {
+      const { width, height } = overlayDimensions;
+      const savedGhostPos = user.personal_info.ghost_pos as { x: number; y: number; size: number };
+      const containerSize = Math.min(width, height);
+      
+      // Convert percentages to pixels
+      const size = (savedGhostPos.size / 100) * containerSize;
+      const x = (savedGhostPos.x / 100) * width;
+      const y = (savedGhostPos.y / 100) * height;
+      
+      setOverlaySize(Math.max(20, size));
+      setGhostPosition({ x, y });
+    } else if (overlayDimensions && !user.personal_info?.ghost_pos) {
+      // Default: center, 50% size
+      const { width, height } = overlayDimensions;
+      const containerSize = Math.min(width, height);
+      const size = containerSize * 0.5;
+      setOverlaySize(size);
+      setGhostPosition({ x: (width - size) / 2, y: (height - size) / 2 });
+    }
+  }, [user.personal_info?.ghost_pos, overlayDimensions]);
 
   if (isDefault) {
     themeColor = colors.textSecondary;
@@ -52,8 +79,24 @@ export const ClassicCard = ({ user, themeColor }: TemplateCardProps) => {
           {/* avatar */}
           <View style={[styles.classicContentAvatarContainer, { borderColor: themeColor }]}>
             <Image source={{ uri: user.personal_info.avatar_url }} style={styles.classicContentAvatar} blurRadius={PHOTO_BLUR_AMOUNT} />
-            <View style={styles.classicContentAvatarOverlay}>
-              <LogoIcon size={28} floatingY={0} stroke={themeColor} />
+            <View 
+              style={styles.classicContentAvatarOverlay}
+              onLayout={(e) => {
+                const { width, height } = e.nativeEvent.layout;
+                setOverlayDimensions({ width, height });
+              }}
+            >
+              <View 
+                style={ghostPosition && overlaySize ? {
+                  position: 'absolute',
+                  left: ghostPosition.x,
+                  top: ghostPosition.y,
+                  width: overlaySize,
+                  height: overlaySize,
+                } : {}}
+              >
+                <LogoIcon size={overlaySize || 28} floatingY={0} stroke={themeColor} />
+              </View>
             </View>
           </View>
           {/* gen */}
@@ -81,8 +124,35 @@ export const ClassicCard = ({ user, themeColor }: TemplateCardProps) => {
 };
 
 export const QuoteCard = ({ user, themeColor }: TemplateCardProps) => {
+  const [overlaySize, setOverlaySize] = React.useState<number | null>(null);
+  const [overlayDimensions, setOverlayDimensions] = React.useState<{ width: number; height: number } | null>(null);
+  const [ghostPosition, setGhostPosition] = React.useState<{ x: number; y: number } | null>(null);
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
+
+  // Update ghost position when dimensions or user data changes
+  React.useEffect(() => {
+    if (overlayDimensions && user.personal_info?.ghost_pos) {
+      const { width, height } = overlayDimensions;
+      const savedGhostPos = user.personal_info.ghost_pos as { x: number; y: number; size: number };
+      const containerSize = Math.min(width, height);
+      
+      // Convert percentages to pixels
+      const size = (savedGhostPos.size / 100) * containerSize;
+      const x = (savedGhostPos.x / 100) * width;
+      const y = (savedGhostPos.y / 100) * height;
+      
+      setOverlaySize(Math.max(20, size));
+      setGhostPosition({ x, y });
+    } else if (overlayDimensions && !user.personal_info?.ghost_pos) {
+      // Default: center, 50% size
+      const { width, height } = overlayDimensions;
+      const containerSize = Math.min(width, height);
+      const size = containerSize * 0.5;
+      setOverlaySize(size);
+      setGhostPosition({ x: (width - size) / 2, y: (height - size) / 2 });
+    }
+  }, [user.personal_info?.ghost_pos, overlayDimensions]);
 
   if (isDefault) {
     themeColor = colors.textSecondary;
@@ -113,8 +183,24 @@ export const QuoteCard = ({ user, themeColor }: TemplateCardProps) => {
         <View style={styles.quoteContentAuthorRow}>
           <View style={styles.quoteContentAuthorAvatarContainer}>
             <Image source={{ uri: user.personal_info.avatar_url }} style={[styles.quoteContentAuthorAvatar, { borderColor: themeColor }]} blurRadius={PHOTO_BLUR_AMOUNT} />
-            <View style={styles.quoteContentAuthorAvatarOverlay}>
-              <LogoIcon size={20} floatingY={0} stroke={themeColor} />
+            <View 
+              style={styles.quoteContentAuthorAvatarOverlay}
+              onLayout={(e) => {
+                const { width, height } = e.nativeEvent.layout;
+                setOverlayDimensions({ width, height });
+              }}
+            >
+              <View 
+                style={ghostPosition && overlaySize ? {
+                  position: 'absolute',
+                  left: ghostPosition.x,
+                  top: ghostPosition.y,
+                  width: overlaySize,
+                  height: overlaySize,
+                } : {}}
+              >
+                <LogoIcon size={overlaySize || 20} floatingY={0} stroke={themeColor} />
+              </View>
             </View>
           </View>
           <Text style={styles.quoteContentAuthorName}>{user.username}</Text>
@@ -131,8 +217,35 @@ export const QuoteCard = ({ user, themeColor }: TemplateCardProps) => {
 };
 
 export const ZineCard = ({ user, themeColor }: TemplateCardProps) => {
+  const [overlaySize, setOverlaySize] = React.useState<number | null>(null);
+  const [overlayDimensions, setOverlayDimensions] = React.useState<{ width: number; height: number } | null>(null);
+  const [ghostPosition, setGhostPosition] = React.useState<{ x: number; y: number } | null>(null);
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
+
+  // Update ghost position when dimensions or user data changes
+  React.useEffect(() => {
+    if (overlayDimensions && user.personal_info?.ghost_pos) {
+      const { width, height } = overlayDimensions;
+      const savedGhostPos = user.personal_info.ghost_pos as { x: number; y: number; size: number };
+      const containerSize = Math.min(width, height);
+      
+      // Convert percentages to pixels
+      const size = (savedGhostPos.size / 100) * containerSize;
+      const x = (savedGhostPos.x / 100) * width;
+      const y = (savedGhostPos.y / 100) * height;
+      
+      setOverlaySize(Math.max(20, size));
+      setGhostPosition({ x, y });
+    } else if (overlayDimensions && !user.personal_info?.ghost_pos) {
+      // Default: center, 50% size
+      const { width, height } = overlayDimensions;
+      const containerSize = Math.min(width, height);
+      const size = containerSize * 0.5;
+      setOverlaySize(size);
+      setGhostPosition({ x: (width - size) / 2, y: (height - size) / 2 });
+    }
+  }, [user.personal_info?.ghost_pos, overlayDimensions]);
 
   if (isDefault) {
     themeColor = colors.textSecondary;
@@ -148,8 +261,24 @@ export const ZineCard = ({ user, themeColor }: TemplateCardProps) => {
       <View style={styles.zineAvatarContainer}>
         <View style={[styles.zineAvatarWrapper, { borderColor: themeColor, transform: [{ rotate: `${stickerAngles[0]}deg` }] }]}>
           <Image source={{ uri: user.personal_info.avatar_url }} style={styles.zineAvatar} blurRadius={PHOTO_BLUR_AMOUNT} />
-          <View style={styles.zineAvatarOverlay}>
-            <LogoIcon size={36} floatingY={0} stroke={themeColor} />
+          <View 
+            style={styles.zineAvatarOverlay}
+            onLayout={(e) => {
+              const { width, height } = e.nativeEvent.layout;
+              setOverlayDimensions({ width, height });
+            }}
+          >
+            <View 
+              style={ghostPosition && overlaySize ? {
+                position: 'absolute',
+                left: ghostPosition.x,
+                top: ghostPosition.y,
+                width: overlaySize,
+                height: overlaySize,
+              } : {}}
+            >
+              <LogoIcon size={overlaySize || 36} floatingY={0} stroke={themeColor} />
+            </View>
           </View>
         </View>
       </View>
@@ -213,9 +342,36 @@ export const ZineCard = ({ user, themeColor }: TemplateCardProps) => {
 };
 
 export const PolaroidCard = ({ user, themeColor }: TemplateCardProps) => {
+  const [overlaySize, setOverlaySize] = React.useState<number | null>(null);
+  const [overlayDimensions, setOverlayDimensions] = React.useState<{ width: number; height: number } | null>(null);
+  const [ghostPosition, setGhostPosition] = React.useState<{ x: number; y: number } | null>(null);
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
   if (isDefault) themeColor = '#64686E';
+
+  // Update ghost position when dimensions or user data changes
+  React.useEffect(() => {
+    if (overlayDimensions && user.personal_info?.ghost_pos) {
+      const { width, height } = overlayDimensions;
+      const savedGhostPos = user.personal_info.ghost_pos as { x: number; y: number; size: number };
+      const containerSize = Math.min(width, height);
+      
+      // Convert percentages to pixels
+      const size = (savedGhostPos.size / 100) * containerSize;
+      const x = (savedGhostPos.x / 100) * width;
+      const y = (savedGhostPos.y / 100) * height;
+      
+      setOverlaySize(Math.max(20, size));
+      setGhostPosition({ x, y });
+    } else if (overlayDimensions && !user.personal_info?.ghost_pos) {
+      // Default: center, 50% size
+      const { width, height } = overlayDimensions;
+      const containerSize = Math.min(width, height);
+      const size = containerSize * 0.5;
+      setOverlaySize(size);
+      setGhostPosition({ x: (width - size) / 2, y: (height - size) / 2 });
+    }
+  }, [user.personal_info?.ghost_pos, overlayDimensions]);
 
   // Washi tape color (semi-transparent version of theme)
   const tapeColor = themeColor + '90';
@@ -228,8 +384,24 @@ export const PolaroidCard = ({ user, themeColor }: TemplateCardProps) => {
       {/* The Photo Area */}
       <View style={styles.polaroidImageFrame}>
         <Image source={{ uri: user.personal_info.avatar_url }} style={styles.polaroidImage} blurRadius={PHOTO_BLUR_AMOUNT + 15} />
-        <View style={styles.polaroidOverlay}>
-          <LogoIcon size={120} floatingY={0} stroke={isDefault ? colors.textSecondary : themeColor} />
+        <View 
+          style={styles.polaroidOverlay}
+          onLayout={(e) => {
+            const { width, height } = e.nativeEvent.layout;
+            setOverlayDimensions({ width, height });
+          }}
+        >
+          <View 
+            style={ghostPosition && overlaySize ? {
+              position: 'absolute',
+              left: ghostPosition.x,
+              top: ghostPosition.y,
+              width: overlaySize,
+              height: overlaySize,
+            } : {}}
+          >
+            <LogoIcon size={overlaySize || 120} floatingY={0} stroke={isDefault ? colors.textSecondary : themeColor} />
+          </View>
         </View>
       </View>
 
@@ -256,9 +428,36 @@ export const PolaroidCard = ({ user, themeColor }: TemplateCardProps) => {
 };
 
 export const TicketCard = ({ user, themeColor }: TemplateCardProps) => {
+  const [overlaySize, setOverlaySize] = React.useState<number | null>(null);
+  const [overlayDimensions, setOverlayDimensions] = React.useState<{ width: number; height: number } | null>(null);
+  const [ghostPosition, setGhostPosition] = React.useState<{ x: number; y: number } | null>(null);
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
   if (isDefault) themeColor = colors.textSecondary;
+
+  // Update ghost position when dimensions or user data changes
+  React.useEffect(() => {
+    if (overlayDimensions && user.personal_info?.ghost_pos) {
+      const { width, height } = overlayDimensions;
+      const savedGhostPos = user.personal_info.ghost_pos as { x: number; y: number; size: number };
+      const containerSize = Math.min(width, height);
+      
+      // Convert percentages to pixels
+      const size = (savedGhostPos.size / 100) * containerSize;
+      const x = (savedGhostPos.x / 100) * width;
+      const y = (savedGhostPos.y / 100) * height;
+      
+      setOverlaySize(Math.max(20, size));
+      setGhostPosition({ x, y });
+    } else if (overlayDimensions && !user.personal_info?.ghost_pos) {
+      // Default: center, 50% size
+      const { width, height } = overlayDimensions;
+      const containerSize = Math.min(width, height);
+      const size = containerSize * 0.5;
+      setOverlaySize(size);
+      setGhostPosition({ x: (width - size) / 2, y: (height - size) / 2 });
+    }
+  }, [user.personal_info?.ghost_pos, overlayDimensions]);
 
   // Fixed barcode pattern for consistent rendering
   const barcodeBars = [ { width: 2, height: 30 }, { width: 1, height: 30 }, { width: 2, height: 30 }, { width: 3, height: 30 }, { width: 2, height: 30 }, { width: 4, height: 30 }, { width: 1, height: 30 }, { width: 3, height: 30 }, { width: 2, height: 30 }, { width: 4, height: 30 }, { width: 1, height: 30 }, { width: 3, height: 30 }, { width: 2, height: 30 }, { width: 4, height: 30 }, { width: 2, height: 30 } ];
@@ -280,8 +479,24 @@ export const TicketCard = ({ user, themeColor }: TemplateCardProps) => {
           </View>
           <View style={[styles.ticketAvatarContainer, { borderColor: themeColor }]}>
             <Image source={{ uri: user.personal_info.avatar_url }} style={styles.ticketAvatar} blurRadius={PHOTO_BLUR_AMOUNT} />
-            <View style={styles.ticketAvatarOverlay}>
-              <LogoIcon size={20} floatingY={0} stroke={themeColor} />
+            <View 
+              style={styles.ticketAvatarOverlay}
+              onLayout={(e) => {
+                const { width, height } = e.nativeEvent.layout;
+                setOverlayDimensions({ width, height });
+              }}
+            >
+              <View 
+                style={ghostPosition && overlaySize ? {
+                  position: 'absolute',
+                  left: ghostPosition.x,
+                  top: ghostPosition.y,
+                  width: overlaySize,
+                  height: overlaySize,
+                } : {}}
+              >
+                <LogoIcon size={overlaySize || 20} floatingY={0} stroke={themeColor} />
+              </View>
             </View>
           </View>
         </View>

@@ -8,13 +8,16 @@ import { EyeIcon, EyeSlashIcon } from '@/svgs'
 import Button from '@/components/ui/button'
 import { useRouter } from 'expo-router'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
-import { GENERATION_OPTIONS, getGeneration, INTEREST_TAGS, MBTI_OPTIONS, PHOTO_BLUR_AMOUNT } from '@/lib/setup'
+import { GENERATION_OPTIONS, getGeneration, INTEREST_TAGS, MBTI_OPTIONS } from '@/lib/setup'
 
 const ProfileScreen = () => {
   const { user, signOut } = useAppContext();
   const router = useRouter();
   const [showImage, setShowImage] = useState(false);
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
+  const [overlaySize, setOverlaySize] = useState<number | null>(null);
+  const [overlayDimensions, setOverlayDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [ghostPosition, setGhostPosition] = useState<{ x: number; y: number } | null>(null);
 
   const avatarUrl = user?.personal_info?.avatar_url as string | undefined;
   const generation = getGeneration(new Date(user?.personal_info?.birthday as string).getFullYear());
@@ -27,6 +30,30 @@ const ProfileScreen = () => {
       router.replace('/');
     }
   }, [user, router]);
+
+  // Update ghost position when user data changes
+  useEffect(() => {
+    if (overlayDimensions && user?.personal_info?.ghost_pos) {
+      const { width, height } = overlayDimensions;
+      const containerSize = Math.min(width, height);
+      const savedGhostPos = user.personal_info.ghost_pos as { x: number; y: number; size: number };
+      
+      // Convert percentages to pixels
+      const size = (savedGhostPos.size / 100) * containerSize;
+      const x = (savedGhostPos.x / 100) * width;
+      const y = (savedGhostPos.y / 100) * height;
+      
+      setOverlaySize(Math.max(20, size));
+      setGhostPosition({ x, y });
+    } else if (overlayDimensions && !user?.personal_info?.ghost_pos) {
+      // Default: center, 50% size
+      const { width, height } = overlayDimensions;
+      const containerSize = Math.min(width, height);
+      const size = containerSize * 0.5;
+      setOverlaySize(size);
+      setGhostPosition({ x: (width - size) / 2, y: (height - size) / 2 });
+    }
+  }, [user?.personal_info?.ghost_pos, overlayDimensions]);
 
   const handleEditProfile = () => {
     router.push('/profile-settings');
@@ -73,16 +100,30 @@ const ProfileScreen = () => {
               >
                 <Image
                   source={{ uri: avatarUrl }}
-                  style={StyleSheet.flatten([
-                    styles.avatarImage,
-                    !showImage && styles.avatarImageBlurred
-                  ])}
-                  blurRadius={showImage ? 0 : PHOTO_BLUR_AMOUNT}
+                  style={styles.avatarImage}
                 />
                 {!showImage && (
-                  <View style={styles.blurOverlay}>
-                    <View style={styles.lockedStateContent}>
-                      <LogoIcon size={60} floatingY={0} stroke={logoStrokeColor} />
+                  <View 
+                    style={styles.blurOverlay}
+                    onLayout={(e) => {
+                      const { width, height } = e.nativeEvent.layout;
+                      setOverlayDimensions({ width, height });
+                      // The useEffect will handle updating the ghost position based on user data
+                    }}
+                  >
+                    <View 
+                      style={[
+                        styles.lockedStateContent,
+                        ghostPosition && overlaySize ? {
+                          position: 'absolute',
+                          left: ghostPosition.x,
+                          top: ghostPosition.y,
+                          width: overlaySize,
+                          height: overlaySize,
+                        } : {},
+                      ]}
+                    >
+                      <LogoIcon size={overlaySize || 60} floatingY={0} stroke={logoStrokeColor} />
                     </View>
                   </View>
                 )}

@@ -23,6 +23,9 @@ export default function ChatsScreen() {
   const router = useRouter();
 
   const showImage = false;
+  const [overlaySizes, setOverlaySizes] = useState<Map<string, number>>(new Map());
+  const [overlayDimensionsMap, setOverlayDimensionsMap] = useState<Map<string, { width: number; height: number }>>(new Map());
+  const [ghostPositions, setGhostPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
 
   const loadData = useCallback(async (isRefreshing = false) => {
     try {
@@ -149,10 +152,68 @@ export default function ChatsScreen() {
             <View style={StyleSheet.flatten([styles.avatar, { backgroundColor: colors.card }])} />
           )}
           {!showImage && (
-            <View style={styles.blurOverlay}>
-              <View style={styles.lockedStateContent}>
+            <View 
+              style={styles.blurOverlay}
+              onLayout={(e) => {
+                const { width, height } = e.nativeEvent.layout;
+                const containerSize = Math.min(width, height);
+                
+                setOverlayDimensionsMap(prev => {
+                  const newMap = new Map(prev);
+                  newMap.set(item.id, { width, height });
+                  return newMap;
+                });
+                
+                // Load saved ghost position or use default
+                const savedGhostPos = item.other_user?.personal_info?.ghost_pos as { x: number; y: number; size: number } | undefined;
+                
+                if (savedGhostPos) {
+                  // Convert percentages to pixels
+                  const size = (savedGhostPos.size / 100) * containerSize;
+                  const x = (savedGhostPos.x / 100) * width;
+                  const y = (savedGhostPos.y / 100) * height;
+                  
+                  setOverlaySizes(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(item.id, Math.max(20, size));
+                    return newMap;
+                  });
+                  
+                  setGhostPositions(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(item.id, { x, y });
+                    return newMap;
+                  });
+                } else {
+                  // Default: center, 50% size
+                  const size = containerSize * 0.5;
+                  setOverlaySizes(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(item.id, size);
+                    return newMap;
+                  });
+                  setGhostPositions(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(item.id, { x: (width - size) / 2, y: (height - size) / 2 });
+                    return newMap;
+                  });
+                }
+              }}
+            >
+              <View 
+                style={[
+                  styles.lockedStateContent,
+                  ghostPositions.get(item.id) && overlaySizes.get(item.id) ? {
+                    position: 'absolute',
+                    left: ghostPositions.get(item.id)!.x,
+                    top: ghostPositions.get(item.id)!.y,
+                    width: overlaySizes.get(item.id)!,
+                    height: overlaySizes.get(item.id)!,
+                  } : {},
+                ]}
+              >
                 <LogoIcon
-                  size={28}
+                  size={overlaySizes.get(item.id) || 28}
                   floatingY={0}
                   stroke={themeColor}
                 />
