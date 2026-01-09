@@ -65,14 +65,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Trigger Pusher event for new message
-    try {
-      await triggerNewMessage(chat_id, message);
-    } catch (error) {
-      console.error('Error triggering Pusher event:', error);
-      // Don't fail the request if Pusher fails
-    }
-
     const newMessageCount = existingChat.message_count + 1;
 
     // Update the chat with the new last_message_id, increment message_count, and set last_message_read to false
@@ -88,6 +80,15 @@ export async function POST(request: NextRequest) {
       `,
       [message.id, chat_id, newMessageCount]
     );
+
+    // Trigger Pusher event for new message
+    try {
+      const otherUserId = existingChat.user_1 === user.id ? existingChat.user_2 : existingChat.user_1;
+      await triggerNewMessage(chat_id, otherUserId, message, { ...existingChat, last_message_id: message.id, last_message_read: false, last_message: { id: message.id, content: message.content, sender_id: user.id, created_at: message.created_at } });
+    } catch (error) {
+      console.error('Error triggering Pusher event:', error);
+      // Don't fail the request if Pusher fails
+    }
 
     // Run chat audit (progress updates, AI scoring, quiz generation)
     await auditMessage(chat_id, user.id, content, newMessageCount);

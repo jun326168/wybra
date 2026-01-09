@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       )
       LEFT JOIN messages m ON m.id = c.last_message_id
       WHERE c.user_1 = $1 OR c.user_2 = $1
-      ORDER BY c.updated_at DESC
+      ORDER BY m.created_at DESC
       `,
       [user.id]
     );

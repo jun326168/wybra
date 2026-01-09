@@ -48,11 +48,15 @@ export async function triggerPusherEvent(
 
 export async function triggerNewMessage(
   chatId: string,
-  message: Message
+  userId: string,
+  message: Message,
+  chat: Chat & { last_message: { id: string, content: string, sender_id: string, created_at: string } }
 ): Promise<void> {
-  const channel = `chat-${chatId}`;
+  const chatChannel = `chat-${chatId}`;
+  const userChannel = `user-${userId}`;
   try {
-    await triggerPusherEvent(channel, 'new-message', { message: message });
+    await triggerPusherEvent(chatChannel, 'new-message', { message: message });
+    await triggerPusherEvent(userChannel, 'new-message', { chat: chat });
   } catch (error) {
     console.error('Error triggering Pusher event:', error);
     throw error;

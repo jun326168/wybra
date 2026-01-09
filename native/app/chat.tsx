@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, FlatList, KeyboardAvoidingView, Platform, Pressable, Keyboard } from 'react-native'
+import { View, Text, StyleSheet, Image, FlatList, KeyboardAvoidingView, Platform, Pressable, Keyboard, Animated } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useRef, useState } from 'react'
 import { brightenHexColor, colors } from '@/lib/colors';
@@ -36,6 +36,10 @@ const ChatScreen = () => {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [tipStep, setTipStep] = useState(1);
+  
+  // Animated values for progress bars
+  const otherUserProgressAnim = useRef(new Animated.Value(0)).current;
+  const currentUserProgressAnim = useRef(new Animated.Value(0)).current;
 
   const themeColor = chat?.other_user?.personal_info?.color === colors.background ? colors.textSecondary : chat?.other_user?.personal_info?.color as string;
 
@@ -109,8 +113,25 @@ const ChatScreen = () => {
   }, []);
 
   useEffect(() => {
-    setCurrentUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_1_progress as number) : (chat?.chat_info?.user_2_progress as number));
-    setOtherUserProgress(user?.id === chat?.user_1 ? (chat?.chat_info?.user_2_progress as number) : (chat?.chat_info?.user_1_progress as number));
+    const newCurrentUserProgress = user?.id === chat?.user_1 ? (chat?.chat_info?.user_1_progress as number) : (chat?.chat_info?.user_2_progress as number);
+    const newOtherUserProgress = user?.id === chat?.user_1 ? (chat?.chat_info?.user_2_progress as number) : (chat?.chat_info?.user_1_progress as number);
+    
+    setCurrentUserProgress(newCurrentUserProgress);
+    setOtherUserProgress(newOtherUserProgress);
+    
+    // Animate progress bars
+    Animated.parallel([
+      Animated.timing(currentUserProgressAnim, {
+        toValue: Math.min(100, newCurrentUserProgress),
+        duration: 500,
+        useNativeDriver: false, // width animation requires layout, not native driver
+      }),
+      Animated.timing(otherUserProgressAnim, {
+        toValue: Math.min(100, newOtherUserProgress),
+        duration: 500,
+        useNativeDriver: false,
+      }),
+    ]).start();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chat]);
 
@@ -157,6 +178,16 @@ const ChatScreen = () => {
     setChat(chat);
     setMessages(messages);
     setLoading(false);
+    
+    // Initialize animated values with initial progress
+    if (chat) {
+      const initialCurrentUserProgress = user?.id === chat.user_1 ? (chat.chat_info?.user_1_progress as number) : (chat.chat_info?.user_2_progress as number);
+      const initialOtherUserProgress = user?.id === chat.user_1 ? (chat.chat_info?.user_2_progress as number) : (chat.chat_info?.user_1_progress as number);
+      
+      otherUserProgressAnim.setValue(Math.min(100, initialOtherUserProgress));
+      currentUserProgressAnim.setValue(Math.min(100, initialCurrentUserProgress));
+    }
+    
     if ((messages.length <= 1)) {
       setShowTips(true);
     } else {
@@ -222,7 +253,7 @@ const ChatScreen = () => {
   const renderTip = () => {
     // along side tips
     if (messages.length > 1 && new Date().getTime() - new Date(messages[messages.length - 1].created_at).getTime() > 21600000) {
-      return <Text style={styles.tipText}>點擊頭像複習一下對方的自介或興趣標籤，也許有新發現喔！</Text>;
+      return <Text style={styles.tipText}>點擊頭像看看對方的自介或興趣標籤，也許會發現新話題喔！</Text>;
     }
     // first time tips
     if (tipStep === 1) {
@@ -296,25 +327,26 @@ const ChatScreen = () => {
         {/* progress bar */}
         <View style={styles.progressBarContainer}>
           <View style={styles.progressBarLeftContainer}>
-            <View style={StyleSheet.flatten([styles.progressBarLeft, {
+            <Animated.View style={StyleSheet.flatten([styles.progressBarLeft, {
               backgroundColor: (chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color) as string,
               shadowColor: (chat?.other_user?.personal_info?.color === colors.background ? colors.text : chat?.other_user?.personal_info?.color) as string,
-              width: `${Math.min(100, otherUserProgress)}%`,
+              width: otherUserProgressAnim.interpolate({
+                inputRange: [0, 100],
+                outputRange: ['0%', '100%'],
+              }),
             }])} />
           </View>
           <View style={styles.progressBarRightContainer}>
-            <View style={StyleSheet.flatten([styles.progressBarRight, {
+            <Animated.View style={StyleSheet.flatten([styles.progressBarRight, {
               backgroundColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
               shadowColor: (user?.personal_info?.color === colors.background ? colors.text : user?.personal_info?.color) as string,
-              width: `${Math.min(100, currentUserProgress)}%`,
+              width: currentUserProgressAnim.interpolate({
+                inputRange: [0, 100],
+                outputRange: ['0%', '100%'],
+              }),
             }])} />
           </View>
         </View>
-        {/* progress bar labels */}
-        {/* <View style={styles.progressBarLabels}>
-          <Text style={styles.progressBarLabel}>{otherUserProgress}</Text>
-          <Text style={styles.progressBarLabel}>{currentUserProgress}</Text>
-        </View> */}
       </View>
 
       <KeyboardAvoidingView

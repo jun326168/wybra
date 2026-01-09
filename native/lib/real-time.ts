@@ -143,3 +143,75 @@ export async function unsubscribeFromChat(chatId: string): Promise<void> {
     console.error('[Pusher] Error unsubscribing from channel:', error);
   }
 }
+
+/**
+ * Subscribe to a user channel to listen for new messages in chats list
+ * @param userId - The user ID
+ * @param onNewMessage - Callback when a new message is received (updates chat in list)
+ * @returns Promise that resolves to unsubscribe function
+ */
+export async function subscribeToUserChannel(
+  userId: string,
+  onNewMessage: (chat: Chat) => void
+): Promise<() => Promise<void>> {
+  const pusher = getPusherClient();
+  const channelName = `user-${userId}`;
+
+  console.log('[Pusher] Subscribing to user channel:', channelName);
+
+  try {
+    await pusher.subscribe({
+      channelName,
+      onEvent: (event) => {
+        console.log('[Pusher] Raw event received on user channel');
+        
+        try {
+          // Parse event data if it's a string
+          let eventData = event.data;
+          if (typeof eventData === 'string') {
+            console.log('[Pusher] Parsing string data...');
+            eventData = JSON.parse(eventData);
+          }
+
+          console.log('[Pusher] Event name:', event.eventName);
+
+          if (event.eventName === 'new-message') {
+            const data = eventData as { chat: Chat };
+            if (data?.chat) {
+              console.log('[Pusher] New message received on user channel, updating chat:', data.chat.id);
+              onNewMessage(data.chat);
+            } else {
+              console.warn('[Pusher] new-message event missing chat data');
+            }
+          } else {
+            console.log('[Pusher] Unknown event type on user channel:', event.eventName);
+          }
+        } catch (parseError) {
+          console.error('[Pusher] Error parsing event data:', parseError);
+        }
+      },
+      onSubscriptionSucceeded: (data) => {
+        console.log('[Pusher] Subscription succeeded for user channel:', channelName, data);
+      },
+      onSubscriptionError: (error) => {
+        console.error('[Pusher] Subscription error for user channel:', channelName, error);
+      },
+    });
+
+    console.log('[Pusher] Successfully subscribed to user channel:', channelName);
+
+    // Return unsubscribe function
+    return async () => {
+      try {
+        console.log('[Pusher] Unsubscribing from user channel:', channelName);
+        await pusher.unsubscribe({ channelName });
+      } catch (error) {
+        console.error('[Pusher] Error unsubscribing from user channel:', error);
+      }
+    };
+  } catch (error) {
+    console.error('[Pusher] Error subscribing to user channel:', error);
+    // Return a no-op unsubscribe function if subscription fails
+    return async () => {};
+  }
+}

@@ -13,6 +13,7 @@ import { Chat } from '@/lib/types'; // Ensure your types file is correct
 import LoadingSpinner from '@/svgs/spinner';
 import { PHOTO_BLUR_AMOUNT } from '@/lib/setup'; // Import your global blur constant
 import { formatMessageTime } from '@/lib/functions';
+import { subscribeToUserChannel } from '@/lib/real-time';
 
 export default function ChatsScreen() {
   const { user } = useAppContext();
@@ -52,6 +53,54 @@ export default function ChatsScreen() {
       loadData();
     }, [loadData])
   );
+
+  // Subscribe to user channel to listen for new messages
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let unsubscribeFn: (() => Promise<void>) | null = null;
+
+    const setupSubscription = async () => {
+      unsubscribeFn = await subscribeToUserChannel(
+        user.id,
+        (updatedChat: Chat) => {
+          console.log('chat-updated', updatedChat);
+          // Update the chat in the list when a new message is received
+          setChats(prevChats => {
+            const chatIndex = prevChats.findIndex(c => c.id === updatedChat.id);
+            
+            if (chatIndex === -1) {
+              // If chat doesn't exist in list, add it at the beginning
+              return [updatedChat, ...prevChats];
+            } else {
+              // Update existing chat, preserving other_user if not in update
+              const existingChat = { ...prevChats[chatIndex] };
+              const mergedChat: Chat = {
+                ...updatedChat,
+                // Preserve other_user from existing chat if not in update
+                other_user: updatedChat.other_user || existingChat.other_user,
+              };
+              
+              // Move updated chat to the beginning (most recent first)
+              const updatedChats = [...prevChats];
+              updatedChats[chatIndex] = mergedChat;
+              const [movedChat] = updatedChats.splice(chatIndex, 1);
+              return [movedChat, ...updatedChats];
+            }
+          });
+        }
+      );
+    };
+
+    setupSubscription();
+
+    // Cleanup subscription on unmount or when user changes
+    return () => {
+      if (unsubscribeFn) {
+        unsubscribeFn();
+      }
+    };
+  }, [user?.id]);
 
   // Pull to refresh handler
   const onRefresh = useCallback(() => {
