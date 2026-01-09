@@ -17,7 +17,7 @@ import { formatMessageTime } from '@/lib/functions';
 import ChatTips from '@/components/ui/chat-tips';
 import { subscribeToChat } from '@/lib/real-time';
 import { Pusher } from '@pusher/pusher-websocket-react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChatScreen = () => {
 
@@ -188,11 +188,15 @@ const ChatScreen = () => {
       currentUserProgressAnim.setValue(Math.min(100, initialCurrentUserProgress));
     }
     
-    if ((messages.length <= 1)) {
+    if ((messages.length <= 1)) { // first time tips
       setShowTips(true);
-    } else {
+    } else { // along side tips
       if (messages.length < 10 && new Date().getTime() - new Date(messages[messages.length - 1].created_at).getTime() > 21600000) { // 6 hours
-        setShowTips(true);
+        // check if already shown in 6 hours
+        const lastShown = await AsyncStorage.getItem(`chat-tips`);
+        if (!lastShown || new Date().getTime() > new Date(lastShown).getTime() + 21600000) {
+          setShowTips(true);
+        }
       }
     }
   };
@@ -219,6 +223,9 @@ const ChatScreen = () => {
       setTipStep(2);
     } else {
       setShowTips(false);
+      if (tipStep === 1) { // is along side tips
+        AsyncStorage.setItem(`chat-tips`, new Date().toISOString());
+      }
     }
   };
 

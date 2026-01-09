@@ -61,28 +61,20 @@ export async function subscribeToChat(
   const pusher = getPusherClient();
   const channelName = `chat-${chatId}`;
 
-  console.log('[Pusher] Subscribing to channel:', channelName);
-
   try {
     await pusher.subscribe({
       channelName,
       onEvent: (event) => {
-        console.log('[Pusher] Raw event received');
-        
         try {
           // Parse event data if it's a string
           let eventData = event.data;
           if (typeof eventData === 'string') {
-            console.log('[Pusher] Parsing string data...');
             eventData = JSON.parse(eventData);
           }
-
-          console.log('[Pusher] Event name:', event.eventName);
 
           if (event.eventName === 'new-message') {
             const data = eventData as { message: Message };
             if (data?.message) {
-              console.log('[Pusher] New message received:', data.message.id);
               onNewMessage(data.message);
             } else {
               console.warn('[Pusher] new-message event missing message data');
@@ -90,13 +82,10 @@ export async function subscribeToChat(
           } else if (event.eventName === 'chat-updated') {
             const data = eventData as { chat: Chat };
             if (data?.chat) {
-              console.log('[Pusher] Chat updated:', data.chat.id);
               onChatUpdate(data.chat);
             } else {
               console.warn('[Pusher] chat-updated event missing chat data');
             }
-          } else {
-            console.log('[Pusher] Unknown event type:', event.eventName);
           }
         } catch (parseError) {
           console.error('[Pusher] Error parsing event data:', parseError);
@@ -109,8 +98,6 @@ export async function subscribeToChat(
         console.error('[Pusher] Subscription error for channel:', channelName, error);
       },
     });
-
-    console.log('[Pusher] Successfully subscribed to:', channelName);
 
     // Return unsubscribe function
     return async () => {
@@ -135,7 +122,6 @@ export async function subscribeToChat(
 export async function unsubscribeFromChat(chatId: string): Promise<void> {
   const pusher = getPusherClient();
   const channelName = `chat-${chatId}`;
-  console.log('[Pusher] Unsubscribing from:', channelName);
   try {
     await pusher.unsubscribe({ channelName });
     console.log('[Pusher] Successfully unsubscribed from:', channelName);
@@ -157,34 +143,24 @@ export async function subscribeToUserChannel(
   const pusher = getPusherClient();
   const channelName = `user-${userId}`;
 
-  console.log('[Pusher] Subscribing to user channel:', channelName);
-
   try {
     await pusher.subscribe({
       channelName,
       onEvent: (event) => {
-        console.log('[Pusher] Raw event received on user channel');
-        
         try {
           // Parse event data if it's a string
           let eventData = event.data;
           if (typeof eventData === 'string') {
-            console.log('[Pusher] Parsing string data...');
             eventData = JSON.parse(eventData);
           }
-
-          console.log('[Pusher] Event name:', event.eventName);
 
           if (event.eventName === 'new-message') {
             const data = eventData as { chat: Chat };
             if (data?.chat) {
-              console.log('[Pusher] New message received on user channel, updating chat:', data.chat.id);
               onNewMessage(data.chat);
             } else {
               console.warn('[Pusher] new-message event missing chat data');
             }
-          } else {
-            console.log('[Pusher] Unknown event type on user channel:', event.eventName);
           }
         } catch (parseError) {
           console.error('[Pusher] Error parsing event data:', parseError);
@@ -197,8 +173,6 @@ export async function subscribeToUserChannel(
         console.error('[Pusher] Subscription error for user channel:', channelName, error);
       },
     });
-
-    console.log('[Pusher] Successfully subscribed to user channel:', channelName);
 
     // Return unsubscribe function
     return async () => {

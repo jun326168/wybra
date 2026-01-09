@@ -64,7 +64,6 @@ export default function ChatsScreen() {
       unsubscribeFn = await subscribeToUserChannel(
         user.id,
         (updatedChat: Chat) => {
-          console.log('chat-updated', updatedChat);
           // Update the chat in the list when a new message is received
           setChats(prevChats => {
             const chatIndex = prevChats.findIndex(c => c.id === updatedChat.id);
