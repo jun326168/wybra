@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { brightenHexColor, colors } from '@/lib/colors';
 import LoadingSpinner from '@/svgs/spinner';
 import LogoIcon from '@/svgs/logo';
-import { fetchChat, sendMessage, markMessageAsRead } from '@/lib/api';
+import { fetchChat, sendMessage, markMessageAsRead, updateChatInfo } from '@/lib/api';
 import { Chat, Message, User } from '@/lib/types';
 import { router, useLocalSearchParams } from 'expo-router';
 import Button from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { Entypo } from '@expo/vector-icons';
 import ProfileModal from '@/components/ui/profile-modal';
 import { formatMessageTime } from '@/lib/functions';
 import ChatTips from '@/components/ui/chat-tips';
+import MidReward from '@/components/ui/mid-reward';
 import { subscribeToChat } from '@/lib/real-time';
 import { Pusher } from '@pusher/pusher-websocket-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -162,6 +163,29 @@ const ChatScreen = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chat]);
 
+  // If both users' progress is above 50, remove blur but keep ghost
+  const shouldShowImage = currentUserProgress > 50 && otherUserProgress > 50;
+
+  // Check if current user has dismissed the mid-reward
+  const isUser1 = user?.id === chat?.user_1;
+  const currentUserShowMidReward = isUser1 
+    ? (chat?.chat_info?.show_mid_reward as { user_1?: boolean; user_2?: boolean } | undefined)?.user_1
+    : (chat?.chat_info?.show_mid_reward as { user_1?: boolean; user_2?: boolean } | undefined)?.user_2;
+  
+  // Show mid-reward when both users' progress is above 50 and current user hasn't dismissed it
+  const [showMidReward, setShowMidReward] = useState(
+    currentUserProgress > 50 && 
+    otherUserProgress > 50 && 
+    currentUserShowMidReward !== true
+  );
+
+  useEffect(() => {
+    const shouldShow = currentUserProgress > 50 && 
+      otherUserProgress > 50 && 
+      currentUserShowMidReward !== true;
+    setShowMidReward(shouldShow);
+  }, [currentUserProgress, otherUserProgress, currentUserShowMidReward]);
+
   // Watch messages and mark as read if last message is from other user
   useEffect(() => {
     if (!messages.length || !chat?.id || !user?.id) return;
@@ -256,6 +280,30 @@ const ChatScreen = () => {
     }
   };
 
+  const handleMidRewardClose = async () => {
+    if (chat?.id && chat?.chat_info && user?.id) {
+      setShowMidReward(false);
+      // Then update in the background
+      try {
+        const isUser1 = user.id === chat.user_1;
+        const currentShowMidReward = (chat.chat_info.show_mid_reward as { user_1?: boolean; user_2?: boolean } | undefined) || {};
+        
+        const updatedChatInfo = {
+          ...chat.chat_info,
+          show_mid_reward: {
+            ...currentShowMidReward,
+            [isUser1 ? 'user_1' : 'user_2']: true,
+          },
+        };
+        const updatedChat = await updateChatInfo(chat.id, updatedChatInfo);
+        // Update with the server response to ensure consistency
+        setChat(updatedChat);
+      } catch (error) {
+        console.error('Error updating chat info:', error);
+      }
+    }
+  }
+
   const renderMessage = ({ item, isSameUser }: { item: Message, isSameUser: boolean }) => {
 
     const lighterThemeColor = brightenHexColor(themeColor, 0.3);
@@ -271,7 +319,7 @@ const ChatScreen = () => {
           </View>
         )}
         <View style={StyleSheet.flatten([styles.messageBubble, { 
-          backgroundColor: (item.user_id === user?.id ? colors.primary : lighterThemeColor + 'A0'),
+          backgroundColor: (item.user_id === user?.id ? colors.primary : colors.textSecondary + '40'),
         }])}>
           <Text style={styles.messageText}>{item.content}</Text>
         </View>
@@ -337,7 +385,7 @@ const ChatScreen = () => {
               <Image
                 source={{ uri: chat?.other_user.personal_info.avatar_url as string }}
                 style={styles.avatar}
-                blurRadius={PHOTO_BLUR_AMOUNT}
+                blurRadius={shouldShowImage ? 0 : PHOTO_BLUR_AMOUNT}
               />
             ) : (
               <View style={StyleSheet.flatten([styles.avatar, { backgroundColor: colors.card }])} />
@@ -419,7 +467,7 @@ const ChatScreen = () => {
         {/* --- INPUT --- */}
         <View style={StyleSheet.flatten([styles.inputContainer, { paddingBottom: isKeyboardVisible ? 12 : 40 }])}>
           <Input
-            style={StyleSheet.flatten([styles.inputField, { borderColor: themeColor + '40' }])}
+            style={StyleSheet.flatten([styles.inputField])}
             value={inputText}
             onChangeText={setInputText}
             placeholder="你的訊息..."
@@ -430,7 +478,7 @@ const ChatScreen = () => {
           <Button
             onPress={handleSendMessage}
             disabled={!inputText.trim() || sending}
-            style={StyleSheet.flatten([styles.sendButton, { backgroundColor: inputText.trim() ? themeColor : colors.card, }])}
+            style={StyleSheet.flatten([styles.sendButton, { backgroundColor: inputText.trim() ? colors.primary : colors.textSecondary + '40' }])}
           >
             {sending ? (
               <LoadingSpinner size={16} color={colors.background} />
@@ -446,6 +494,7 @@ const ChatScreen = () => {
         visible={showProfileModal}
         onClose={() => setShowProfileModal(false)}
         user={chat?.other_user as User}
+        shouldShowImage={shouldShowImage}
       />
 
       {/* Chat Tips */}
@@ -455,6 +504,14 @@ const ChatScreen = () => {
       >
         {renderTip()}
       </ChatTips>
+
+      {/* Mid Reward */}
+      <MidReward 
+        visible={showMidReward} 
+        onClose={handleMidRewardClose}
+        user={user as User}
+        otherUser={chat?.other_user as User | null}
+      />
     </SafeAreaView>
   );
 }
@@ -637,7 +694,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 25,
-    backgroundColor: colors.card,
+    backgroundColor: colors.primary,
     borderWidth: 1,
     borderColor: colors.border,
   },

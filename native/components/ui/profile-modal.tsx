@@ -10,16 +10,17 @@ interface ProfileModalProps {
   visible: boolean;
   onClose: () => void;
   user: User | null;
+  shouldShowImage?: boolean;
 }
 
-export default function ProfileModal({ visible, onClose, user }: ProfileModalProps) {
+export default function ProfileModal({ visible, onClose, user, shouldShowImage = false }: ProfileModalProps) {
   const [overlaySize, setOverlaySize] = React.useState<number | null>(null);
   const [overlayDimensions, setOverlayDimensions] = React.useState<{ width: number; height: number } | null>(null);
   const [ghostPosition, setGhostPosition] = React.useState<{ x: number; y: number } | null>(null);
 
   const avatarUrl = user?.personal_info?.avatar_url as string | undefined;
   const logoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string | undefined);
-  const showImage = false;
+  const showImage = shouldShowImage;
 
   // Update ghost position when dimensions or user data changes
   React.useEffect(() => {
@@ -72,34 +73,35 @@ export default function ProfileModal({ visible, onClose, user }: ProfileModalPro
                       ]}
                       blurRadius={showImage ? 0 : PHOTO_BLUR_AMOUNT}
                     />
-                    {!showImage && (
+                    <View 
+                      style={[
+                        styles.blurOverlay,
+                        showImage && styles.blurOverlayTransparent
+                      ]}
+                      onLayout={(e) => {
+                        const { width, height } = e.nativeEvent.layout;
+                        setOverlayDimensions({ width, height });
+                      }}
+                    >
                       <View 
-                        style={styles.blurOverlay}
-                        onLayout={(e) => {
-                          const { width, height } = e.nativeEvent.layout;
-                          setOverlayDimensions({ width, height });
-                        }}
+                        style={[
+                          styles.lockedStateContent,
+                          ghostPosition && overlaySize ? {
+                            position: 'absolute',
+                            left: ghostPosition.x,
+                            top: ghostPosition.y,
+                            width: overlaySize,
+                            height: overlaySize,
+                          } : {},
+                        ]}
                       >
-                        <View 
-                          style={[
-                            styles.lockedStateContent,
-                            ghostPosition && overlaySize ? {
-                              position: 'absolute',
-                              left: ghostPosition.x,
-                              top: ghostPosition.y,
-                              width: overlaySize,
-                              height: overlaySize,
-                            } : {},
-                          ]}
-                        >
-                          <LogoIcon
-                            size={overlaySize || 60}
-                            floatingY={0}
-                            stroke={logoStrokeColor}
-                          />
-                        </View>
+                        <LogoIcon
+                          size={overlaySize || 60}
+                          floatingY={0}
+                          stroke={logoStrokeColor}
+                        />
                       </View>
-                    )}
+                    </View>
                   </View>
                 )}
               </View>
@@ -192,9 +194,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.background + '40',
     borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
     zIndex: 10,
+  },
+  blurOverlayTransparent: {
+    backgroundColor: 'transparent',
   },
   lockedStateContent: {
     alignItems: 'center',

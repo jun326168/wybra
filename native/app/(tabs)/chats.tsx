@@ -134,6 +134,9 @@ export default function ChatsScreen() {
     const isUser1 = user?.id === item.user_1;
     const currentUserProgress = Math.min(100, isUser1 ? (item.chat_info?.user_1_progress as number) : (item.chat_info?.user_2_progress as number));
     const otherUserProgress = Math.min(100, isUser1 ? (item.chat_info?.user_2_progress as number) : (item.chat_info?.user_1_progress as number));
+    
+    // If both users' progress is above 50, remove blur but keep ghost
+    const shouldShowImage = currentUserProgress > 50 && otherUserProgress > 50;
 
     return (
       <Button
@@ -146,7 +149,7 @@ export default function ChatsScreen() {
             <Image
               source={{ uri: item.other_user.personal_info.avatar_url as string }}
               style={styles.avatar}
-              blurRadius={PHOTO_BLUR_AMOUNT}
+              blurRadius={shouldShowImage ? 0 : PHOTO_BLUR_AMOUNT}
             />
           ) : (
             <View style={StyleSheet.flatten([styles.avatar, { backgroundColor: colors.card }])} />

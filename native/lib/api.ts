@@ -250,3 +250,20 @@ export const markMessageAsRead = async (chatId: string): Promise<Chat> => {
   const data = await response.json();
   return data.chat as Chat;
 };
+
+export const updateChatInfo = async (chatId: string, chatInfo: Record<string, unknown>): Promise<Chat> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/chats/one?chat_id=${chatId}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ chat_info: chatInfo }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update chat info');
+  }
+
+  const data = await response.json();
+  return data.chat as Chat;
+};
