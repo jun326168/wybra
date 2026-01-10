@@ -33,10 +33,10 @@ interface User {
 
 
 async function getScorePrompt(conversationText: string): Promise<string> {
-  return `Analyze this conversation between two people and rate their conversation quality and meaningfulness on a scale of 1-15, where:
-- 0-5: Low quality (short messages, no depth, disengaged)
-- 6-10: Medium quality (decent engagement, some meaningful exchanges)
-- 11-15: High quality (deep conversations, thoughtful responses, strong engagement)
+  return `Analyze this conversation between two people and rate their conversation quality and meaningfulness on a scale of 0-12, where:
+- 0-4: Low quality (short messages, no depth, disengaged)
+- 5-9: Medium quality (decent engagement, some meaningful exchanges)
+- 10-12: High quality (deep conversations, thoughtful responses, strong engagement)
 
 Consider:
 - Message depth and thoughtfulness
@@ -60,13 +60,24 @@ ${conversationText}
 
 Create questions that are:
 - Specific to what ${targetUsername} shared in the conversation
-- About their interests, preferences, experiences, or personality
+- About their interests, goals, preferences, experiences, or personality
 - Have exactly 3 options each with only 1 correct answer
+- Must be in zh-TW except for special cases that appear in chat
 
-For each question:
-- question: The question text
-- options: Array of exactly 3 possible answers
-- correct: The index (0, 1, or 2) of the correct answer in the options array
+Return the questions as a JSON array. Each question should be an object with:
+- question: The question text (string)
+- options: Array of exactly 3 possible answers (string[])
+- correct: The index (0, 1, or 2) of the correct answer in the options array (number)
+
+Example format:
+[
+  {
+    "question": "What is ${targetUsername}'s favorite hobby?",
+    "options": ["Reading", "Swimming", "Cooking"],
+    "correct": 0
+  },
+  ...
+]
 `.trim();
 }
 
@@ -81,9 +92,7 @@ const quizQuestionSchema = z.object({
   correct: z.number(),
 });
 
-const quizArraySchema = z.object({
-  quizzes: z.array(quizQuestionSchema)
-});
+const quizArraySchema = z.array(quizQuestionSchema);
 
 const MODEL_NAME = 'gemini-3-flash-preview';
 
@@ -400,18 +409,12 @@ async function generateQuizForUser(
 
     const text = response.text ?? '';
 
-    // Parse structured output
-    const parsed = quizArraySchema.parse(JSON.parse(text));
+    // Parse and validate with Zod schema
+    const parsedJson = JSON.parse(text);
+    const validatedQuestions = quizArraySchema.parse(parsedJson);
 
-    // Validate and return up to 5 questions
-    return parsed.quizzes.slice(0, 5).filter((q: QuizQuestion) =>
-      q.question &&
-      Array.isArray(q.options) &&
-      q.options.length === 3 &&
-      typeof q.correct === 'number' &&
-      q.correct >= 0 &&
-      q.correct <= 2
-    );
+    // Return up to 5 questions (schema already validates structure)
+    return validatedQuestions.slice(0, 5);
   } catch (error) {
     console.error('Error generating quiz:', error);
     return [];

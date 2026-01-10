@@ -27,6 +27,12 @@ export interface User {
   has_chat?: boolean;
 }
 
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correct: number;
+}
+
 export interface Chat {
   id: string;
   user_1: string;
@@ -34,8 +40,19 @@ export interface Chat {
   last_message_id: string;
   message_count: number;
   last_message_read?: boolean;
-  chat_info?: Record<string, unknown>;
-  quiz_info?: Record<string, unknown>;
+  chat_info?: {
+    user_1_progress: number;
+    user_2_progress: number;
+    user_1_unlocked: boolean;
+    user_2_unlocked: boolean;
+    show_mid_reward: { user_1?: boolean; user_2?: boolean };
+    show_quiz_unlock: { user_1?: boolean; user_2?: boolean };
+  };
+  quiz_info?: {
+    user_1_quiz: QuizQuestion[];
+    user_2_quiz: QuizQuestion[];
+    last_quiz_level: number;
+  };
   created_at: string;
   updated_at: string;
   other_user?: {

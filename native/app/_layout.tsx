@@ -99,6 +99,7 @@ export default function RootLayout() {
             <Stack.Screen name="profile-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="preference-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="chat" options={{ headerShown: false }} />
+            <Stack.Screen name="quiz" options={{ headerShown: false }} />
           </Stack>
           <StatusBar style="light" />
         </ThemeProvider>
