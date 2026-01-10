@@ -8,12 +8,22 @@ import { COLOR_OPTIONS } from '@/lib/setup'
 import LoadingSpinner from '@/svgs/spinner'
 import { updateUserProfile } from '@/lib/api'
 import { useRouter } from 'expo-router'
-import LogoIcon from '@/svgs/logo'
+import LogoIcon, { LogoPersonality } from '@/svgs/logo'
 import { ClassicCard, QuoteCard, ZineCard, PolaroidCard, TicketCard, TEMPLATE_OPTIONS } from '@/components/card-templates/template-cards'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 56;
 const CARD_SPACING = 56;
+
+const PERSONALITY_OPTIONS: { id: LogoPersonality; label: string }[] = [
+  { id: 'headphone', label: '耳機' },
+  { id: 'flower', label: '花朵' },
+  // { id: 'cloud', label: '雲朵' },
+  // { id: 'tophat', label: '高帽' },
+  { id: 'glasses', label: '眼鏡' },
+  { id: 'beanie', label: '毛帽' },
+  // { id: 'sprout', label: '嫩芽' },
+];
 
 const PreferenceSettingsScreen = () => {
   const { user, setUser } = useAppContext();
@@ -26,6 +36,10 @@ const PreferenceSettingsScreen = () => {
 
   const [selectedTemplate, setSelectedTemplate] = useState<string>(
     (user?.personal_info as any)?.template || 'zine'
+  );
+
+  const [selectedPersonality, setSelectedPersonality] = useState<LogoPersonality>(
+    (user?.personal_info?.personality as LogoPersonality) || 'headphone'
   );
 
   const [loading, setLoading] = useState(false);
@@ -41,6 +55,7 @@ const PreferenceSettingsScreen = () => {
           ...user.personal_info,
           color: selectedColor,
           template: selectedTemplate,
+          personality: selectedPersonality,
         }
       });
       setUser(updatedUser);
@@ -164,7 +179,7 @@ const PreferenceSettingsScreen = () => {
               {/* Preview */}
               <View style={styles.colorPreviewContainer}>
                 <View style={styles.colorPreview}>
-                  <LogoIcon size={60} floatingY={0} stroke={selectedColor} />
+                  <LogoIcon size={60} floatingY={0} stroke={selectedColor} personality={selectedPersonality} />
                 </View>
               </View>
 
@@ -183,6 +198,45 @@ const PreferenceSettingsScreen = () => {
                     {selectedColor === color.value && (
                       <View style={styles.colorCheckmark}>
                         <Text style={styles.colorCheckmarkText}>✓</Text>
+                      </View>
+                    )}
+                  </Button>
+                ))}
+              </View>
+            </View>
+
+            {/* Personality Picker */}
+            <View style={styles.section}>
+              <Text style={styles.inputLabel}>造型</Text>
+              <Text style={styles.colorDescription}>選擇你的小配件</Text>
+
+              {/* Preview */}
+              <View style={styles.colorPreviewContainer}>
+                <View style={styles.colorPreview}>
+                  <LogoIcon size={60} floatingY={0} stroke={selectedColor} personality={selectedPersonality} />
+                </View>
+              </View>
+
+              {/* Personality Grid */}
+              <View style={styles.colorGrid}>
+                {PERSONALITY_OPTIONS.map((personality) => (
+                  <Button
+                    key={personality.id}
+                    onPress={() => setSelectedPersonality(personality.id)}
+                    style={StyleSheet.flatten([
+                      styles.personalityOption,
+                      selectedPersonality === personality.id && styles.personalityOptionSelected
+                    ])}
+                  >
+                    <LogoIcon 
+                      size={40} 
+                      floatingY={0} 
+                      stroke={selectedColor} 
+                      personality={personality.id}
+                    />
+                    {selectedPersonality === personality.id && (
+                      <View style={styles.personalityCheckmark}>
+                        <Text style={styles.personalityCheckmarkText}>✓</Text>
                       </View>
                     )}
                   </Button>
@@ -309,6 +363,37 @@ const styles = StyleSheet.create({
   },
   templateLabel: {
     fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  personalityOption: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    position: 'relative',
+  },
+  personalityOptionSelected: {
+    borderColor: colors.text,
+    borderWidth: 1.5,
+  },
+  personalityCheckmark: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  personalityCheckmarkText: {
+    fontSize: 12,
     fontWeight: 'bold',
     color: colors.text,
   },

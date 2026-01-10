@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { colors } from '@/lib/colors';
-import LogoIcon from '@/svgs/logo';
+import LogoIcon, { LogoPersonality } from '@/svgs/logo';
 import { useAppContext } from '@/contexts/AppContext';
 import Button from '@/components/ui/button';
 import { fetchChats } from '@/lib/api';
@@ -119,6 +119,7 @@ export default function ChatsScreen() {
     const themeColor = (!rawColor || rawColor === colors.background)
       ? colors.textSecondary
       : rawColor;
+    const personality = (item.other_user?.personal_info?.personality as LogoPersonality) || 'headphone';
 
     // 2. Formatting
     const timeDisplay = formatMessageTime(item.last_message?.created_at || item.created_at);
@@ -228,6 +229,7 @@ export default function ChatsScreen() {
                   size={overlaySizes.get(item.id) || 28}
                   floatingY={0}
                   stroke={themeColor}
+                  personality={personality}
                 />
               </View>
             </View>

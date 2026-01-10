@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { colors } from '@/lib/colors'
 import { useAppContext } from '@/contexts/AppContext'
-import LogoIcon from '@/svgs/logo'
+import LogoIcon, { LogoPersonality } from '@/svgs/logo'
 import { EyeIcon, EyeSlashIcon } from '@/svgs'
 import Button from '@/components/ui/button'
 import { useRouter } from 'expo-router'
@@ -24,6 +24,7 @@ const ProfileScreen = () => {
   const generation = getGeneration(new Date(user?.personal_info?.birthday as string).getFullYear());
   const generationColor = colors.generation[generation as keyof typeof colors.generation];
   const logoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string | undefined);
+  const personality = (user?.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Redirect to auth screen if user is signed out
   useEffect(() => {
@@ -124,7 +125,7 @@ const ProfileScreen = () => {
                         } : {},
                       ]}
                     >
-                      <LogoIcon size={overlaySize || 60} floatingY={0} stroke={logoStrokeColor} />
+                      <LogoIcon size={overlaySize || 60} floatingY={0} stroke={logoStrokeColor} personality={personality} />
                     </View>
                   </View>
                 )}

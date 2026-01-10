@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Platform } from 'react-native'
 import { Image } from 'expo-image'
 import { colors, darkenHexColor } from '@/lib/colors'
 import { INTEREST_TAGS, MBTI_OPTIONS, PHOTO_BLUR_AMOUNT } from '@/lib/setup'
-import LogoIcon from '@/svgs/logo'
+import LogoIcon, { LogoPersonality } from '@/svgs/logo'
 
 export type TemplateCardProps = {
   user: any
@@ -40,6 +40,7 @@ export const ClassicCard = ({ user, themeColor }: TemplateCardProps) => {
 
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
+  const personality = (user.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Update ghost position when dimensions or user data changes
   React.useEffect(() => {
@@ -96,7 +97,7 @@ export const ClassicCard = ({ user, themeColor }: TemplateCardProps) => {
                   height: overlaySize,
                 } : {}}
               >
-                <LogoIcon size={overlaySize || 28} floatingY={0} stroke={themeColor} />
+                <LogoIcon size={overlaySize || 28} floatingY={0} stroke={themeColor} personality={personality} />
               </View>
             </View>
           </View>
@@ -130,6 +131,7 @@ export const QuoteCard = ({ user, themeColor }: TemplateCardProps) => {
   const [ghostPosition, setGhostPosition] = React.useState<{ x: number; y: number } | null>(null);
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
+  const personality = (user.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Update ghost position when dimensions or user data changes
   React.useEffect(() => {
@@ -200,7 +202,7 @@ export const QuoteCard = ({ user, themeColor }: TemplateCardProps) => {
                   height: overlaySize,
                 } : {}}
               >
-                <LogoIcon size={overlaySize || 20} floatingY={0} stroke={themeColor} />
+                <LogoIcon size={overlaySize || 20} floatingY={0} stroke={themeColor} personality={personality} />
               </View>
             </View>
           </View>
@@ -223,6 +225,7 @@ export const ZineCard = ({ user, themeColor }: TemplateCardProps) => {
   const [ghostPosition, setGhostPosition] = React.useState<{ x: number; y: number } | null>(null);
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
+  const personality = (user.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Update ghost position when dimensions or user data changes
   React.useEffect(() => {
@@ -278,7 +281,7 @@ export const ZineCard = ({ user, themeColor }: TemplateCardProps) => {
                 height: overlaySize,
               } : {}}
             >
-              <LogoIcon size={overlaySize || 36} floatingY={0} stroke={themeColor} />
+              <LogoIcon size={overlaySize || 36} floatingY={0} stroke={themeColor} personality={personality} />
             </View>
           </View>
         </View>
@@ -349,6 +352,7 @@ export const PolaroidCard = ({ user, themeColor }: TemplateCardProps) => {
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
   if (isDefault) themeColor = '#64686E';
+  const personality = (user.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Update ghost position when dimensions or user data changes
   React.useEffect(() => {
@@ -401,7 +405,7 @@ export const PolaroidCard = ({ user, themeColor }: TemplateCardProps) => {
               height: overlaySize,
             } : {}}
           >
-            <LogoIcon size={overlaySize || 120} floatingY={0} stroke={isDefault ? colors.textSecondary : themeColor} />
+            <LogoIcon size={overlaySize || 120} floatingY={0} stroke={isDefault ? colors.textSecondary : themeColor} personality={personality} />
           </View>
         </View>
       </View>
@@ -435,6 +439,7 @@ export const TicketCard = ({ user, themeColor }: TemplateCardProps) => {
   const mbtiTag = user.personal_info.mbti === 'UNKNOWN' ? '' : '#' + MBTI_OPTIONS.find(option => option.value === user.personal_info.mbti)?.value + ' ';
   let isDefault = themeColor === colors.background;
   if (isDefault) themeColor = colors.textSecondary;
+  const personality = (user.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Update ghost position when dimensions or user data changes
   React.useEffect(() => {
@@ -496,7 +501,7 @@ export const TicketCard = ({ user, themeColor }: TemplateCardProps) => {
                   height: overlaySize,
                 } : {}}
               >
-                <LogoIcon size={overlaySize || 20} floatingY={0} stroke={themeColor} />
+                <LogoIcon size={overlaySize || 20} floatingY={0} stroke={themeColor} personality={personality} />
               </View>
             </View>
           </View>

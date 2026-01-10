@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { colors } from '@/lib/colors';
-import LogoIcon from '@/svgs/logo';
+import LogoIcon, { LogoPersonality } from '@/svgs/logo';
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal';
 import { INTEREST_TAGS, MBTI_OPTIONS, PHOTO_BLUR_AMOUNT } from '@/lib/setup';
 import type { User } from '@/lib/types';
@@ -22,6 +22,7 @@ export default function ProfileModal({ visible, onClose, user, shouldShowImage =
   const avatarUrl = user?.personal_info?.avatar_url as string | undefined;
   const logoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string | undefined);
   const showImage = shouldShowImage;
+  const personality = (user?.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Update ghost position when dimensions or user data changes
   React.useEffect(() => {
@@ -99,6 +100,7 @@ export default function ProfileModal({ visible, onClose, user, shouldShowImage =
                             size={overlaySize || 60}
                             floatingY={0}
                             stroke={logoStrokeColor}
+                            personality={personality}
                           />
                         </View>
                       </View>

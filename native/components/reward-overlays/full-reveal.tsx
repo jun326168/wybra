@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Image } from 'expo-image'
 import * as Haptics from 'expo-haptics'
 import { colors } from '@/lib/colors'
-import LogoIcon from '@/svgs/logo' // Your ghost icon
+import LogoIcon, { LogoPersonality } from '@/svgs/logo' // Your ghost icon
 import Button from '@/components/ui/button'
 import type { User } from '@/lib/types'
 
@@ -35,6 +35,7 @@ const FullReveal = ({ visible, onClose, otherUser }: FullRevealProps) => {
   // Use their theme color for the background burst
   const themeColor = otherUser?.personal_info?.color as string || colors.primary;
   const otherUserLogoStrokeColor = otherUser?.personal_info?.color === colors.background ? colors.textSecondary : (otherUser?.personal_info?.color as string || colors.textSecondary);
+  const personality = (otherUser?.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Update ghost position when dimensions or user data changes
   useEffect(() => {
@@ -165,11 +166,12 @@ const FullReveal = ({ visible, onClose, otherUser }: FullRevealProps) => {
                      }
                    ]}
                  >
-                   <LogoIcon
-                     size={overlaySize}
-                     floatingY={0}
-                     stroke={otherUserLogoStrokeColor}
-                   />
+                  <LogoIcon
+                    size={overlaySize}
+                    floatingY={0}
+                    stroke={otherUserLogoStrokeColor}
+                    personality={personality}
+                  />
                  </View>
                )}
              </Animated.View>

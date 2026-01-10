@@ -3,7 +3,7 @@ import { Image } from 'expo-image'
 import React, { useEffect, useRef, useState } from 'react'
 import { colors } from '@/lib/colors'
 import ChatTips from '../ui/chat-tips'
-import LogoIcon from '@/svgs/logo'
+import LogoIcon, { LogoPersonality } from '@/svgs/logo'
 import type { User } from '@/lib/types'
 import * as Haptics from 'expo-haptics' // Assuming you have expo-haptics installed
 
@@ -72,6 +72,8 @@ const MidReward = ({ visible, onClose, user, otherUser }: MidRewardProps) => {
   const otherUserAvatarUrl = otherUser?.personal_info?.avatar_url;
   const userLogoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string);
   const otherUserLogoStrokeColor = otherUser?.personal_info?.color === colors.background ? colors.textSecondary : (otherUser?.personal_info?.color as string);
+  const userPersonality = (user?.personal_info?.personality as LogoPersonality) || 'headphone';
+  const otherUserPersonality = (otherUser?.personal_info?.personality as LogoPersonality) || 'headphone';
   
   const userAvatarTop = 100;
   const otherUserAvatarTop = 240; // Increased spacing slightly for visuals
@@ -225,7 +227,7 @@ const MidReward = ({ visible, onClose, user, otherUser }: MidRewardProps) => {
             >
               {userGhostPosition && userOverlaySize && (
                 <View style={[styles.lockedStateContent, { position: 'absolute', left: userGhostPosition.x, top: userGhostPosition.y, width: userOverlaySize, height: userOverlaySize }]}>
-                  <LogoIcon size={userOverlaySize} floatingY={0} stroke={userLogoStrokeColor || colors.textSecondary} />
+                  <LogoIcon size={userOverlaySize} floatingY={0} stroke={userLogoStrokeColor || colors.textSecondary} personality={userPersonality} />
                 </View>
               )}
             </View>
@@ -254,7 +256,7 @@ const MidReward = ({ visible, onClose, user, otherUser }: MidRewardProps) => {
             >
               {otherUserGhostPosition && otherUserOverlaySize && (
                 <View style={[styles.lockedStateContent, { position: 'absolute', left: otherUserGhostPosition.x, top: otherUserGhostPosition.y, width: otherUserOverlaySize, height: otherUserOverlaySize }]}>
-                  <LogoIcon size={otherUserOverlaySize} floatingY={0} stroke={otherUserLogoStrokeColor || colors.textSecondary} />
+                  <LogoIcon size={otherUserOverlaySize} floatingY={0} stroke={otherUserLogoStrokeColor || colors.textSecondary} personality={otherUserPersonality} />
                 </View>
               )}
             </View>

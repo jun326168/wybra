@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useRef, useState } from 'react'
 import { colors } from '@/lib/colors';
 import LoadingSpinner from '@/svgs/spinner';
-import LogoIcon from '@/svgs/logo';
+import LogoIcon, { LogoPersonality } from '@/svgs/logo';
 import { fetchChat, sendMessage, markMessageAsRead, updateChatInfo } from '@/lib/api';
 import { Chat, Message, User } from '@/lib/types';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -49,6 +49,7 @@ const ChatScreen = () => {
   const quizButtonScaleAnim = useRef(new Animated.Value(1)).current;
 
   const themeColor = chat?.other_user?.personal_info?.color === colors.background ? colors.textSecondary : chat?.other_user?.personal_info?.color as string;
+  const personality = (chat?.other_user?.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Check if current user has unlocked the other user's photo
   const isUser1 = user?.id === chat?.user_1;
@@ -533,6 +534,7 @@ const ChatScreen = () => {
                     size={overlaySize || 20}
                     floatingY={0}
                     stroke={themeColor}
+                    personality={personality}
                   />
                 </View>
               </View>

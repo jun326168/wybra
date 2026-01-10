@@ -21,6 +21,7 @@ export interface User {
     interests: string[];
     avatar_url: string;
     friends_count: number;
+    personality?: string;
   };
   settings?: Record<string, unknown>;
   created_at?: string;

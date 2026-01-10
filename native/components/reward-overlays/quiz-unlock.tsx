@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Image } from 'expo-image'
 import * as Haptics from 'expo-haptics'
 import { colors } from '@/lib/colors'
-import LogoIcon from '@/svgs/logo'
+import LogoIcon, { LogoPersonality } from '@/svgs/logo'
 import Button from '@/components/ui/button' // Assuming you have this
 import type { User } from '@/lib/types'
 
@@ -28,6 +28,7 @@ const QuizUnlock = ({ visible, onStartQuiz, onClose, otherUser }: QuizUnlockProp
   const otherUserAvatarUrl = otherUser?.personal_info?.avatar_url;
   const otherUserColor = otherUser?.personal_info?.color as string || colors.primary;
   const otherUserLogoStrokeColor = otherUser?.personal_info?.color === colors.background ? colors.textSecondary : (otherUser?.personal_info?.color as string || colors.textSecondary);
+  const personality = (otherUser?.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Update ghost position when dimensions or user data changes
   useEffect(() => {
@@ -124,6 +125,7 @@ const QuizUnlock = ({ visible, onStartQuiz, onClose, otherUser }: QuizUnlockProp
                   size={overlaySize}
                   floatingY={0}
                   stroke={otherUserLogoStrokeColor}
+                  personality={personality}
                 />
               </View>
             )}

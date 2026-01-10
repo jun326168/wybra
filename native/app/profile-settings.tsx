@@ -14,7 +14,7 @@ import LoadingSpinner from '@/svgs/spinner'
 import { updateUserProfile, uploadUserPhoto } from '@/lib/api'
 import { useRouter } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
-import LogoIcon from '@/svgs/logo'
+import LogoIcon, { LogoPersonality } from '@/svgs/logo'
 
 interface GhostDraggableProps {
   ghostX: SharedValue<number>;
@@ -22,9 +22,10 @@ interface GhostDraggableProps {
   ghostSize: SharedValue<number>;
   overlayDimensions: { width: number; height: number } | null;
   logoStrokeColor: string | undefined;
+  personality: LogoPersonality;
 }
 
-const GhostDraggable = ({ ghostX, ghostY, ghostSize, overlayDimensions, logoStrokeColor }: GhostDraggableProps) => {
+const GhostDraggable = ({ ghostX, ghostY, ghostSize, overlayDimensions, logoStrokeColor, personality }: GhostDraggableProps) => {
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
 
@@ -82,7 +83,7 @@ const GhostDraggable = ({ ghostX, ghostY, ghostSize, overlayDimensions, logoStro
         ]}
       >
         <View style={styles.lockedStateContent}>
-          <LogoIcon size={iconSize} floatingY={0} stroke={logoStrokeColor} />
+          <LogoIcon size={iconSize} floatingY={0} stroke={logoStrokeColor} personality={personality} />
         </View>
       </Animated.View>
     </GestureDetector>
@@ -94,6 +95,7 @@ const ProfileSettingsScreen = () => {
   const router = useRouter();
 
   const logoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string | undefined);
+  const personality = (user?.personal_info?.personality as LogoPersonality) || 'headphone';
 
   // Form states
   const [username, setUsername] = useState(user?.username || '');
@@ -483,6 +485,7 @@ const ProfileSettingsScreen = () => {
                               ghostSize={ghostSize}
                               overlayDimensions={overlayDimensions}
                               logoStrokeColor={logoStrokeColor}
+                              personality={personality}
                             />
                           )}
                         </View>
@@ -500,7 +503,7 @@ const ProfileSettingsScreen = () => {
                         <LoadingSpinner size={28} color={colors.text} strokeWidth={3} />
                       ) : (
                         <>
-                          <LogoIcon size={60} floatingY={0} />
+                          <LogoIcon size={60} floatingY={0} personality={personality} />
                           <Text style={styles.uploadText}>點擊上傳</Text>
                         </>
                       )}
