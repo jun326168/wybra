@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     const storedFeed = user.personal_info?.feed as { date: string; ids: string[] } | undefined;
     
     if (storedFeed && storedFeed.date === today && Array.isArray(storedFeed.ids) && storedFeed.ids.length > 0) {
-      // HIT: Fetch the exact profiles stored in the feed
+      // HIT: Fetch the exact profiles stored in the feed (from today, so return as-is even if they now have chats)
       const feedIds = storedFeed.ids;
       
       const cachedUsers = await query<User>(
@@ -161,7 +161,10 @@ export async function GET(request: NextRequest) {
       combined = [...oppositeResults, ...sameResults];
     }
 
-    // Desperation Fill
+    // Filter out any users that now have chats (in case they were added between query and now)
+    combined = combined.filter(u => !existingChatUserIds.has(u.id));
+
+    // Desperation Fill - keep trying until we have 10 users, excluding those with chats
     const seenIds = new Set(combined.map(u => u.id));
     if (combined.length < TOTAL_LIMIT) {
       const missingCount = TOTAL_LIMIT - combined.length;
