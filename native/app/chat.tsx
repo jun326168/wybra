@@ -8,6 +8,7 @@ import LogoIcon from '@/svgs/logo';
 import { fetchChat, sendMessage, markMessageAsRead, updateChatInfo } from '@/lib/api';
 import { Chat, Message, User } from '@/lib/types';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import Button from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { PHOTO_BLUR_AMOUNT } from '@/lib/setup';
@@ -21,7 +22,6 @@ import QuizUnlock from '@/components/reward-overlays/quiz-unlock';
 import { subscribeToChat } from '@/lib/real-time';
 import { Pusher } from '@pusher/pusher-websocket-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import FullReveal from '@/components/reward-overlays/full-reveal';
 
 const ChatScreen = () => {
 
@@ -41,7 +41,6 @@ const ChatScreen = () => {
   const [showFirstTimeTips, setShowFirstTimeTips] = useState(false);
   const [firstTimeTipStep, setFirstTimeTipStep] = useState(1);
   const [showAlongsideTips, setShowAlongsideTips] = useState(false);
-  const [showFullReveal, setShowFullReveal] = useState(false);
 
   // Animated values for progress bars
   const otherUserProgressAnim = useRef(new Animated.Value(0)).current;
@@ -51,7 +50,11 @@ const ChatScreen = () => {
 
   const themeColor = chat?.other_user?.personal_info?.color === colors.background ? colors.textSecondary : chat?.other_user?.personal_info?.color as string;
 
-  const showImage = false;
+  // Check if current user has unlocked the other user's photo
+  const isUser1 = user?.id === chat?.user_1;
+  const currentUserUnlocked = isUser1 
+    ? (chat?.chat_info?.user_1_unlocked as boolean | undefined)
+    : (chat?.chat_info?.user_2_unlocked as boolean | undefined);
   const [overlaySize, setOverlaySize] = useState<number | null>(null);
   const [overlayDimensions, setOverlayDimensions] = useState<{ width: number; height: number } | null>(null);
   const [ghostPosition, setGhostPosition] = useState<{ x: number; y: number } | null>(null);
@@ -84,6 +87,23 @@ const ChatScreen = () => {
     loadChat();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Refetch chat when screen comes into focus (e.g., returning from quiz)
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!loading) {
+        const refreshChat = async () => {
+          try {
+            const { chat: refreshedChat } = await fetchChat(chat_id as string, other_user_id as string);
+            setChat(refreshedChat);
+          } catch (error) {
+            console.error('Error refreshing chat:', error);
+          }
+        };
+        refreshChat();
+      }
+    }, [chat_id, other_user_id, loading])
+  );
 
   // Subscribe to Pusher events when chat is loaded
   useEffect(() => {
@@ -189,11 +209,15 @@ const ChatScreen = () => {
     animateQuizButton();
   }, [quizButtonScaleAnim]);
 
-  // If both users' progress is above 50, remove blur but keep ghost
-  const shouldShowImage = currentUserProgress > 50 && otherUserProgress > 50;
+  // Image display logic:
+  // 1. If unlocked: no blur, no ghost (full reveal)
+  // 2. If both progress > 50 but not unlocked: no blur, but ghost
+  // 3. If either progress < 50: blur + ghost
+  const shouldShowImage = currentUserUnlocked === true;
+  const shouldShowBlur = !shouldShowImage && (currentUserProgress < 50 || otherUserProgress < 50);
+  const shouldShowGhost = !shouldShowImage;
 
   // Check if current user has dismissed the mid-reward
-  const isUser1 = user?.id === chat?.user_1;
   const currentUserShowMidReward = isUser1 
     ? (chat?.chat_info?.show_mid_reward as { user_1?: boolean; user_2?: boolean } | undefined)?.user_1
     : (chat?.chat_info?.show_mid_reward as { user_1?: boolean; user_2?: boolean } | undefined)?.user_2;
@@ -402,10 +426,6 @@ const ChatScreen = () => {
     }
   }
 
-  const handleFullRevealClose = () => {
-    setShowFullReveal(false);
-  }
-
   const renderMessage = ({ item, isSameUser }: { item: Message, isSameUser: boolean }) => {
 
     return (
@@ -484,12 +504,12 @@ const ChatScreen = () => {
               <Image
                 source={{ uri: chat?.other_user.personal_info.avatar_url as string }}
                 style={styles.avatar}
-                blurRadius={shouldShowImage ? 0 : PHOTO_BLUR_AMOUNT}
+                blurRadius={shouldShowBlur ? PHOTO_BLUR_AMOUNT : 0}
               />
             ) : (
               <View style={StyleSheet.flatten([styles.avatar, { backgroundColor: colors.card }])} />
             )}
-            {!showImage && (
+            {shouldShowGhost && (
               <View 
                 style={styles.blurOverlay}
                 onLayout={(e) => {
@@ -519,7 +539,11 @@ const ChatScreen = () => {
             )}
           </Pressable>
           <Pressable onPress={() => setShowProfileModal(true)}>
-            <Text style={styles.headerTitle}>{chat?.other_user?.username}</Text>
+            <Text style={styles.headerTitle}>
+              {shouldShowImage 
+                ? (chat?.other_user?.personal_info?.real_name as string || chat?.other_user?.username)
+                : chat?.other_user?.username}
+            </Text>
           </Pressable>
         </View>
         {/* progress bar */}
@@ -638,13 +662,6 @@ const ChatScreen = () => {
         visible={showQuizUnlock}
         onStartQuiz={handleQuizUnlockStart}
         onClose={handleQuizUnlockClose}
-        otherUser={chat?.other_user as User | null}
-      />
-
-      {/* Full Reveal */}
-      <FullReveal 
-        visible={showFullReveal}
-        onClose={handleFullRevealClose}
         otherUser={chat?.other_user as User | null}
       />
     </SafeAreaView>

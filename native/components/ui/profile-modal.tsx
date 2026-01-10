@@ -55,7 +55,11 @@ export default function ProfileModal({ visible, onClose, user, shouldShowImage =
     >
       {user ? (
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>{user.username}</Text>
+          <Text style={styles.modalTitle}>
+            {shouldShowImage 
+              ? (user.personal_info?.real_name as string || user.username)
+              : user.username}
+          </Text>
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={styles.modalScrollView}
@@ -68,41 +72,37 @@ export default function ProfileModal({ visible, onClose, user, shouldShowImage =
                   <View style={styles.avatarContainer}>
                     <Image
                       source={{ uri: avatarUrl }}
-                      style={[
-                        styles.avatarImage,
-                        !showImage && styles.avatarImageBlurred
-                      ]}
+                      style={styles.avatarImage}
                       blurRadius={showImage ? 0 : PHOTO_BLUR_AMOUNT}
                     />
-                    <View 
-                      style={[
-                        styles.blurOverlay,
-                        showImage && styles.blurOverlayTransparent
-                      ]}
-                      onLayout={(e) => {
-                        const { width, height } = e.nativeEvent.layout;
-                        setOverlayDimensions({ width, height });
-                      }}
-                    >
+                    {!showImage && (
                       <View 
-                        style={[
-                          styles.lockedStateContent,
-                          ghostPosition && overlaySize ? {
-                            position: 'absolute',
-                            left: ghostPosition.x,
-                            top: ghostPosition.y,
-                            width: overlaySize,
-                            height: overlaySize,
-                          } : {},
-                        ]}
+                        style={styles.blurOverlay}
+                        onLayout={(e) => {
+                          const { width, height } = e.nativeEvent.layout;
+                          setOverlayDimensions({ width, height });
+                        }}
                       >
-                        <LogoIcon
-                          size={overlaySize || 60}
-                          floatingY={0}
-                          stroke={logoStrokeColor}
-                        />
+                        <View 
+                          style={[
+                            styles.lockedStateContent,
+                            ghostPosition && overlaySize ? {
+                              position: 'absolute',
+                              left: ghostPosition.x,
+                              top: ghostPosition.y,
+                              width: overlaySize,
+                              height: overlaySize,
+                            } : {},
+                          ]}
+                        >
+                          <LogoIcon
+                            size={overlaySize || 60}
+                            floatingY={0}
+                            stroke={logoStrokeColor}
+                          />
+                        </View>
                       </View>
-                    </View>
+                    )}
                   </View>
                 )}
               </View>
@@ -188,17 +188,11 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
     borderRadius: 48,
   },
-  avatarImageBlurred: {
-    opacity: 0.6,
-  },
   blurOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.background + '40',
     borderRadius: 48,
     zIndex: 10,
-  },
-  blurOverlayTransparent: {
-    backgroundColor: 'transparent',
   },
   lockedStateContent: {
     alignItems: 'center',

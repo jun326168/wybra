@@ -187,6 +187,7 @@ const FullReveal = ({ visible, onClose, otherUser }: FullRevealProps) => {
         >
           <Text style={styles.nameText}>{otherUser?.personal_info?.real_name}</Text>
           <Text style={styles.subText}>終於見面了！</Text>
+          <Text style={styles.subText}>現在，不用隔著面具說話了！</Text>
           <View style={styles.buttonContainer}>
             <Button onPress={onClose} style={styles.button}>
               <Text style={styles.buttonText}>回聊天室</Text>
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
   backdrop: { ...StyleSheet.absoluteFillObject },
   flashOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'white', zIndex: 3001 },
   
-  photoWrapper: { marginBottom: 40, alignItems: 'center', justifyContent: 'center' },
+  photoWrapper: { marginBottom: 200, alignItems: 'center', justifyContent: 'center' },
   cardFrame: { 
     width: SCREEN_WIDTH * 0.8, 
     height: SCREEN_WIDTH * 0.8, // Square or Aspect Ratio
@@ -235,9 +236,9 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
 
-  textContainer: { alignItems: 'center', position: 'absolute', bottom: 100, width: '100%' },
+  textContainer: { alignItems: 'center', position: 'absolute', bottom: 120, width: '100%' },
   nameText: { fontSize: 32, fontWeight: 'bold', color: colors.text, marginBottom: 8 },
-  subText: { fontSize: 18, color: colors.textSecondary },
+  subText: { fontSize: 18, lineHeight: 26, color: colors.textSecondary },
   buttonContainer: { width: '100%', paddingHorizontal: 40, marginTop: 24 },
   button: { width: '100%', paddingVertical: 16, paddingHorizontal: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary + '20', borderColor: colors.primary, borderWidth: 1 },
   buttonText: { fontSize: 16, fontWeight: 'bold', color: colors.primary },

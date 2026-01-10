@@ -22,7 +22,6 @@ export default function ChatsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
-  const showImage = false;
   const [overlaySizes, setOverlaySizes] = useState<Map<string, number>>(new Map());
   const [overlayDimensionsMap, setOverlayDimensionsMap] = useState<Map<string, { width: number; height: number }>>(new Map());
   const [ghostPositions, setGhostPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
@@ -132,11 +131,21 @@ export default function ChatsScreen() {
 
     // 4. Determine which user is current user and get progress accordingly
     const isUser1 = user?.id === item.user_1;
-    const currentUserProgress = Math.min(100, isUser1 ? (item.chat_info?.user_1_progress as number) : (item.chat_info?.user_2_progress as number));
-    const otherUserProgress = Math.min(100, isUser1 ? (item.chat_info?.user_2_progress as number) : (item.chat_info?.user_1_progress as number));
+    const currentUserProgress = Math.min(100, isUser1 ? (item.chat_info?.user_1_progress as number || 0) : (item.chat_info?.user_2_progress as number || 0));
+    const otherUserProgress = Math.min(100, isUser1 ? (item.chat_info?.user_2_progress as number || 0) : (item.chat_info?.user_1_progress as number || 0));
     
-    // If both users' progress is above 50, remove blur but keep ghost
-    const shouldShowImage = currentUserProgress > 50 && otherUserProgress > 50;
+    // Check if current user has unlocked the other user's photo
+    const currentUserUnlocked = isUser1 
+      ? (item.chat_info?.user_1_unlocked as boolean | undefined)
+      : (item.chat_info?.user_2_unlocked as boolean | undefined);
+    
+    // Image display logic:
+    // 1. If unlocked: no blur, no ghost (full reveal)
+    // 2. If both progress > 50 but not unlocked: no blur, but ghost
+    // 3. If either progress < 50: blur + ghost
+    const shouldShowImage = currentUserUnlocked === true;
+    const shouldShowBlur = !shouldShowImage && (currentUserProgress < 50 || otherUserProgress < 50);
+    const shouldShowGhost = !shouldShowImage;
 
     return (
       <Button
@@ -149,12 +158,12 @@ export default function ChatsScreen() {
             <Image
               source={{ uri: item.other_user.personal_info.avatar_url as string }}
               style={styles.avatar}
-              blurRadius={shouldShowImage ? 0 : PHOTO_BLUR_AMOUNT}
+              blurRadius={shouldShowBlur ? PHOTO_BLUR_AMOUNT : 0}
             />
           ) : (
             <View style={StyleSheet.flatten([styles.avatar, { backgroundColor: colors.card }])} />
           )}
-          {!showImage && (
+          {shouldShowGhost && (
             <View 
               style={styles.blurOverlay}
               onLayout={(e) => {
@@ -229,7 +238,9 @@ export default function ChatsScreen() {
         <View style={styles.chatInfo}>
           <View style={styles.topRow}>
             <Text style={StyleSheet.flatten([styles.username, { color: themeColor }])} numberOfLines={1}>
-              {item.other_user?.username}
+              {shouldShowImage 
+                ? (item.other_user?.personal_info?.real_name as string || item.other_user?.username)
+                : item.other_user?.username}
             </Text>
             <Text style={styles.timeText}>{timeDisplay}</Text>
           </View>
