@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, Platform, Pressable, ScrollView, Animated, Dimensions, Image, Alert, TextInput, KeyboardAvoidingView } from 'react-native'
+import { View, Text, StyleSheet, Platform, Pressable, ScrollView, Animated, Dimensions, Alert, TextInput, KeyboardAvoidingView } from 'react-native'
 import React, { useState, useEffect, useRef } from 'react'
+import { Image } from 'expo-image'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import AnimatedReanimated, { useSharedValue, useAnimatedStyle, SharedValue, useAnimatedReaction, runOnJS } from 'react-native-reanimated'
 import LogoIcon from '@/svgs/logo'

@@ -1,9 +1,9 @@
-import { FlatList, StyleSheet, Text, View, Image, RefreshControl } from 'react-native';
+import { FlatList, StyleSheet, Text, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-
+import { Image } from 'expo-image';
 import { colors } from '@/lib/colors';
 import LogoIcon from '@/svgs/logo';
 import { useAppContext } from '@/contexts/AppContext';
@@ -296,10 +296,10 @@ export default function ChatsScreen() {
           </View>
           <Text style={styles.noChatsTitle}>還沒有聊天</Text>
           <Text style={styles.noChatsText}>
-            空氣靜謐，到首頁尋找共鳴
+            選擇一個有趣的小幽靈，開啟對話吧！
           </Text>
           <Button onPress={() => router.push('/home')} style={styles.noChatsButton}>
-            <Text style={styles.noChatsButtonText}>開始漂流</Text>
+            <Text style={styles.noChatsButtonText}>到首頁</Text>
           </Button>
         </View>
       ) : (
@@ -381,10 +381,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingVertical: 14,
     paddingHorizontal: 32,
-    borderRadius: 30,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.primary,
-    backgroundColor: 'transparent',
+    backgroundColor: colors.primary + '20',
   },
   noChatsButtonText: {
     fontSize: 16,

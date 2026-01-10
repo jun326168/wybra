@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, Pressable, ScrollView, Image, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
+import { Image } from 'expo-image'
 import React, { useState, useEffect } from 'react'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, SharedValue, useAnimatedReaction, runOnJS } from 'react-native-reanimated'

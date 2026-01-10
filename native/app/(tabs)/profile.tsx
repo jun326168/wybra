@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, Image, ScrollView, Linking } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, Linking } from 'react-native'
+import { Image } from 'expo-image'
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { colors } from '@/lib/colors'

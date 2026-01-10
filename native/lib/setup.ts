@@ -1,6 +1,6 @@
 import { colors } from "./colors";
 
-export const PHOTO_BLUR_AMOUNT = 15;
+export const PHOTO_BLUR_AMOUNT = 360;
 
 export const COLOR_OPTIONS = [
   { id: 'cyber_blue', value: '#64D2FF' },
@@ -97,7 +97,6 @@ export const INTEREST_TAGS = [
   { id: 'cooking', label: '#烹飪' },
   { id: 'sleep', label: '#睡覺' }, // I 人最愛
   { id: 'sports', label: '#運動' },
-  { id: 'fitness', label: '#健身' },
 
   // 3. 毛孩與自然 (Nature & Pets)
   { id: 'outdoor', label: '#戶外' }, // 露營/爬山
@@ -106,8 +105,10 @@ export const INTEREST_TAGS = [
 
   // 4. 技能與創造 (Creativity & Tech)
   { id: 'tech', label: '#科技' },
-  { id: 'coding', label: '#寫作' }, // 或是 #程式
+  { id: 'writing', label: '#寫作' }, // 或是 #程式
   { id: 'design', label: '#設計' },
+  { id: 'architecture', label: '#建築' },
+  { id: 'drawing', label: '#畫畫' },
   { id: 'art', label: '#藝術' },
   { id: 'photo', label: '#攝影' },
   { id: 'science', label: '#科學' },

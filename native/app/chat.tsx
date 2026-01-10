@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, Image, FlatList, KeyboardAvoidingView, Platform, Pressable, Keyboard, Animated } from 'react-native'
+import { View, Text, StyleSheet, FlatList, KeyboardAvoidingView, Platform, Pressable, Keyboard, Animated } from 'react-native'
+import { Image } from 'expo-image'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useRef, useState } from 'react'
-import { brightenHexColor, colors } from '@/lib/colors';
+import { colors } from '@/lib/colors';
 import LoadingSpinner from '@/svgs/spinner';
 import LogoIcon from '@/svgs/logo';
 import { fetchChat, sendMessage, markMessageAsRead, updateChatInfo } from '@/lib/api';
@@ -35,8 +36,9 @@ const ChatScreen = () => {
   const [sending, setSending] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const [showTips, setShowTips] = useState(false);
-  const [tipStep, setTipStep] = useState(1);
+  const [showFirstTimeTips, setShowFirstTimeTips] = useState(false);
+  const [firstTimeTipStep, setFirstTimeTipStep] = useState(1);
+  const [showAlongsideTips, setShowAlongsideTips] = useState(false);
   
   // Animated values for progress bars
   const otherUserProgressAnim = useRef(new Animated.Value(0)).current;
@@ -98,7 +100,7 @@ const ChatScreen = () => {
             });
             // Scroll to bottom when new message arrives
             setTimeout(() => {
-              flatListRef.current?.scrollToEnd({ animated: true });
+              flatListRef.current?.scrollToEnd({ animated: false });
             }, 100);
           }
         },
@@ -240,13 +242,13 @@ const ChatScreen = () => {
     }
     
     if ((messages.length <= 1)) { // first time tips
-      setShowTips(true);
+      setShowFirstTimeTips(true);
     } else { // along side tips
       if (messages.length < 10 && new Date().getTime() - new Date(messages[messages.length - 1].created_at).getTime() > 21600000) { // 6 hours
         // check if already shown in 6 hours
         const lastShown = await AsyncStorage.getItem(`chat-tips`);
         if (!lastShown || new Date().getTime() > new Date(lastShown).getTime() + 21600000) {
-          setShowTips(true);
+          setShowAlongsideTips(true);
         }
       }
     }
@@ -269,15 +271,17 @@ const ChatScreen = () => {
     setMessages(prev => prev.slice(0, -1).concat(message));
   };
 
-  const handleTipPress = () => {
-    if (tipStep === 1 && messages.length <= 1) {
-      setTipStep(2);
+  const handleFirstTimeTipPress = () => {
+    if (firstTimeTipStep === 1) {
+      setFirstTimeTipStep(2);
     } else {
-      setShowTips(false);
-      if (tipStep === 1) { // is along side tips
-        AsyncStorage.setItem(`chat-tips`, new Date().toISOString());
-      }
+      setShowFirstTimeTips(false);
     }
+  };
+
+  const handleAlongsideTipPress = () => {
+    setShowAlongsideTips(false);
+    AsyncStorage.setItem(`chat-tips`, new Date().toISOString());
   };
 
   const handleMidRewardClose = async () => {
@@ -306,8 +310,6 @@ const ChatScreen = () => {
 
   const renderMessage = ({ item, isSameUser }: { item: Message, isSameUser: boolean }) => {
 
-    const lighterThemeColor = brightenHexColor(themeColor, 0.3);
-
     return (
       <View style={StyleSheet.flatten([styles.messageContainer, {
         justifyContent: item.user_id === user?.id ? 'flex-end' : 'flex-start',
@@ -332,13 +334,8 @@ const ChatScreen = () => {
     );
   };
 
-  const renderTip = () => {
-    // along side tips
-    if (messages.length > 1 && new Date().getTime() - new Date(messages[messages.length - 1].created_at).getTime() > 21600000) {
-      return <Text style={styles.tipText}>點擊頭像看看對方的自介或興趣標籤，也許會發現新話題喔！</Text>;
-    }
-    // first time tips
-    if (tipStep === 1) {
+  const renderFirstTimeTip = () => {
+    if (firstTimeTipStep === 1) {
       return <Text style={styles.tipText}>在一天之中，只有<Text style={styles.tipHighlight}>下午 6 點</Text>到<Text style={styles.tipHighlight}>午夜 12 點</Text>可以聊天，把握時間了解對方吧！</Text>;
     } else {
       return <View>
@@ -361,6 +358,10 @@ const ChatScreen = () => {
         <Text style={styles.tipText}>小幽靈會持續捕捉你們的<Text style={styles.tipHighlight}>契合度</Text>。隨著話題深入，畫面上方的進度線會逐漸向中間靠攏，直到發動「默契問答」！通過就能解鎖對方的照片嘍！</Text>
       </View>
     }
+  };
+
+  const renderAlongsideTip = () => {
+    return <Text style={styles.tipText}>點擊頭像看看對方的自介或興趣標籤，也許會發現新話題喔！</Text>;
   };
 
   if (loading) {
@@ -497,12 +498,20 @@ const ChatScreen = () => {
         shouldShowImage={shouldShowImage}
       />
 
-      {/* Chat Tips */}
+      {/* First Time Chat Tips */}
       <ChatTips 
-        visible={showTips}
-        onPress={handleTipPress}
+        visible={showFirstTimeTips}
+        onPress={handleFirstTimeTipPress}
       >
-        {renderTip()}
+        {renderFirstTimeTip()}
+      </ChatTips>
+
+      {/* Alongside Chat Tips */}
+      <ChatTips 
+        visible={showAlongsideTips}
+        onPress={handleAlongsideTipPress}
+      >
+        {renderAlongsideTip()}
       </ChatTips>
 
       {/* Mid Reward */}

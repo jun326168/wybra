@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Image } from 'expo-image';
 import { colors } from '@/lib/colors';
 import LogoIcon from '@/svgs/logo';
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal';

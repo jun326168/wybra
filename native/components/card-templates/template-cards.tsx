@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Text, StyleSheet, Platform, Image } from 'react-native'
+import { View, Text, StyleSheet, Platform } from 'react-native'
+import { Image } from 'expo-image'
 import { colors, darkenHexColor } from '@/lib/colors'
 import { INTEREST_TAGS, MBTI_OPTIONS, PHOTO_BLUR_AMOUNT } from '@/lib/setup'
 import LogoIcon from '@/svgs/logo'
