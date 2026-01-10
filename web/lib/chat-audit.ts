@@ -251,8 +251,8 @@ export async function scoreConversation(
 
     // Map AI scores to chat positions: User1 -> user_1, User2 -> user_2
     return {
-      user_1_score: Math.max(0, Math.min(10, scores.user1)),
-      user_2_score: Math.max(0, Math.min(10, scores.user2))
+      user_1_score: Math.max(0, Math.min(12, scores.user1)),
+      user_2_score: Math.max(0, Math.min(12, scores.user2))
     };
   } catch (error) {
     console.error('Error scoring conversation:', error);

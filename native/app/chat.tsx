@@ -22,6 +22,7 @@ import QuizUnlock from '@/components/reward-overlays/quiz-unlock';
 import { subscribeToChat } from '@/lib/real-time';
 import { Pusher } from '@pusher/pusher-websocket-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sanitizeMessage } from '@/lib/ghost-wall';
 
 const ChatScreen = () => {
 
@@ -428,6 +429,11 @@ const ChatScreen = () => {
   }
 
   const renderMessage = ({ item, isSameUser }: { item: Message, isSameUser: boolean }) => {
+    // Sanitize message content - replace patterns with asterisks
+    // Check against both users' real names to prevent either user from leaking them
+    const otherUserRealName = chat?.other_user?.personal_info?.real_name as string | undefined;
+    const currentUserRealName = user?.personal_info?.real_name as string | undefined;
+    const sanitizedContent = sanitizeMessage(item.content, otherUserRealName, currentUserRealName);
 
     return (
       <View style={StyleSheet.flatten([styles.messageContainer, {
@@ -442,7 +448,7 @@ const ChatScreen = () => {
         <View style={StyleSheet.flatten([styles.messageBubble, { 
           backgroundColor: (item.user_id === user?.id ? colors.primary + 'A0' : colors.textSecondary + '40'),
         }])}>
-          <Text style={styles.messageText}>{item.content}</Text>
+          <Text style={styles.messageText}>{sanitizedContent}</Text>
         </View>
         {item.user_id !== user?.id && (
           <View style={styles.timeTextContainer}>
