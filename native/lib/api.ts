@@ -306,3 +306,93 @@ export const getTokens = async (): Promise<UserToken[]> => {
   const data = await response.json();
   return data.tokens as UserToken[];
 };
+
+// Invite APIs
+export interface Invite {
+  id: string;
+  code: string;
+  status: string;
+  created_at: string;
+}
+
+export const createInvite = async (): Promise<Invite> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/invite`, {
+    method: 'POST',
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create invite');
+  }
+
+  const data = await response.json();
+  return data.invite as Invite;
+};
+
+export const getMyInvite = async (): Promise<Invite | null> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/invite/me`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get invite');
+  }
+
+  const data = await response.json();
+  return data.invite as Invite;
+};
+
+export const pairInvite = async (code: string): Promise<{ success: boolean; message: string; type?: string }> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/invite/pair`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ code }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    return {
+      success: false,
+      message: error.error || 'Failed to pair invite',
+      type: error.type,
+    };
+  }
+
+  const data = await response.json();
+  return {
+    success: true,
+    message: data.message || 'Successfully paired',
+  };
+};
+
+// X-ray API
+export const useXray = async (targetUserId: string): Promise<{ success: boolean; message?: string; error?: string }> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/xray`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ target_user_id: targetUserId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    return {
+      success: false,
+      error: error.error || 'Failed to use X-ray',
+    };
+  }
+
+  const data = await response.json();
+  return {
+    success: true,
+    message: data.message || 'X-ray used successfully',
+  };
+};

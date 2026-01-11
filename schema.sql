@@ -50,13 +50,27 @@ CREATE TABLE daily_feeds (
   UNIQUE(user_id, feed_date) -- one feed per user per day
 );
 
-create table user_access (
+CREATE TABLE user_access (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
   is_vip BOOLEAN NOT NULL DEFAULT false,
   reputation_score INT NOT NULL DEFAULT 100, -- Starts at 100. Bans drop this.
-  xray_charges INT NOT NULL DEFAULT 1,       -- Refills daily
-  last_charge_refill TIMESTAMPTZ NOT NULL DEFAULT now(),
+  xray_charges INT NOT NULL DEFAULT 1, -- Refills daily
+  xray_target UUID, -- Target user ID for X-ray
+  charges_refill_date VARCHAR(10), -- YYYY-MM-DD format
   FOREIGN KEY (user_id) REFERENCES users(id),
   UNIQUE(user_id) -- one access record per user
+);
+
+CREATE TABLE invites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR(255) NOT NULL,
+  invited_user_id UUID NOT NULL,
+  used_by_user_id UUID,
+  status VARCHAR(50) NOT NULL DEFAULT 'active', -- active, used, revoked
+  created_at TIMESTAMPTZ DEFAULT now(),
+  FOREIGN KEY (invited_user_id) REFERENCES users(id),
+  FOREIGN KEY (used_by_user_id) REFERENCES users(id),
+  UNIQUE(invited_user_id) -- one invite per user
+  UNIQUE(code) -- one code per invite
 );

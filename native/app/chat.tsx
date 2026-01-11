@@ -644,6 +644,7 @@ const ChatScreen = () => {
         onClose={() => setShowProfileModal(false)}
         user={chat?.other_user as User}
         shouldShowImage={shouldShowImage}
+        currentUser={user}
       />
 
       {/* First Time Chat Tips */}

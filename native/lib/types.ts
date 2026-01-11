@@ -24,6 +24,13 @@ export interface User {
     personality?: string;
   };
   settings?: Record<string, unknown>;
+  access?: {
+    is_vip: boolean;
+    reputation_score: number;
+    xray_charges: number;
+    xray_target: string | null;
+    charges_refill_date: string | null;
+  };
   created_at?: string;
   has_chat?: boolean;
 }

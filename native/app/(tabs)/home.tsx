@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, FlatList, Dimensions, Platform, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Dimensions, Platform, Keyboard, Pressable } from 'react-native';
 import { colors } from '@/lib/colors';
 import { createChat, fetchProfiles } from '@/lib/api';
 import LoadingSpinner from '@/svgs/spinner';
@@ -18,12 +18,16 @@ import ProfileModal from '@/components/ui/profile-modal';
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal';
 import Input from '@/components/ui/input';
 import { router } from 'expo-router';
-
+import { useAppContext } from '@/contexts/AppContext';
+import XrayGhostIcon from '@/svgs/xray-ghost';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 80;
 const CARD_SPACING = 32;
 
 export default function FeedScreen() {
+
+  const { user } = useAppContext();
+
   const [profiles, setProfiles] = useState<(User & { has_chat?: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<(User & { has_chat?: boolean }) | null>(null);
@@ -34,6 +38,7 @@ export default function FeedScreen() {
   const [message, setMessage] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [showVipUnlockModal, setShowVipUnlockModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -154,6 +159,12 @@ export default function FeedScreen() {
           <LogoIcon size={24} floatingY={2} />
           <Text style={styles.headerTitle}>Wybra</Text>
         </View>
+        <Pressable onPress={() => setShowVipUnlockModal(true)} style={styles.headerAccessContainer}>
+          <View style={styles.headerAccessItem}>
+            <XrayGhostIcon size={20} color={colors.primary} />
+            <Text style={styles.headerAccessText}>{user?.access?.xray_charges || 0}</Text>
+          </View>
+        </Pressable>
       </View>
 
       <View style={styles.headerDescriptionContainer}>
@@ -201,6 +212,7 @@ export default function FeedScreen() {
         visible={showProfileModal}
         onClose={handleCloseModal}
         user={selectedUser}
+        currentUser={user}
       />
 
       {/* Send Signal Modal */}
@@ -305,6 +317,58 @@ export default function FeedScreen() {
           </View>
         </View>
       </BottomSheetModal>
+
+      {/* VIP Unlock Modal */}
+      <BottomSheetModal
+        visible={showVipUnlockModal}
+        containerStyle={styles.modalContainer}
+        onClose={() => setShowVipUnlockModal(false)}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.vipModalContent}>
+            <XrayGhostIcon size={48} color={colors.primary} />
+            <Text style={styles.vipModalTitle}>
+              {user?.access?.is_vip ? 'VIP 功能' : '解鎖 VIP'}
+            </Text>
+            {user?.access?.is_vip ? (
+              <>
+                <Text style={styles.vipModalDescription}>
+                  你已經是 VIP 會員！每日可以使用一次 X 光功能查看對方的<Text style={styles.vipModalDescriptionHighlight}>性別</Text>和<Text style={styles.vipModalDescriptionHighlight}>年齡</Text>。
+                </Text>
+                <Text style={styles.vipModalSubDescription}>
+                  目前剩餘 {user?.access?.xray_charges || 0} 次使用次數
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.vipModalDescription}>
+                  解鎖 VIP 後，你將獲得每日一次 X 光功能的機會，查看對方的<Text style={styles.vipModalDescriptionHighlight}>性別</Text>和<Text style={styles.vipModalDescriptionHighlight}>年齡</Text>。
+                </Text>
+                <Text style={styles.vipModalSubDescription}>
+                  每日會自動補充一次使用次數
+                </Text>
+              </>
+            )}
+            <Text style={styles.vipModalButtonContainer}>
+              <Button
+                onPress={() => setShowVipUnlockModal(false)}
+                containerStyle={{ width: '100%' }}
+                style={StyleSheet.flatten([
+                  styles.vipModalButton,
+                  {
+                    backgroundColor: colors.primary + '20',
+                    borderColor: colors.primary,
+                  }
+                ])}
+              >
+                <Text style={StyleSheet.flatten([styles.vipModalButtonText, { color: colors.primary }])}>
+                  我知道了
+                </Text>
+              </Button>
+            </Text>
+          </View>
+        </View>
+      </BottomSheetModal>
     </SafeAreaView>
   );
 }
@@ -329,6 +393,9 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 28,
     paddingVertical: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitleContainer: {
     flexDirection: 'row',
@@ -346,6 +413,22 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
+    letterSpacing: 1,
+  },
+  headerAccessContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerAccessItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerAccessText: {
+    fontSize: 15,
+    color: colors.primary,
+    fontWeight: '800',
     letterSpacing: 1,
   },
   feedContainer: {
@@ -438,6 +521,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.background,
+    letterSpacing: 1,
+  },
+  vipModalContent: {
+    alignItems: 'center',
+    gap: 16,
+  },
+  vipModalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  vipModalDescription: {
+    fontSize: 16,
+    color: colors.text,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginTop: 8,
+  },
+  vipModalDescriptionHighlight: {
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  vipModalSubDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginTop: 4,
+  },
+  vipModalButtonContainer: {
+    width: '100%',
+    marginTop: 16,
+  },
+  vipModalButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    width: '100%',
+  },
+  vipModalButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
     letterSpacing: 1,
   },
 });

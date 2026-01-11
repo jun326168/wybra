@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, ScrollView, Linking } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, Linking, Keyboard, Platform } from 'react-native'
 import { Image } from 'expo-image'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { colors } from '@/lib/colors'
 import { useAppContext } from '@/contexts/AppContext'
@@ -10,19 +10,31 @@ import Button from '@/components/ui/button'
 import { useRouter } from 'expo-router'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
 import { GENERATION_OPTIONS, getGeneration, INTEREST_TAGS, MBTI_OPTIONS } from '@/lib/setup'
+import XrayGhostIcon from '@/svgs/xray-ghost'
+import { createInvite, getMyInvite, pairInvite } from '@/lib/api'
+import Input from '@/components/ui/input'
+import LoadingSpinner from '@/svgs/spinner'
+import VipUnlock from '@/components/reward-overlays/vip-unlock'
 
 const ProfileScreen = () => {
-  const { user, signOut } = useAppContext();
+  const { user, signOut, refreshUser } = useAppContext();
   const router = useRouter();
   const [showImage, setShowImage] = useState(false);
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
+  const [showVipUnlockModal, setShowVipUnlockModal] = useState(false);
+  const [showVipUnlockOverlay, setShowVipUnlockOverlay] = useState(false);
   const [overlaySize, setOverlaySize] = useState<number | null>(null);
   const [overlayDimensions, setOverlayDimensions] = useState<{ width: number; height: number } | null>(null);
   const [ghostPosition, setGhostPosition] = useState<{ x: number; y: number } | null>(null);
+  const [myInviteCode, setMyInviteCode] = useState<string | null>(null);
+  const [pairCode, setPairCode] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isPairing, setIsPairing] = useState(false);
+  const [pairError, setPairError] = useState<string | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const hasLoadedInviteCode = useRef(false);
 
   const avatarUrl = user?.personal_info?.avatar_url as string | undefined;
-  const generation = getGeneration(new Date(user?.personal_info?.birthday as string).getFullYear());
-  const generationColor = colors.generation[generation as keyof typeof colors.generation];
   const logoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string | undefined);
   const personality = (user?.personal_info?.personality as LogoPersonality) || 'headphone';
 
@@ -39,12 +51,12 @@ const ProfileScreen = () => {
       const { width, height } = overlayDimensions;
       const containerSize = Math.min(width, height);
       const savedGhostPos = user.personal_info.ghost_pos as { x: number; y: number; size: number };
-      
+
       // Convert percentages to pixels
       const size = (savedGhostPos.size / 100) * containerSize;
       const x = (savedGhostPos.x / 100) * width;
       const y = (savedGhostPos.y / 100) * height;
-      
+
       setOverlaySize(Math.max(20, size));
       setGhostPosition({ x, y });
     } else if (overlayDimensions && !user?.personal_info?.ghost_pos) {
@@ -56,6 +68,27 @@ const ProfileScreen = () => {
       setGhostPosition({ x: (width - size) / 2, y: (height - size) / 2 });
     }
   }, [user?.personal_info?.ghost_pos, overlayDimensions]);
+
+  // Keyboard listeners
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
 
   const handleEditProfile = () => {
     router.push('/profile-settings');
@@ -87,6 +120,88 @@ const ProfileScreen = () => {
     Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
   };
 
+  // Load invite code only once when component mounts (if not VIP)
+  useEffect(() => {
+    if (user?.access?.is_vip) {
+      // Reset flag if user becomes VIP (in case they lose VIP later)
+      hasLoadedInviteCode.current = false;
+      setMyInviteCode(null);
+    } else if (!hasLoadedInviteCode.current) {
+      hasLoadedInviteCode.current = true;
+      loadMyInviteCode();
+    }
+  }, [user?.access?.is_vip]);
+
+  const loadMyInviteCode = async () => {
+    try {
+      const invite = await getMyInvite();
+      if (invite) {
+        setMyInviteCode(invite.code);
+      } else {
+        setMyInviteCode(null);
+      }
+    } catch (error) {
+      console.error('Error loading invite code:', error);
+      setMyInviteCode(null);
+    }
+  };
+
+  const handleGenerateInvite = async () => {
+    try {
+      setIsGenerating(true);
+      setPairError(null);
+      const invite = await createInvite();
+      setMyInviteCode(invite.code);
+    } catch (error: any) {
+      console.error('Error generating invite:', error);
+      setPairError(error.message || '無法產生邀請碼');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handlePairInvite = async () => {
+    if (!pairCode.trim()) {
+      setPairError('請輸入邀請碼');
+      return;
+    }
+
+    try {
+      setIsPairing(true);
+      setPairError(null);
+      const pairResult = await pairInvite(pairCode.trim().toUpperCase());
+      const result: { success: boolean; message: string; type?: string } = pairResult;
+      
+      if (result.success) {
+        // Refresh user data to get updated VIP status
+        await refreshUser();
+        setShowVipUnlockModal(false);
+        setTimeout(() => {
+          setShowVipUnlockOverlay(true);
+        }, 800);
+        setPairCode('');
+      } else {
+        if (result.type === 'NotOneMaleOneFemale') {
+          setPairError('必須要是異性才能配對喔');
+        } else {
+          setPairError('找不到邀請碼');
+        }
+      }
+    } catch (error: any) {
+      console.error('Error pairing invite:', error);
+      setPairError(error.message || '配對失敗');
+    } finally {
+      setIsPairing(false);
+    }
+  };
+
+  const handleCloseVipModal = () => {
+    setShowVipUnlockModal(false);
+    setPairCode('');
+    setPairError(null);
+    // Don't reset myInviteCode - keep it cached
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -105,7 +220,7 @@ const ProfileScreen = () => {
                   style={styles.avatarImage}
                 />
                 {!showImage && (
-                  <View 
+                  <View
                     style={styles.blurOverlay}
                     onLayout={(e) => {
                       const { width, height } = e.nativeEvent.layout;
@@ -113,7 +228,7 @@ const ProfileScreen = () => {
                       // The useEffect will handle updating the ghost position based on user data
                     }}
                   >
-                    <View 
+                    <View
                       style={[
                         styles.lockedStateContent,
                         ghostPosition && overlaySize ? {
@@ -147,11 +262,23 @@ const ProfileScreen = () => {
             </Button>
           </View>
           <View style={styles.profileInfoContainer}>
+            {user?.access?.is_vip ? (
+              <View
+                style={[styles.vipUnlockButton, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '40' }]}
+              >
+                <XrayGhostIcon size={14} color={colors.primary} />
+                <Text style={[styles.vipUnlockButtonText, { color: colors.primary }]}>VIP</Text>
+              </View>
+            ) : (
+              <Button
+                onPress={() => setShowVipUnlockModal(true)}
+                style={[styles.vipUnlockButton, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '40' }]}
+              >
+                <Text style={[styles.vipUnlockButtonText, { color: colors.primary }]}>解鎖 VIP</Text>
+              </Button>
+            )}
             <View style={styles.profileInfoTextContainer}>
               <Text style={styles.profileInfoText}>{user?.username}</Text>
-              {/* <View style={[styles.profileInfoTextGenerationContainer, { backgroundColor: generationColor + '1A', borderColor: generationColor + '80' }]}>
-                <Text style={[styles.profileInfoTextGeneration, { color: generationColor }]}>{GENERATION_OPTIONS.find(option => option.value === generation)?.label}</Text>
-              </View> */}
             </View>
             <Text style={StyleSheet.flatten([styles.profileInfoTextMbti, { color: user?.personal_info?.color === colors.background ? colors.primary : user?.personal_info?.color }])}>{user?.personal_info?.mbti === 'UNKNOWN' ? 'MBTI: ' : ''}{MBTI_OPTIONS.find(option => option.value === user?.personal_info?.mbti)?.label}</Text>
             <Text style={styles.profileInfoTextInterests}>{(user?.personal_info?.interests as string[])?.map(i => i.startsWith('#') ? i : INTEREST_TAGS.find(tag => tag.id === i)?.label).join(' ')}</Text>
@@ -255,6 +382,112 @@ const ProfileScreen = () => {
           </Button>
         </View>
       </BottomSheetModal>
+
+      {/* VIP Unlock Modal */}
+      <BottomSheetModal
+        visible={showVipUnlockModal}
+        containerStyle={{
+          ...styles.modalContainer,
+          ...(keyboardHeight > 0 && { marginBottom: keyboardHeight - 28 })
+        }}
+        onClose={() => {
+          Keyboard.dismiss();
+          handleCloseVipModal();
+        }}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.vipModalContent}>
+            <XrayGhostIcon size={48} color={colors.primary} />
+            <Text style={styles.vipModalTitle}>解鎖 VIP</Text>
+            <Text style={styles.vipModalDescription}>
+              解鎖 VIP 後，你將獲得每日一次 X 光功能的機會，查看對方的<Text style={styles.vipModalDescriptionHighlight}>性別</Text>和<Text style={styles.vipModalDescriptionHighlight}>年齡</Text>。
+            </Text>
+            <Text style={styles.vipModalSubDescription}>
+              每日會自動補充一次使用次數
+            </Text>
+
+            {/* My Invite Code Section */}
+            {myInviteCode ? (
+              <View style={styles.vipModalInviteSection}>
+                <Text style={styles.vipModalInviteLabel}>我的邀請碼</Text>
+                <View style={[styles.vipModalInviteCodeContainer, { borderColor: colors.primary + '80' }]}>
+                  <Text style={[styles.vipModalInviteCode, { color: colors.primary }]}>{myInviteCode}</Text>
+                </View>
+                <Text style={styles.vipModalInviteHint}>分享給異性朋友配對即可解鎖 VIP</Text>
+              </View>
+            ) : (
+              <View style={styles.vipModalInviteSection}>
+                <Button
+                  onPress={handleGenerateInvite}
+                  disabled={isGenerating}
+                  style={StyleSheet.flatten([
+                    styles.vipModalGenerateButton,
+                    {
+                      backgroundColor: colors.primary + '20',
+                      borderColor: colors.primary,
+                    }
+                  ])}
+                >
+                  {isGenerating ? (
+                    <LoadingSpinner size={20} color={colors.primary} strokeWidth={3} />
+                  ) : (
+                    <Text style={StyleSheet.flatten([styles.vipModalGenerateButtonText, { color: colors.primary }])}>
+                      產生邀請碼
+                    </Text>
+                  )}
+                </Button>
+              </View>
+            )}
+
+            {/* Pair Invite Section */}
+            <View style={styles.vipModalPairSection}>
+              <Text style={styles.vipModalPairLabel}>或輸入他人的邀請碼</Text>
+              <Input
+                value={pairCode}
+                onChangeText={(text) => {
+                  setPairCode(text.toUpperCase());
+                  setPairError(null);
+                }}
+                placeholder="輸入 6 位邀請碼"
+                maxLength={6}
+                style={StyleSheet.flatten([
+                  styles.vipModalPairInput,
+                  { borderColor: pairError ? colors.error + '80' : colors.border }
+                ])}
+              />
+              {pairError && (
+                <Text style={styles.vipModalErrorText}>{pairError}</Text>
+              )}
+              <Button
+                onPress={handlePairInvite}
+                disabled={isPairing || !pairCode.trim()}
+                style={StyleSheet.flatten([
+                  styles.vipModalPairButton,
+                  {
+                    backgroundColor: colors.primary + '20',
+                    borderColor: colors.primary,
+                    opacity: (!pairCode.trim() || isPairing) ? 0.5 : 1,
+                  }
+                ])}
+              >
+                {isPairing ? (
+                  <LoadingSpinner size={20} color={colors.primary} strokeWidth={3} />
+                ) : (
+                  <Text style={StyleSheet.flatten([styles.vipModalPairButtonText, { color: colors.primary }])}>
+                    配對
+                  </Text>
+                )}
+              </Button>
+            </View>
+          </View>
+        </View>
+      </BottomSheetModal>
+
+      {/* VIP Unlock Overlay */}
+      <VipUnlock
+        visible={showVipUnlockOverlay}
+        onClose={() => setShowVipUnlockOverlay(false)}
+      />
     </SafeAreaView>
   )
 }
@@ -520,6 +753,153 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.textSecondary,
+  },
+  vipBadge: {
+    borderWidth: 1,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    marginLeft: 8,
+  },
+  vipBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  vipUnlockButton: {
+    borderWidth: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  vipUnlockButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  vipModalContent: {
+    alignItems: 'center',
+    gap: 16,
+  },
+  vipModalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  vipModalDescription: {
+    fontSize: 16,
+    color: colors.text,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginTop: 8,
+  },
+  vipModalDescriptionHighlight: {
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  vipModalSubDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginTop: 4,
+  },
+  vipModalButtonContainer: {
+    width: '100%',
+    marginTop: 16,
+  },
+  vipModalButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    width: '100%',
+  },
+  vipModalButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  vipModalInviteSection: {
+    width: '100%',
+    marginTop: 16,
+    gap: 12,
+  },
+  vipModalInviteLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  vipModalInviteCodeContainer: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+  },
+  vipModalInviteCode: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    letterSpacing: 4,
+  },
+  vipModalInviteHint: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  vipModalGenerateButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    width: '100%',
+  },
+  vipModalGenerateButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  vipModalPairSection: {
+    width: '100%',
+    marginTop: 24,
+    gap: 12,
+  },
+  vipModalPairLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  vipModalPairInput: {
+    marginBottom: 4,
+  },
+  vipModalErrorText: {
+    fontSize: 12,
+    color: colors.error,
+    marginTop: -8,
+  },
+  vipModalPairButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    width: '100%',
+  },
+  vipModalPairButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
 });
 
