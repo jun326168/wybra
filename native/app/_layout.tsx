@@ -19,6 +19,7 @@ import 'react-native-reanimated';
 
 import { colors } from '@/lib/colors';
 import { AppProvider } from '@/contexts/AppContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 import { initializePusher } from '@/lib/real-time';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -91,18 +92,20 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppProvider>
-        <ThemeProvider value={customTheme}>
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="setup" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="profile-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="preference-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="chat" options={{ headerShown: false }} />
-            <Stack.Screen name="quiz" options={{ headerShown: false }} />
-          </Stack>
-          <StatusBar style="light" />
-        </ThemeProvider>
+        <NotificationProvider>
+          <ThemeProvider value={customTheme}>
+            <Stack>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="setup" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="profile-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="preference-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="chat" options={{ headerShown: false }} />
+              <Stack.Screen name="quiz" options={{ headerShown: false }} />
+            </Stack>
+            <StatusBar style="light" />
+          </ThemeProvider>
+        </NotificationProvider>
       </AppProvider>
     </GestureHandlerRootView>
   );

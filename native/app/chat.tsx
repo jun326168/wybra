@@ -433,7 +433,12 @@ const ChatScreen = () => {
     // Check against both users' real names to prevent either user from leaking them
     const otherUserRealName = chat?.other_user?.personal_info?.real_name as string | undefined;
     const currentUserRealName = user?.personal_info?.real_name as string | undefined;
-    const sanitizedContent = sanitizeMessage(item.content, otherUserRealName, currentUserRealName);
+    const sanitizedContent = sanitizeMessage(
+      currentUserProgress >= 100 && otherUserProgress >= 100 && (isUser1 ? !!chat?.chat_info?.user_1_unlocked : !!chat?.chat_info?.user_2_unlocked),
+      item.content,
+      otherUserRealName,
+      currentUserRealName
+    );
 
     return (
       <View style={StyleSheet.flatten([styles.messageContainer, {

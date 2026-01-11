@@ -4,6 +4,7 @@ import { queryOne } from '@/lib/postgres';
 import { Chat, Message } from '@/lib/type';
 import { auditMessage } from '@/lib/chat-audit';
 import { triggerChatUpdate, triggerNewMessage } from '@/lib/real-time';
+import { sendMessageNotification } from '@/lib/push-notifications';
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,6 +89,15 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('Error triggering Pusher event:', error);
       // Don't fail the request if Pusher fails
+    }
+
+    // Send push notification to the recipient
+    try {
+      const otherUserId = existingChat.user_1 === user.id ? existingChat.user_2 : existingChat.user_1;
+      await sendMessageNotification(otherUserId, chat_id);
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+      // Don't fail the request if push notification fails
     }
 
     // Run chat audit (progress updates, AI scoring, quiz generation)

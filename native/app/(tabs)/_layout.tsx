@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -13,6 +13,7 @@ import Animated, {
 
 import { colors } from '@/lib/colors';
 import Svg, { Path, G } from 'react-native-svg';
+import { useNotificationContext } from '@/contexts/NotificationContext';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
@@ -139,6 +140,14 @@ function AnimatedGhostIcon({ color, size, trigger }: AnimatedIconProps) {
 
 export default function TabLayout() {
   const { triggers, triggerAnimation } = useAnimationTriggers();
+  const { requestPermission } = useNotificationContext();
+
+  // Request notification permission when tabs layout mounts
+  useEffect(() => {
+    requestPermission().catch((error) => {
+      console.error('Failed to request notification permission:', error);
+    });
+  }, [requestPermission]);
 
   return (
     <Tabs

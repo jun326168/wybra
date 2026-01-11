@@ -106,7 +106,9 @@ export const hasRealName = (
  * @param realNames - Array of real names to check against (optional)
  * @returns Sanitized text with patterns replaced by asterisks
  */
-export const sanitizeMessage = (text: string, ...realNames: (string | undefined)[]): string => {
+export const sanitizeMessage = (ignoreRules: boolean, text: string, ...realNames: (string | undefined)[]): string => {
+  if (ignoreRules) return text;
+
   let sanitized = text;
 
   // 1. Replace phone numbers (09xxxxxxxx)
@@ -122,8 +124,7 @@ export const sanitizeMessage = (text: string, ...realNames: (string | undefined)
   const socialMediaPatterns = [
     { regex: /\b(ig|instagram)\b/gi, replacement: (match: string) => '👻'.repeat(match.length) },
     { regex: /哀居|唉居/gi, replacement: (match: string) => '👻'.repeat(match.length) },
-    { regex: /\b((line\s*id)|lineid)\b/gi, replacement: (match: string) => '👻'.repeat(match.length) },
-    { regex: /賴|加我/gi, replacement: (match: string) => '👻'.repeat(match.length) },
+    { regex: /\b(line\s*id)\b/gi, replacement: (match: string) => '👻'.repeat(match.length) },
     { regex: /\b(fb|facebook)\b/gi, replacement: (match: string) => '👻'.repeat(match.length) },
     { regex: /臉書/gi, replacement: (match: string) => '👻'.repeat(match.length) },
     { regex: /(http|https|www\.)/gi, replacement: (match: string) => '👻'.repeat(match.length) },

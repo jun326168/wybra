@@ -267,3 +267,42 @@ export const updateChatInfo = async (chatId: string, chatInfo: Record<string, un
   const data = await response.json();
   return data.chat as Chat;
 };
+
+// Token APIs
+export interface UserToken {
+  id: string;
+  token: string;
+  created_at: string;
+}
+
+export const createToken = async (token: string): Promise<UserToken> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/tokens`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ token }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create token');
+  }
+
+  const data = await response.json();
+  return data.token as UserToken;
+};
+
+export const getTokens = async (): Promise<UserToken[]> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/tokens`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get tokens');
+  }
+
+  const data = await response.json();
+  return data.tokens as UserToken[];
+};

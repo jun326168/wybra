@@ -31,3 +31,11 @@ CREATE TABLE messages (
   FOREIGN KEY (chat_id) REFERENCES chats(id),
   FOREIGN KEY (user_id) REFERENCES users(id),
 );
+
+CREATE TABLE user_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  token VARCHAR(255) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+);

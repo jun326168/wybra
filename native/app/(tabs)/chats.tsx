@@ -14,6 +14,7 @@ import LoadingSpinner from '@/svgs/spinner';
 import { PHOTO_BLUR_AMOUNT } from '@/lib/setup'; // Import your global blur constant
 import { formatMessageTime } from '@/lib/functions';
 import { subscribeToUserChannel } from '@/lib/real-time';
+import { sanitizeMessage } from '@/lib/ghost-wall';
 
 export default function ChatsScreen() {
   const { user } = useAppContext();
@@ -255,7 +256,12 @@ export default function ChatsScreen() {
             numberOfLines={1}
           >
             {isLastMessageFromMe && <Text style={{ color: colors.textSecondary }}>你: </Text>}
-            {lastContent}
+            {sanitizeMessage(
+              currentUserProgress >= 100 && otherUserProgress >= 100 && (isUser1 ? !!item.chat_info?.user_1_unlocked : !!item.chat_info?.user_2_unlocked),
+              lastContent,
+              item.other_user?.personal_info?.real_name as string | undefined,
+              user?.personal_info?.real_name as string | undefined
+            )}
           </Text>
 
           <View style={styles.bottomRow}>
