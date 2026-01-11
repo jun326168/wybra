@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     // Check if user has charges
     if (userAccess.xray_charges <= 0) {
       return NextResponse.json(
-        { error: 'No X-ray charges remaining' },
+        { error: 'No charges remaining' },
         { status: 400 }
       );
     }
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     if (userAccess.xray_target === target_user_id) {
       return NextResponse.json({
         success: true,
-        message: 'X-ray already used on this target',
+        message: 'Already used on this target',
       });
     }
 
@@ -80,10 +80,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'X-ray used successfully',
+      message: 'Used successfully',
     });
   } catch (error: unknown) {
-    console.error('X-ray error:', error);
+    console.error('Ghost perception error:', error);
 
     return NextResponse.json(
       { error: 'Internal server error' },

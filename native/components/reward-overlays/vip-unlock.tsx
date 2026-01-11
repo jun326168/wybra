@@ -95,10 +95,10 @@ const VipUnlock = ({ visible, onClose }: VipUnlockProps) => {
 
         {/* Text Info */}
         <Animated.View style={[styles.textContainer, { opacity: textOpacity }]}>
-          <Text style={styles.title}>X 光功能已解鎖</Text>
+          <Text style={styles.title}>幽靈感知功能已解鎖</Text>
           <Text style={styles.subtitle}>
-            使用 X 光功能查看{'\n'}
-            對方的性別和年齡
+            使用即可查看對方的{'\n'}
+            性別和年齡
           </Text>
           
           <View style={styles.statRow}>

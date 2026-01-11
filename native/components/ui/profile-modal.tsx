@@ -151,7 +151,7 @@ export default function ProfileModal({ visible, onClose, user, shouldShowImage =
                 )}
               </View>
               <View style={styles.profileInfoContainer}>
-                {/* X-ray Section */}
+                {/* 幽靈感知 Section */}
                 {isVip && (
                   <View style={styles.xraySection}>
                     {hasXrayed ? (
@@ -184,7 +184,7 @@ export default function ProfileModal({ visible, onClose, user, shouldShowImage =
                           <>
                             <XrayGhostIcon size={16} color={colors.primary} />
                             <Text style={[styles.xrayButtonText, { color: colors.primary }]}>
-                              使用 X 光
+                              幽靈感知
                             </Text>
                           </>
                         )}

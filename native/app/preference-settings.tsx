@@ -83,9 +83,9 @@ const PreferenceSettingsScreen = () => {
       case 'classic':
         TemplateComponent = <ClassicCard user={user} themeColor={selectedColor} />;
         break;
-      case 'quote':
-        TemplateComponent = <QuoteCard user={user} themeColor={selectedColor} />;
-        break;
+      // case 'quote':
+      //   TemplateComponent = <QuoteCard user={user} themeColor={selectedColor} />;
+      //   break;
       case 'zine':
         TemplateComponent = <ZineCard user={user} themeColor={selectedColor} />;
         break;

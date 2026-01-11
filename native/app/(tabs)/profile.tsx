@@ -400,7 +400,7 @@ const ProfileScreen = () => {
             <XrayGhostIcon size={48} color={colors.primary} />
             <Text style={styles.vipModalTitle}>解鎖 VIP</Text>
             <Text style={styles.vipModalDescription}>
-              解鎖 VIP 後，你將獲得每日一次 X 光功能的機會，查看對方的<Text style={styles.vipModalDescriptionHighlight}>性別</Text>和<Text style={styles.vipModalDescriptionHighlight}>年齡</Text>。
+              解鎖 VIP 後，你將獲得每日一次<Text style={styles.vipModalDescriptionHighlight}>幽靈感知</Text>功能的機會，查看對方的<Text style={styles.vipModalDescriptionHighlight}>性別</Text>和<Text style={styles.vipModalDescriptionHighlight}>年齡</Text>。
             </Text>
             <Text style={styles.vipModalSubDescription}>
               每日會自動補充一次使用次數

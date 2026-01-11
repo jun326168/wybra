@@ -373,7 +373,7 @@ export const pairInvite = async (code: string): Promise<{ success: boolean; mess
   };
 };
 
-// X-ray API
+// X-ray APIs
 export const useXray = async (targetUserId: string): Promise<{ success: boolean; message?: string; error?: string }> => {
   const headers = await getAuthHeaders();
   const response = await fetch(`${API_URL}/xray`, {
@@ -393,6 +393,6 @@ export const useXray = async (targetUserId: string): Promise<{ success: boolean;
   const data = await response.json();
   return {
     success: true,
-    message: data.message || 'X-ray used successfully',
+    message: data.message || 'Successfully used X-ray',
   };
 };

@@ -15,10 +15,10 @@ export const TEMPLATE_OPTIONS = [
     id: 'classic',
     label: 'Journal',
   },
-  {
-    id: 'quote',
-    label: 'Quote',
-  },
+  // {
+  //   id: 'quote',
+  //   label: 'Quote',
+  // },
   {
     id: 'zine',
     label: 'Zine',
