@@ -61,11 +61,14 @@ export async function GET(request: NextRequest) {
     // ---------------------------------------------------------
     // 1. CHECK CACHE: Do we already have a feed for today?
     // ---------------------------------------------------------
-    const storedFeed = user.personal_info?.feed as { date: string; ids: string[] } | undefined;
+    const storedFeed = await query<{ user_ids: string[] }>(
+      `SELECT user_ids FROM daily_feeds WHERE user_id = $1 AND feed_date = $2`,
+      [user.id, today]
+    );
     
-    if (storedFeed && storedFeed.date === today && Array.isArray(storedFeed.ids) && storedFeed.ids.length > 0) {
+    if (storedFeed.length > 0 && Array.isArray(storedFeed[0].user_ids) && storedFeed[0].user_ids.length > 0) {
       // HIT: Fetch the exact profiles stored in the feed (from today, so return as-is even if they now have chats)
-      const feedIds = storedFeed.ids;
+      const feedIds = storedFeed[0].user_ids;
       
       const cachedUsers = await query<User>(
         `SELECT id, username, personal_info FROM users WHERE id = ANY($1::uuid[])`,
@@ -187,23 +190,26 @@ export async function GET(request: NextRequest) {
     const finalFeed = shuffleInPlace(combined);
 
     // ---------------------------------------------------------
-    // 3. SAVE TO DB: Update user's personal_info with new feed
+    // 3. SAVE TO DB: Save feed to daily_feeds table
     // ---------------------------------------------------------
     
-    const feedData = {
-      date: today,
-      ids: finalFeed.map(u => u.id)
-    };
+    const feedUserIds = finalFeed.map(u => u.id);
 
-    // Use Postgres JSONB concatenation (||) to merge the "feed" key into personal_info
-    // This preserves existing bio, avatar, etc., and just adds/updates "feed"
+    // Delete old feeds for this user (all feeds except today's)
+    await query(
+      `DELETE FROM daily_feeds WHERE user_id = $1 AND feed_date <> $2`,
+      [user.id, today]
+    );
+
+    // Insert or update today's feed
     await query(
       `
-      UPDATE users 
-      SET personal_info = personal_info || $1::jsonb 
-      WHERE id = $2
+      INSERT INTO daily_feeds (user_id, feed_date, user_ids)
+      VALUES ($1, $2, $3::jsonb)
+      ON CONFLICT (user_id, feed_date)
+      DO UPDATE SET user_ids = $3::jsonb, created_at = now()
       `,
-      [JSON.stringify({ feed: feedData }), user.id]
+      [user.id, today, JSON.stringify(feedUserIds)]
     );
 
     // Add has_chat flag to each user (should be false for newly generated feed, but check anyway)

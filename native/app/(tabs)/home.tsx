@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Dimensions, ScrollView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, FlatList, Dimensions, Platform, Keyboard } from 'react-native';
 import { colors } from '@/lib/colors';
 import { createChat, fetchProfiles } from '@/lib/api';
 import LoadingSpinner from '@/svgs/spinner';
@@ -17,7 +17,6 @@ import Button from '@/components/ui/button';
 import ProfileModal from '@/components/ui/profile-modal';
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal';
 import Input from '@/components/ui/input';
-import { INTEREST_TAGS, MBTI_OPTIONS } from '@/lib/setup';
 import { router } from 'expo-router';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

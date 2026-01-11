@@ -39,3 +39,24 @@ CREATE TABLE user_tokens (
   created_at TIMESTAMPTZ DEFAULT now(),
   FOREIGN KEY (user_id) REFERENCES users(id),
 );
+
+CREATE TABLE daily_feeds (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  feed_date VARCHAR(10) NOT NULL, -- YYYY-MM-DD format
+  user_ids JSONB NOT NULL DEFAULT '[]', -- array of user UUIDs in the feed
+  created_at TIMESTAMPTZ DEFAULT now(),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE(user_id, feed_date) -- one feed per user per day
+);
+
+create table user_access (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  is_vip BOOLEAN NOT NULL DEFAULT false,
+  reputation_score INT NOT NULL DEFAULT 100, -- Starts at 100. Bans drop this.
+  xray_charges INT NOT NULL DEFAULT 1,       -- Refills daily
+  last_charge_refill TIMESTAMPTZ NOT NULL DEFAULT now(),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE(user_id) -- one access record per user
+);
