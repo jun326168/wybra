@@ -396,3 +396,47 @@ export const useXray = async (targetUserId: string): Promise<{ success: boolean;
     message: data.message || 'Successfully used X-ray',
   };
 };
+
+// Block User
+export const blockUser = async (targetUserId: string): Promise<void> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/users/block`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ target_user_id: targetUserId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || '無法封鎖用戶');
+  }
+};
+
+// Report User
+export const reportUser = async (targetUserId: string, reason: string): Promise<void> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/users/report`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ target_user_id: targetUserId, reason }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || '無法檢舉用戶');
+  }
+};
+
+// Delete Account
+export const deleteAccount = async (): Promise<void> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/auth/delete-account`, {
+    method: 'DELETE',
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || '無法刪除帳號');
+  }
+};

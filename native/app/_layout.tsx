@@ -98,10 +98,14 @@ export default function RootLayout() {
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="setup" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="profile-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="preference-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
               <Stack.Screen name="chat" options={{ headerShown: false }} />
               <Stack.Screen name="quiz" options={{ headerShown: false }} />
+              {/* Settings */}
+              <Stack.Screen name="profile-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="preference-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="account-settings" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
+              {/* policy */}
+              <Stack.Screen name="eula" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }} />
             </Stack>
             <StatusBar style="light" />
           </ThemeProvider>

@@ -11,6 +11,7 @@ import XrayGhostIcon from '@/svgs/xray-ghost';
 import { useAppContext } from '@/contexts/AppContext';
 import { useXray as callXray } from '@/lib/api';
 import LoadingSpinner from '@/svgs/spinner';
+import UserActionModal from '@/components/ui/user-action-modal';
 
 interface ProfileModalProps {
   visible: boolean;
@@ -27,6 +28,10 @@ export default function ProfileModal({ visible, onClose, user, shouldShowImage =
   const [overlayDimensions, setOverlayDimensions] = React.useState<{ width: number; height: number } | null>(null);
   const [ghostPosition, setGhostPosition] = React.useState<{ x: number; y: number } | null>(null);
   const [isUsingXray, setIsUsingXray] = React.useState(false);
+  const [showUserActionModal, setShowUserActionModal] = React.useState(false);
+  
+  // Check if this is viewing another user's profile (not own profile)
+  const isOtherUser = user?.id && currentUser?.id && user.id !== currentUser.id;
 
   const avatarUrl = user?.personal_info?.avatar_url as string | undefined;
   const logoStrokeColor = user?.personal_info?.color === colors.background ? colors.textSecondary : (user?.personal_info?.color as string | undefined);
@@ -98,11 +103,21 @@ export default function ProfileModal({ visible, onClose, user, shouldShowImage =
     >
       {user ? (
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>
-            {shouldShowImage 
-              ? (user.personal_info?.real_name as string || user.username)
-              : user.username}
-          </Text>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>
+              {shouldShowImage 
+                ? (user.personal_info?.real_name as string || user.username)
+                : user.username}
+            </Text>
+            {isOtherUser && (
+              <Button
+                onPress={() => setShowUserActionModal(true)}
+                style={styles.moreButton}
+              >
+                <Text style={styles.moreButtonText}>⋯</Text>
+              </Button>
+            )}
+          </View>
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={styles.modalScrollView}
@@ -223,6 +238,20 @@ export default function ProfileModal({ visible, onClose, user, shouldShowImage =
           </ScrollView>
         </View>
       ) : null}
+      
+      {/* User Action Modal (Report/Block) */}
+      {isOtherUser && user?.id && (
+        <UserActionModal
+          visible={showUserActionModal}
+          onClose={() => setShowUserActionModal(false)}
+          targetUserId={user.id}
+          targetUserName={user.username}
+          onBlockSuccess={() => {
+            setShowUserActionModal(false);
+            onClose();
+          }}
+        />
+      )}
     </BottomSheetModal>
   );
 }
@@ -236,11 +265,34 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
   },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 24,
+    flex: 1,
+  },
+  moreButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 0,
+  },
+  moreButtonText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    lineHeight: 24,
   },
   modalScrollView: {
   },

@@ -49,6 +49,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user's reputation_score > 0
+    const userAccess = await queryOne<{ reputation_score: number }>(
+      `SELECT reputation_score FROM user_access WHERE user_id = $1`,
+      [user.id]
+    );
+
+    if (!userAccess || userAccess.reputation_score <= 0) {
+      return NextResponse.json(
+        { error: 'Cannot send messages: account restricted' },
+        { status: 403 }
+      );
+    }
+
     // Create the message
     const message = await queryOne<Message>(
       `

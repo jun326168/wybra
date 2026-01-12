@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     // Get all chats where the user is either user_1 or user_2
     // Order by updated_at descending (most recent first)
     // Use JOIN to get the other user's information and last message in a single query
+    // Filter out chats where the other user has reputation_score <= 0
     const chatsWithOtherUser = await query<Chat & { 
       other_user_id: string; 
       other_username: string | null; 
@@ -50,8 +51,15 @@ export async function GET(request: NextRequest) {
           ELSE u.id = c.user_1
         END
       )
+      LEFT JOIN user_access ua ON (
+        CASE 
+          WHEN c.user_1 = $1 THEN ua.user_id = c.user_2
+          ELSE ua.user_id = c.user_1
+        END
+      )
       LEFT JOIN messages m ON m.id = c.last_message_id
-      WHERE c.user_1 = $1 OR c.user_2 = $1
+      WHERE (c.user_1 = $1 OR c.user_2 = $1)
+        AND (ua.reputation_score > 0 OR ua.reputation_score IS NULL)
       ORDER BY m.created_at DESC
       `,
       [user.id]

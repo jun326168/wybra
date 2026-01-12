@@ -30,16 +30,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user_2 exists
+    // Check if user_2 exists and has reputation_score > 0
     const otherUser = await queryOne<{ id: string }>(
-      'SELECT id FROM users WHERE id = $1',
+      `
+      SELECT u.id 
+      FROM users u
+      INNER JOIN user_access ua ON u.id = ua.user_id
+      WHERE u.id = $1 AND ua.reputation_score > 0
+      `,
       [user_2]
     );
 
     if (!otherUser) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'User not found or account restricted' },
         { status: 404 }
+      );
+    }
+
+    // Check if current user's reputation_score > 0
+    const userAccess = await queryOne<{ reputation_score: number }>(
+      `SELECT reputation_score FROM user_access WHERE user_id = $1`,
+      [user.id]
+    );
+
+    if (!userAccess || userAccess.reputation_score <= 0) {
+      return NextResponse.json(
+        { error: 'Cannot create chat: account restricted' },
+        { status: 403 }
       );
     }
 

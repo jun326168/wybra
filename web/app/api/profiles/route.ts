@@ -71,14 +71,20 @@ export async function GET(request: NextRequest) {
       const feedIds = storedFeed[0].user_ids;
       
       const cachedUsers = await query<User>(
-        `SELECT id, username, personal_info FROM users WHERE id = ANY($1::uuid[])`,
+        `
+        SELECT u.id, u.username, u.personal_info 
+        FROM users u
+        LEFT JOIN user_access ua ON u.id = ua.user_id
+        WHERE u.id = ANY($1::uuid[])
+          AND (ua.reputation_score > 0 OR ua.reputation_score IS NULL)
+        `,
         [feedIds]
       );
 
       // Restore the original shuffled order (SQL doesn't guarantee order by IN array)
       const orderedUsers = feedIds
         .map((id: string) => cachedUsers.find(u => u.id === id))
-        .filter((u): u is User => u !== undefined) // Filter out any users that might have been deleted
+        .filter((u): u is User => u !== undefined) // Filter out any users that might have been deleted or blocked
         .map((u) => ({
           ...u,
           has_chat: existingChatUserIds.has(u.id),
@@ -113,15 +119,24 @@ export async function GET(request: NextRequest) {
 
     const oppositeGender = getOppositeGender(requesterGender);
     let combined: User[] = [];
-
+    
     // Build exclusion list: current user + users already in chats
+    // Blocked users (reputation_score <= 0) are already filtered by the reputation_score > 0 check
     const excludeIds = [user.id, ...Array.from(existingChatUserIds)];
     
     // --- Generation Logic (Same as your design) ---
     if (!oppositeGender || requesterGender === 'unknown') {
       // Pure Random for NB or Unknown
       combined = await query<User>(
-        `SELECT id, username, personal_info FROM users WHERE id <> ALL($1::uuid[]) ORDER BY random() LIMIT $2`,
+        `
+        SELECT u.id, u.username, u.personal_info 
+        FROM users u
+        LEFT JOIN user_access ua ON u.id = ua.user_id
+        WHERE u.id <> ALL($1::uuid[])
+          AND (ua.reputation_score > 0 OR ua.reputation_score IS NULL)
+        ORDER BY random() 
+        LIMIT $2
+        `,
         [excludeIds, TOTAL_LIMIT]
       );
     } else {
@@ -135,12 +150,14 @@ export async function GET(request: NextRequest) {
       const [oppositeResults, sameResults] = await Promise.all([
         query<User>(
           `
-          SELECT id, username, personal_info 
-          FROM users
-          WHERE id <> ALL($1::uuid[])
-            AND (personal_info->>'birthday') ~ '^\\d{4}-\\d{2}-\\d{2}$'
-            AND date_part('year', age(current_date, (personal_info->>'birthday')::date))::int BETWEEN $2 AND $3
-            AND lower(personal_info->>'gender') = lower($4)
+          SELECT u.id, u.username, u.personal_info 
+          FROM users u
+          LEFT JOIN user_access ua ON u.id = ua.user_id
+          WHERE u.id <> ALL($1::uuid[])
+            AND (ua.reputation_score > 0 OR ua.reputation_score IS NULL)
+            AND (u.personal_info->>'birthday') ~ '^\\d{4}-\\d{2}-\\d{2}$'
+            AND date_part('year', age(current_date, (u.personal_info->>'birthday')::date))::int BETWEEN $2 AND $3
+            AND lower(u.personal_info->>'gender') = lower($4)
           ORDER BY random()
           LIMIT $5
           `,
@@ -148,12 +165,14 @@ export async function GET(request: NextRequest) {
         ),
         query<User>(
           `
-          SELECT id, username, personal_info 
-          FROM users
-          WHERE id <> ALL($1::uuid[])
-            AND (personal_info->>'birthday') ~ '^\\d{4}-\\d{2}-\\d{2}$'
-            AND date_part('year', age(current_date, (personal_info->>'birthday')::date))::int BETWEEN $2 AND $3
-            AND lower(personal_info->>'gender') = lower($4)
+          SELECT u.id, u.username, u.personal_info 
+          FROM users u
+          LEFT JOIN user_access ua ON u.id = ua.user_id
+          WHERE u.id <> ALL($1::uuid[])
+            AND (ua.reputation_score > 0 OR ua.reputation_score IS NULL)
+            AND (u.personal_info->>'birthday') ~ '^\\d{4}-\\d{2}-\\d{2}$'
+            AND date_part('year', age(current_date, (u.personal_info->>'birthday')::date))::int BETWEEN $2 AND $3
+            AND lower(u.personal_info->>'gender') = lower($4)
           ORDER BY random()
           LIMIT $5
           `,
@@ -175,9 +194,11 @@ export async function GET(request: NextRequest) {
       
       const fillers = await query<User>(
         `
-        SELECT id, username, personal_info 
-        FROM users
-        WHERE id <> ALL($1::uuid[])
+        SELECT u.id, u.username, u.personal_info 
+        FROM users u
+        LEFT JOIN user_access ua ON u.id = ua.user_id
+        WHERE u.id <> ALL($1::uuid[])
+          AND (ua.reputation_score > 0 OR ua.reputation_score IS NULL)
         ORDER BY random()
         LIMIT $2
         `,

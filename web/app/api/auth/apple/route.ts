@@ -56,6 +56,15 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('Apple auth error:', error);
+    
+    // Handle account restricted error
+    if (error instanceof Error && error.message === 'Account restricted') {
+      return NextResponse.json(
+        { error: 'Account restricted' },
+        { status: 403 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

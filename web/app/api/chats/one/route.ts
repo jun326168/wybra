@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     } | null = null;
 
     if (chatId) {
-      // Get chat by ID, ensuring user is part of it
+      // Get chat by ID, ensuring user is part of it and other user has reputation_score > 0
       chatWithDetails = await queryOne<Chat & {
         other_user_id: string;
         other_username: string | null;
@@ -69,12 +69,20 @@ export async function GET(request: NextRequest) {
             ELSE u.id = c.user_1
           END
         )
-        WHERE c.id = $2 AND (c.user_1 = $1 OR c.user_2 = $1)
+        LEFT JOIN user_access ua ON (
+          CASE 
+            WHEN c.user_1 = $1 THEN ua.user_id = c.user_2
+            ELSE ua.user_id = c.user_1
+          END
+        )
+        WHERE c.id = $2 
+          AND (c.user_1 = $1 OR c.user_2 = $1)
+          AND (ua.reputation_score > 0 OR ua.reputation_score IS NULL)
         `,
         [user.id, chatId]
       );
     } else if (otherUserId) {
-      // Get chat by other_user_id
+      // Get chat by other_user_id, ensuring other user has reputation_score > 0
       chatWithDetails = await queryOne<Chat & {
         other_user_id: string;
         other_username: string | null;
@@ -105,7 +113,9 @@ export async function GET(request: NextRequest) {
             ELSE u.id = c.user_1
           END
         )
-        WHERE (c.user_1 = $1 AND c.user_2 = $2) OR (c.user_1 = $2 AND c.user_2 = $1)
+        LEFT JOIN user_access ua ON ua.user_id = $2
+        WHERE ((c.user_1 = $1 AND c.user_2 = $2) OR (c.user_1 = $2 AND c.user_2 = $1))
+          AND (ua.reputation_score > 0 OR ua.reputation_score IS NULL)
         `,
         [user.id, otherUserId]
       );
@@ -119,18 +129,21 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch all messages for this chat, ordered by created_at
+    // Filter out messages from users with reputation_score <= 0
     const messages = await query<Message>(
       `
       SELECT 
-        id,
-        chat_id,
-        user_id,
-        content,
-        created_at,
-        message_info
-      FROM messages
-      WHERE chat_id = $1
-      ORDER BY created_at ASC
+        m.id,
+        m.chat_id,
+        m.user_id,
+        m.content,
+        m.created_at,
+        m.message_info
+      FROM messages m
+      LEFT JOIN user_access ua ON m.user_id = ua.user_id
+      WHERE m.chat_id = $1
+        AND (ua.reputation_score > 0 OR ua.reputation_score IS NULL)
+      ORDER BY m.created_at ASC
       `,
       [chatWithDetails.id]
     );

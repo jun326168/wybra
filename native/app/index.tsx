@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Text, Alert, Platform } from 'react-native';
+import { View, StyleSheet, Text, Alert, Platform, Linking, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Google from 'expo-auth-session/providers/google';
@@ -34,6 +34,7 @@ export default function SplashAuthScreen() {
 
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Google OAuth configuration
   const [, response, promptAsync] = Google.useAuthRequest({
@@ -126,10 +127,21 @@ export default function SplashAuthScreen() {
   }, [loading, user, router, logoTranslateY, logoScale, authOpacity]);
 
   const handleGoogleSignIn = () => {
+    if (!agreedToTerms) return;
     promptAsync();
   };
 
+  const handleEulaPress = () => {
+    router.push('/eula');
+  };
+
+  const handlePrivacyPress = () => {
+    Linking.openURL('https://wybra.vercel.app/privacy').catch(err => console.error("Couldn't load page", err));
+  };
+
   const handleAppleSignIn = async () => {
+    if (!agreedToTerms) return;
+    
     try {
       setAppleLoading(true);
       const credential = await AppleAuthentication.signInAsync({
@@ -192,9 +204,13 @@ export default function SplashAuthScreen() {
 
           <View style={styles.formContainer}>
             <Button
-              style={[styles.button, styles.googleButton]}
+              style={[
+                styles.button, 
+                styles.googleButton,
+                !agreedToTerms && styles.buttonDisabled
+              ]}
               onPress={handleGoogleSignIn}
-              disabled={googleLoading || appleLoading}
+              disabled={googleLoading || appleLoading || !agreedToTerms}
             >
               {googleLoading ? (
                 <LoadingSpinner size={20} color="#FFFFFF" strokeWidth={3} />
@@ -205,9 +221,13 @@ export default function SplashAuthScreen() {
 
             {Platform.OS === 'ios' && (
               <Button
-                style={[styles.button, styles.appleButton]}
+                style={[
+                  styles.button, 
+                  styles.appleButton,
+                  !agreedToTerms && styles.buttonDisabled
+                ]}
                 onPress={handleAppleSignIn}
-                disabled={googleLoading || appleLoading}
+                disabled={googleLoading || appleLoading || !agreedToTerms}
               >
                 {appleLoading ? (
                   <LoadingSpinner size={20} color="#FFFFFF" strokeWidth={3} />
@@ -216,6 +236,31 @@ export default function SplashAuthScreen() {
                 )}
               </Button>
             )}
+
+            <View style={styles.agreementContainer}>
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => setAgreedToTerms(!agreedToTerms)}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.checkbox,
+                  agreedToTerms && styles.checkboxChecked
+                ]}>
+                  {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.agreementText}>
+                  我已閱讀並同意{' '}
+                  <Text style={styles.linkText} onPress={handleEulaPress}>
+                    使用條款
+                  </Text>
+                  {' '}和{' '}
+                  <Text style={styles.linkText} onPress={handlePrivacyPress}>
+                    隱私權政策
+                  </Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </Animated.View>
       </View>
@@ -282,5 +327,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  agreementContainer: {
+    width: '100%',
+    marginTop: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  agreementText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  linkText: {
+    color: colors.primary,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });

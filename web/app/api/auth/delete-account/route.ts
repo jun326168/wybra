@@ -10,7 +10,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Remove any pending verification codes for this email (safety)
+    // Remove any related records for the user
+
     // Finally delete the user record
     await query('DELETE FROM users WHERE id = $1', [user.id]);
 

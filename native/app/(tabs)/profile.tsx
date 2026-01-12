@@ -9,7 +9,7 @@ import { EyeIcon, EyeSlashIcon } from '@/svgs'
 import Button from '@/components/ui/button'
 import { useRouter } from 'expo-router'
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal'
-import { GENERATION_OPTIONS, getGeneration, INTEREST_TAGS, MBTI_OPTIONS } from '@/lib/setup'
+import { INTEREST_TAGS, MBTI_OPTIONS } from '@/lib/setup'
 import XrayGhostIcon from '@/svgs/xray-ghost'
 import { createInvite, getMyInvite, pairInvite } from '@/lib/api'
 import Input from '@/components/ui/input'
@@ -17,10 +17,9 @@ import LoadingSpinner from '@/svgs/spinner'
 import VipUnlock from '@/components/reward-overlays/vip-unlock'
 
 const ProfileScreen = () => {
-  const { user, signOut, refreshUser } = useAppContext();
+  const { user, refreshUser } = useAppContext();
   const router = useRouter();
   const [showImage, setShowImage] = useState(false);
-  const [signOutModalVisible, setSignOutModalVisible] = useState(false);
   const [showVipUnlockModal, setShowVipUnlockModal] = useState(false);
   const [showVipUnlockOverlay, setShowVipUnlockOverlay] = useState(false);
   const [overlaySize, setOverlaySize] = useState<number | null>(null);
@@ -99,21 +98,7 @@ const ProfileScreen = () => {
   };
 
   const handleAccountSettings = () => {
-    // router.push('/account-settings');
-  };
-
-  const handleSignOut = () => {
-    setSignOutModalVisible(true);
-  };
-
-  const confirmSignOut = async () => {
-    try {
-      setSignOutModalVisible(false);
-      await signOut();
-      // The useEffect will handle navigation when user becomes null
-    } catch (error) {
-      console.error('Error during sign out:', error);
-    }
+    router.push('/account-settings');
   };
 
   const openLink = (url: string) => {
@@ -126,7 +111,7 @@ const ProfileScreen = () => {
       // Reset flag if user becomes VIP (in case they lose VIP later)
       hasLoadedInviteCode.current = false;
       setMyInviteCode(null);
-    } else if (!hasLoadedInviteCode.current) {
+    } else if (!hasLoadedInviteCode.current && !!user) {
       hasLoadedInviteCode.current = true;
       loadMyInviteCode();
     }
@@ -336,52 +321,20 @@ const ProfileScreen = () => {
         <View style={styles.divider} />
 
         {/* About Section */}
-        <View style={StyleSheet.flatten([styles.settingsView])}>
+        <View style={StyleSheet.flatten([styles.settingsView, { marginBottom: 100 }])}>
           <View>
             <Text style={styles.sectionTitle}>關於</Text>
             <Button style={styles.linkRow} onPress={() => openLink('https://wybra.vercel.app/privacy')}>
               <Text style={styles.linkLabel}>隱私權政策</Text>
               <Text style={styles.linkArrow}>→</Text>
             </Button>
-          </View>
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* Sign Out Section */}
-        <View style={StyleSheet.flatten([styles.settingsView, { paddingBottom: 100 }])}>
-          <View>
-            <Button style={styles.signOutButton} onPress={handleSignOut}>
-              <Text style={styles.signOutText}>登出</Text>
+            <Button style={styles.linkRow} onPress={() => router.push('/eula')}>
+              <Text style={styles.linkLabel}>使用條款</Text>
+              <Text style={styles.linkArrow}>→</Text>
             </Button>
           </View>
         </View>
       </ScrollView>
-
-      {/* Sign Out Modal */}
-      <BottomSheetModal
-        visible={signOutModalVisible}
-        containerStyle={styles.modalContainer}
-        onClose={() => setSignOutModalVisible(false)}
-      >
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>確定要登出嗎？</Text>
-
-          <Button
-            style={styles.modalButtonDanger}
-            onPress={confirmSignOut}
-          >
-            <Text style={styles.modalButtonText}>登出</Text>
-          </Button>
-
-          <Button
-            style={styles.modalButtonCancel}
-            onPress={() => setSignOutModalVisible(false)}
-          >
-            <Text style={styles.modalButtonCancelText}>取消</Text>
-          </Button>
-        </View>
-      </BottomSheetModal>
 
       {/* VIP Unlock Modal */}
       <BottomSheetModal
@@ -688,19 +641,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: 'bold',
   },
-  signOutButton: {
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: colors.error + '1A',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.error + '40',
-  },
-  signOutText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.error,
-  },
   modalContainer: {
     backgroundColor: colors.card,
     borderTopLeftRadius: 24,
@@ -708,51 +648,6 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '100%',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  modalSubtitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 24,
-  },
-  modalButtonDanger: {
-    width: '100%',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.error + '40',
-    backgroundColor: colors.error + '1A',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  modalButtonCancel: {
-    width: '100%',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  modalButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.error,
-  },
-  modalButtonCancelText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.textSecondary,
   },
   vipBadge: {
     borderWidth: 1,

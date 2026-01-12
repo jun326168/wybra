@@ -74,3 +74,13 @@ CREATE TABLE invites (
   UNIQUE(invited_user_id) -- one invite per user
   UNIQUE(code) -- one code per invite
 );
+
+CREATE TABLE user_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  reporter_id UUID NOT NULL, -- user who is reporting
+  reported_id UUID NOT NULL, -- user who is being reported
+  reason TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (reported_id) REFERENCES users(id) ON DELETE CASCADE
+);

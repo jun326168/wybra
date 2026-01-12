@@ -119,6 +119,11 @@ export async function getUserById(userId: string): Promise<AuthUser | null> {
   
   if (!result) return null;
   
+  // Check if user has reputation_score <= 0 (banned/restricted) - prevent login
+  if (result.reputation_score !== null && result.reputation_score <= 0) {
+    return null;
+  }
+  
   const user: AuthUser = {
     id: result.id,
     email: result.email,
@@ -146,6 +151,11 @@ export async function getUserById(userId: string): Promise<AuthUser | null> {
     );
 
     if (updatedAccess) {
+      // Double-check reputation_score after refetch
+      if (updatedAccess.reputation_score <= 0) {
+        return null;
+      }
+      
       user.access = {
         is_vip: updatedAccess.is_vip,
         reputation_score: updatedAccess.reputation_score,
@@ -155,6 +165,11 @@ export async function getUserById(userId: string): Promise<AuthUser | null> {
       };
     } else {
       // Fallback to original values if update failed
+      // But still check reputation_score
+      if (result.reputation_score !== null && result.reputation_score <= 0) {
+        return null;
+      }
+      
       user.access = {
         is_vip: result.is_vip!,
         reputation_score: result.reputation_score!,
@@ -209,6 +224,11 @@ export async function getOrCreateGoogleUser(
   );
 
   if (result) {
+    // Check if user has reputation_score <= 0 (banned/restricted) - prevent login
+    if (result.reputation_score !== null && result.reputation_score <= 0) {
+      throw new Error('Account restricted');
+    }
+    
     const user: AuthUser = {
       id: result.id,
       email: result.email,
@@ -236,6 +256,11 @@ export async function getOrCreateGoogleUser(
       );
 
       if (updatedAccess) {
+        // Double-check reputation_score after refetch
+        if (updatedAccess.reputation_score <= 0) {
+          throw new Error('Account restricted');
+        }
+        
         user.access = {
           is_vip: updatedAccess.is_vip,
           reputation_score: updatedAccess.reputation_score,
@@ -245,6 +270,11 @@ export async function getOrCreateGoogleUser(
         };
       } else {
         // Fallback to original values if update failed
+        // But still check reputation_score
+        if (result.reputation_score !== null && result.reputation_score <= 0) {
+          throw new Error('Account restricted');
+        }
+        
         user.access = {
           is_vip: result.is_vip!,
           reputation_score: result.reputation_score!,
@@ -404,6 +434,11 @@ export async function getOrCreateAppleUser(
   );
 
   if (result) {
+    // Check if user has reputation_score <= 0 (banned/restricted) - prevent login
+    if (result.reputation_score !== null && result.reputation_score <= 0) {
+      throw new Error('Account restricted');
+    }
+    
     const user: AuthUser = {
       id: result.id,
       email: result.email,
@@ -431,6 +466,11 @@ export async function getOrCreateAppleUser(
       );
 
       if (updatedAccess) {
+        // Double-check reputation_score after refetch
+        if (updatedAccess.reputation_score <= 0) {
+          throw new Error('Account restricted');
+        }
+        
         user.access = {
           is_vip: updatedAccess.is_vip,
           reputation_score: updatedAccess.reputation_score,
@@ -440,6 +480,11 @@ export async function getOrCreateAppleUser(
         };
       } else {
         // Fallback to original values if update failed
+        // But still check reputation_score
+        if (result.reputation_score !== null && result.reputation_score <= 0) {
+          throw new Error('Account restricted');
+        }
+        
         user.access = {
           is_vip: result.is_vip!,
           reputation_score: result.reputation_score!,
