@@ -258,7 +258,7 @@ const ProfileScreen = () => {
               onPress={handleEditProfile}
               style={styles.editProfileButton}
             >
-              <Text style={styles.editProfileButtonText}>編輯個人檔案</Text>
+              <Text style={styles.editProfileButtonText}>編輯人設</Text>
             </Button>
           </View>
           <View style={styles.profileInfoContainer}>

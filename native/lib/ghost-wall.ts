@@ -123,12 +123,9 @@ export const sanitizeMessage = (ignoreRules: boolean, text: string, ...realNames
   // 2. Replace social media keywords
   const socialMediaPatterns = [
     { regex: /\b(ig|instagram)\b/gi, replacement: (match: string) => '👻'.repeat(match.length) },
-    { regex: /哀居|唉居/gi, replacement: (match: string) => '👻'.repeat(match.length) },
+    { regex: /哀居|唉居|臉書|加賴/gi, replacement: (match: string) => '👻'.repeat(match.length) },
     { regex: /\b(line\s*id)\b/gi, replacement: (match: string) => '👻'.repeat(match.length) },
     { regex: /\b(fb|facebook)\b/gi, replacement: (match: string) => '👻'.repeat(match.length) },
-    { regex: /臉書/gi, replacement: (match: string) => '👻'.repeat(match.length) },
-    { regex: /(http|https|www\.)/gi, replacement: (match: string) => '👻'.repeat(match.length) },
-    { regex: /\.(com|net|org)\b/gi, replacement: (match: string) => '.' + '👻'.repeat(match.length - 1) },
   ];
 
   for (const pattern of socialMediaPatterns) {
